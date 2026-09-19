@@ -13,8 +13,8 @@ import zeldaswordskills_remastered.combat.PlayerCombatState;
 import java.util.Optional;
 
 public final class ZSSNetwork {
-    /** Includes the server-confirmed Dash continuation window. */
-    private static final String PROTOCOL_VERSION = "16";
+    /** Includes the Magic Mirror transition state. */
+    private static final String PROTOCOL_VERSION = "19";
     private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(ZeldaSwordSkills_Remastered.MOD_ID, "main"),
             () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
@@ -48,8 +48,10 @@ public final class ZSSNetwork {
                 SpinStateMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(id++, FlashAssaultStateMessage.class, FlashAssaultStateMessage::encode, FlashAssaultStateMessage::decode,
                 FlashAssaultStateMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(id, SkillToggleMessage.class, SkillToggleMessage::encode, SkillToggleMessage::decode,
+        CHANNEL.registerMessage(id++, SkillToggleMessage.class, SkillToggleMessage::encode, SkillToggleMessage::decode,
                 SkillToggleMessage::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id, MirrorStateMessage.class, MirrorStateMessage::encode, MirrorStateMessage::decode,
+                MirrorStateMessage::handle, Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         initialized = true;
     }
 
@@ -57,6 +59,11 @@ public final class ZSSNetwork {
         if (player.connection == null || player.connection.connection.channel() == null || !player.connection.connection.isConnected()) return;
         ZSSCapabilities.get(player).ifPresent(data -> CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player), new PlayerDataSyncMessage(data.save())));
+    }
+
+    public static void syncMirrorState(ServerPlayer player, boolean active) {
+        if (player.connection == null || player.connection.connection.channel() == null || !player.connection.connection.isConnected()) return;
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new MirrorStateMessage(active));
     }
 
     public static void syncCombatState(ServerPlayer player, PlayerCombatState state) {

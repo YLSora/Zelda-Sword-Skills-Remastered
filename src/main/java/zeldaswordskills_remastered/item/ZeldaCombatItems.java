@@ -101,10 +101,19 @@ public final class ZeldaCombatItems {
             return stack.hasTag() ? net.minecraft.util.Mth.clamp(stack.getTag().getInt("fairy_level"), 1, 3) : 1;
         }
 
+        @Override public void appendHoverText(ItemStack stack, Level level, java.util.List<net.minecraft.network.chat.Component> tooltip, TooltipFlag flag) {
+            super.appendHoverText(stack, level, tooltip, flag);
+            tooltip.add(net.minecraft.network.chat.Component.translatable("tooltip.zeldaswordskills_remastered.hero_bow_level", upgradeLevel(stack)));
+        }
+
         @Override public void releaseUsing(ItemStack stack, Level level, LivingEntity living, int remaining) {
             if (living instanceof Player player && player.getProjectile(stack).getItem() instanceof ElementArrow arrow) {
                 int required = switch (arrow.kind()) { case LIGHT -> 3; case FIRE, ICE -> 2; default -> 1; };
-                if (upgradeLevel(stack) < required) return;
+                if (upgradeLevel(stack) < required) {
+                    if (!level.isClientSide) player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                            "message.zeldaswordskills_remastered.hero_bow_upgrade_required", required), true);
+                    return;
+                }
             }
             super.releaseUsing(stack, level, living, remaining);
         }

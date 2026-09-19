@@ -24,7 +24,7 @@ public final class EquipmentItem extends ArmorItem {
     private final Gear gear;
 
     public EquipmentItem(ArmorMaterial material, Type type, Gear gear, Properties properties) {
-        super(material, type, properties);
+        super(new BalancedMaterial(material), type, properties);
         this.gear = gear;
     }
 
@@ -36,7 +36,7 @@ public final class EquipmentItem extends ArmorItem {
     @Override
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         Multimap<Attribute, AttributeModifier> base = super.getAttributeModifiers(slot, stack);
-        if (slot != EquipmentSlot.FEET && slot != EquipmentSlot.HEAD) return base;
+        if (slot != getEquipmentSlot()) return base;
         ImmutableMultimap.Builder<Attribute, AttributeModifier> modifiers = ImmutableMultimap.builder();
         modifiers.putAll(base);
         if (gear == Gear.HEAVY_BOOTS) {
@@ -72,6 +72,24 @@ public final class EquipmentItem extends ArmorItem {
         if (texture == null) return null;
         int layer = slot == EquipmentSlot.LEGS ? 2 : 1;
         return ZeldaSwordSkills_Remastered.MOD_ID + ":textures/armor/" + texture + "_layer_" + layer + ".png";
+    }
+
+    /** Retain each material's sound, enchantability and repair ingredient. */
+    private record BalancedMaterial(ArmorMaterial base) implements ArmorMaterial {
+        @Override public int getDurabilityForType(Type type) { return base.getDurabilityForType(type); }
+        @Override public int getDefenseForType(Type type) {
+            return switch (type) {
+                case HELMET, BOOTS -> 2;
+                case CHESTPLATE -> 8;
+                case LEGGINGS -> 5;
+            };
+        }
+        @Override public int getEnchantmentValue() { return base.getEnchantmentValue(); }
+        @Override public net.minecraft.sounds.SoundEvent getEquipSound() { return base.getEquipSound(); }
+        @Override public net.minecraft.world.item.crafting.Ingredient getRepairIngredient() { return base.getRepairIngredient(); }
+        @Override public String getName() { return base.getName(); }
+        @Override public float getToughness() { return 2.0F; }
+        @Override public float getKnockbackResistance() { return 0.06F; }
     }
 
     public enum Gear {

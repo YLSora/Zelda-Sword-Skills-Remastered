@@ -90,7 +90,12 @@ public final class DarknutCreature extends LegacyCreature {
         };
         boolean power = charge >= threshold;
         if (power) charge = 0;
-        float damage = (float) getAttributeValue(Attributes.ATTACK_DAMAGE) * (power ? 1.5F : 1.0F);
+        // The variant defines total attack power; its carried sword must not add damage again.
+        var attack = new net.minecraft.world.entity.ai.attributes.AttributeInstance(Attributes.ATTACK_DAMAGE, ignored -> {});
+        attack.replaceFrom(getAttribute(Attributes.ATTACK_DAMAGE));
+        getMainHandItem().getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND)
+                .get(Attributes.ATTACK_DAMAGE).forEach(attack::removeModifier);
+        float damage = (float) attack.getValue() * (power ? 1.5F : 1.0F);
         boolean hit = living.hurt(damageSources().mobAttack(this), damage);
         if (!hit) return false;
         if (++hitStreak >= 3) {

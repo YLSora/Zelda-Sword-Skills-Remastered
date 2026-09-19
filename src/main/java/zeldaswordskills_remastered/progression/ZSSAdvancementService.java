@@ -31,6 +31,7 @@ public final class ZSSAdvancementService {
 
     public static void songLearned(ServerPlayer player, ResourceLocation song, int total) {
         grant(player, "ocarina.song", true);
+        grant(player, "ocarina.song." + song.getPath(), ZSSContentIds.SONGS.contains(song));
         grant(player, "ocarina.scarecrow", song.equals(ZSSContentIds.SCARECROW));
         grant(player, "ocarina.maestro", total >= 16);
     }

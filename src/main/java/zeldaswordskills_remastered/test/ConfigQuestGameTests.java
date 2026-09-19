@@ -350,39 +350,68 @@ public final class ConfigQuestGameTests {
         ZSSPlayerData data = data(player);
         Villager villager = EntityType.VILLAGER.create(helper.getLevel());
         villager.setCustomName(Component.literal("Cursed Man"));
-        for (int total = 1; total <= 100; total++) {
-            ItemStack tokens = new ItemStack(ZSSRegistries.getItem("skulltula_token"), 2);
-            player.setItemInHand(InteractionHand.MAIN_HAND, tokens);
-            helper.assertTrue(QuestService.attackForTrade(player, villager)
-                            && tokens.getCount() == 1 && data.skulltulaTokens() == total,
-                    "Cursed Man did not consume exactly one token at " + total);
-            String reward = switch (total) {
-                case 10 -> "whip";
-                case 20 -> "zora_tunic_chestplate";
-                case 30 -> "bomb_bag";
-                case 40 -> "big_key";
-                case 50 -> "skill_orb";
-                default -> null;
+        for (var skill : ZSSContentIds.SKILLS) data.setSkillLevel(skill, data.skillMaximum(skill));
+        data.setSkillLevel(ZSSContentIds.DASH, 0);
+        data.addSkulltulaTokens(9);
+        QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
+        helper.assertTrue(data.skulltulaTrades() == 0 && player.getInventory().isEmpty(), "Nine tokens unlocked a reward");
+        data.addSkulltulaTokens(41);
+        QuestService.interactVillager(player, villager, InteractionHand.OFF_HAND);
+        helper.assertTrue(data.skulltulaTrades() == 0, "Offhand interaction claimed an extra reward");
+        for (int rewardIndex = 0; rewardIndex < 5; rewardIndex++) {
+            helper.assertTrue(QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND),
+                    "Cursed Man did not offer reward " + rewardIndex);
+            String reward = switch (rewardIndex) {
+                case 0 -> "whip";
+                case 1 -> "zora_tunic_chestplate";
+                case 2 -> "bomb_bag";
+                case 3 -> "big_key";
+                default -> "skill_orb";
             };
-            if (reward != null) {
-                helper.assertTrue(count(player, reward) == 1, "Missing milestone reward at " + total);
-                ItemStack stack = player.getInventory().items.stream()
-                        .filter(item -> item.is(ZSSRegistries.getItem(reward))).findFirst().orElseThrow();
-                if (total == 30) helper.assertTrue(BombBagItem.getCount(stack, "standard_bomb") == 10,
-                        "Reward bag did not contain ten bombs");
-                if (total == 40) helper.assertTrue(BigKeyItem.dungeon(stack).isPresent(), "Reward key was unbound");
-                if (total == 50) {
-                    ResourceLocation skill = ResourceLocation.parse(stack.getTag().getString(ProgressionItem.SKILL_TAG));
-                    helper.assertTrue(!skill.equals(ZSSContentIds.BONUS_HEART), "Orb rewarded Bonus Heart");
-                }
-            } else if (total < 100) {
-                helper.assertTrue(player.getInventory().items.stream().filter(stack -> !stack.isEmpty()).count() == 1,
-                        "Unexpected reward at " + total);
-            } else helper.assertTrue(player.getInventory().countItem(Items.EMERALD) == 64, "Missing completion emeralds");
-            player.getInventory().clearContent();
-            data.load(data.save());
-            helper.assertTrue(data.skulltulaTokens() == total, "Delivered token count did not survive reload");
+            helper.assertTrue(count(player, reward) == 1, "Missing milestone reward " + rewardIndex);
+            ItemStack stack = player.getInventory().items.stream()
+                    .filter(item -> item.is(ZSSRegistries.getItem(reward))).findFirst().orElseThrow();
+            if (rewardIndex == 2) helper.assertTrue(BombBagItem.getCount(stack, "standard_bomb") == 10,
+                    "Reward bag did not contain ten bombs");
+            if (rewardIndex == 3) helper.assertTrue(BigKeyItem.dungeon(stack).isPresent(), "Reward key was unbound");
+            if (rewardIndex == 4) helper.assertTrue(stack.getTag().getString(ProgressionItem.SKILL_TAG).equals(ZSSContentIds.DASH.toString()),
+                    "Reward orb selected a maxed skill");
         }
+        helper.assertTrue(data.skulltulaTokens() == 50 && data.skulltulaTrades() == 5,
+                "Trading changed the lifetime badge balance");
+        data.addSkulltulaTokens(50);
+        player.getInventory().clearContent();
+        QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
+        helper.assertTrue(count(player, "whip") == 1, "The reward list did not cycle after fifty badges");
+        for (int i = 0; i < 4; i++) QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
+        helper.assertTrue(player.getInventory().countItem(Items.EMERALD) == 64,
+                "The hundred-badge bonus was not granted");
+        data.load(data.save());
+        helper.assertTrue(data.skulltulaTokens() == 100 && data.skulltulaTrades() == 10,
+                "Badge balance or trade list did not survive reload");
+        var clone = new ZSSPlayerData();
+        clone.copyFrom(data);
+        clone.resetLearnedSkills();
+        helper.assertTrue(clone.skulltulaTokens() == 100 && clone.skulltulaTrades() == 10,
+                "Death lost token collection or reward history");
+        Villager another = EntityType.VILLAGER.create(helper.getLevel());
+        another.setCustomName(Component.literal("Cursed Man"));
+        QuestService.interactVillager(player, another, InteractionHand.MAIN_HAND);
+        helper.assertTrue(data.skulltulaTrades() == 10 && player.getInventory().countItem(Items.EMERALD) == 64,
+                "Another Cursed Man repeated a claimed reward");
+        data.addSkulltulaTokens(100);
+        player.getInventory().clearContent();
+        for (int i = 0; i < 10; i++) QuestService.interactVillager(player, another, InteractionHand.MAIN_HAND);
+        helper.assertTrue(data.skulltulaTokens() == 200 && data.skulltulaTrades() == 20
+                        && player.getInventory().countItem(Items.EMERALD) == 64 && count(player, "whip") == 2,
+                "Rewards did not continue to cycle through two hundred tokens");
+        FakePlayer otherPlayer = player(helper);
+        data(otherPlayer).addSkulltulaTokens(10);
+        QuestService.interactVillager(otherPlayer, another, InteractionHand.MAIN_HAND);
+        helper.assertTrue(count(otherPlayer, "whip") == 1 && data(otherPlayer).skulltulaTrades() == 1,
+                "One player's rewards changed another player's trade list");
+        helper.assertTrue(!another.getPersistentData().contains("zss_next_skulltula_reward"),
+                "Cursed Man retained player reward state");
         helper.succeed();
     }
 
@@ -401,40 +430,115 @@ public final class ConfigQuestGameTests {
         helper.assertTrue(!QuestService.attackForTrade(player, villager), "Baby accepted quest tokens");
         villager.setAge(0);
         ProgressionItem item = (ProgressionItem) tokens.getItem();
-        helper.assertTrue(!item.applyOnPickup(player, tokens), "Pickup consumed quest token");
+        helper.assertTrue(item.applyOnPickup(player, tokens) && tokens.isEmpty() && data.skulltulaTokens() == 3,
+                "Pickup did not add quest tokens to the persistent balance");
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.getItem("skulltula_token"), 3));
         item.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
-        helper.assertTrue(tokens.getCount() == 3 && data.skulltulaTokens() == 0, "Air use consumed quest token");
+        helper.assertTrue(data.skulltulaTokens() == 3, "Manual token use changed the persistent balance");
         for (var skill : ZSSContentIds.SKILLS) data.setSkillLevel(skill, data.skillMaximum(skill));
-        for (int i = 0; i < 49; i++) data.addSkulltulaToken();
-        QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
-        helper.assertTrue(count(player, "light_arrow") == 16 && tokens.getCount() == 2,
-                "Maxed skills did not yield sixteen Light Arrows");
-        for (int i = 50; i < 99; i++) data.addSkulltulaToken();
-        int previous = ZSSConfig.SERVER.skulltulaRewardRate.get();
-        try {
-            ZSSConfig.SERVER.skulltulaRewardRate.set(7);
-            QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
-            long due = villager.getPersistentData().getLong("zss_next_skulltula_reward");
-            helper.assertTrue(due == helper.getLevel().getGameTime() + 7 * 24000L,
-                    "Completion did not schedule the recurring reward");
-            Villager reloaded = EntityType.VILLAGER.create(helper.getLevel());
-            reloaded.load(villager.saveWithoutId(new CompoundTag()));
-            helper.assertTrue(reloaded.getPersistentData().getLong("zss_next_skulltula_reward") == due,
-                    "Reward cooldown did not survive entity reload");
-            QuestService.interactVillager(player, reloaded, InteractionHand.MAIN_HAND);
-            helper.assertTrue(tokens.getCount() == 1 && data.skulltulaTokens() == 100
-                            && player.getInventory().countItem(Items.EMERALD) == 64, "Completion repeated or consumed a token");
-            reloaded.getPersistentData().putLong("zss_next_skulltula_reward", helper.getLevel().getGameTime());
-            ZSSConfig.SERVER.skulltulaRewardRate.set(0);
-            QuestService.attackForTrade(player, reloaded);
-            helper.assertTrue(player.getInventory().countItem(Items.EMERALD) == 64, "Disabled recurring reward was granted");
-            ZSSConfig.SERVER.skulltulaRewardRate.set(7);
-            QuestService.attackForTrade(player, reloaded);
-            QuestService.attackForTrade(player, reloaded);
-            helper.assertTrue(tokens.getCount() == 1 && player.getInventory().countItem(Items.EMERALD) == 128,
-                    "Due reward consumed a token or repeated before cooldown");
-        } finally {
-            ZSSConfig.SERVER.skulltulaRewardRate.set(previous);
+        data.setSkillLevel(ZSSContentIds.BONUS_HEART, 0);
+        data.addSkulltulaTokens(47);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.FAIRY_OCARINA.get()));
+        QuestService.convertNamedVillager(villager);
+        for (int i = 0; i < 5; i++) QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
+        ItemStack heartOrb = player.getInventory().items.stream()
+                .filter(stack -> stack.is(ZSSRegistries.getItem("skill_orb"))).findFirst().orElseThrow();
+        helper.assertTrue(heartOrb.getTag().getString(ProgressionItem.SKILL_TAG).equals(ZSSContentIds.BONUS_HEART.toString())
+                        && count(player, "light_arrow") == 0,
+                "An unmaxed Bonus Heart was treated as all skills maxed");
+        helper.assertTrue(data.skulltulaTokens() == 50 && data.skulltulaTrades() == 5,
+                "The player-owned trade list did not advance");
+        helper.assertTrue(!villager.isRemoved() && player.getMainHandItem().is(ZSSRegistries.FAIRY_OCARINA.get()),
+                "Holding an ocarina converted Cursed Man into Zelda");
+        data.setSkillLevel(ZSSContentIds.BONUS_HEART, data.skillMaximum(ZSSContentIds.BONUS_HEART));
+        data.addSkulltulaTokens(50);
+        for (int i = 0; i < 5; i++) QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
+        helper.assertTrue(count(player, "light_arrow") == 16 && player.getInventory().countItem(Items.EMERALD) == 64,
+                "All skills maxed did not yield Light Arrows alongside the hundred-token bonus");
+        QuestService.attackForTrade(player, villager);
+        helper.assertTrue(count(player, "light_arrow") == 16 && data.skulltulaTrades() == 10,
+                "Repeated interaction duplicated a reward");
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssConfigQuest")
+    public static void skulltulaTokensConvertOnPickupAndInventoryEntry(GameTestHelper helper) {
+        FakePlayer player = player(helper);
+        var data = data(player);
+        var token = ZSSRegistries.getItem("skulltula_token");
+        int expected = 0;
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            player.getInventory().setItem(slot, new ItemStack(token, 3));
+            zeldaswordskills_remastered.event.ZSSItemEvents.tick(new net.minecraftforge.event.TickEvent.PlayerTickEvent(
+                    net.minecraftforge.event.TickEvent.Phase.END, player));
+            expected += 3;
+            helper.assertTrue(player.getInventory().getItem(slot).isEmpty() && data.skulltulaTokens() == expected,
+                    "Inventory tokens were lost, duplicated or retained at slot " + slot);
+        }
+        player.containerMenu.setCarried(new ItemStack(token, 5));
+        zeldaswordskills_remastered.event.ZSSItemEvents.tick(new net.minecraftforge.event.TickEvent.PlayerTickEvent(
+                net.minecraftforge.event.TickEvent.Phase.END, player));
+        expected += 5;
+        helper.assertTrue(player.containerMenu.getCarried().isEmpty() && data.skulltulaTokens() == expected,
+                "Cursor tokens were not converted");
+        player.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        player.getInventory().setItem(0, new ItemStack(token, 7));
+        var dropped = new net.minecraft.world.entity.item.ItemEntity(helper.getLevel(), 0, 0, 0, new ItemStack(token, 11));
+        var creativePickup = new net.minecraftforge.event.entity.player.EntityItemPickupEvent(player, dropped);
+        zeldaswordskills_remastered.event.ZSSItemEvents.pickup(creativePickup);
+        zeldaswordskills_remastered.event.ZSSItemEvents.tick(new net.minecraftforge.event.TickEvent.PlayerTickEvent(
+                net.minecraftforge.event.TickEvent.Phase.END, player));
+        helper.assertTrue(count(player, "skulltula_token") == 7 && data.skulltulaTokens() == expected
+                        && !creativePickup.isCanceled() && dropped.getItem().getCount() == 11,
+                "Creative tokens were consumed or counted");
+        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        zeldaswordskills_remastered.event.ZSSItemEvents.tick(new net.minecraftforge.event.TickEvent.PlayerTickEvent(
+                net.minecraftforge.event.TickEvent.Phase.END, player));
+        expected += 7;
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++)
+            player.getInventory().setItem(slot, new ItemStack(Items.STONE, 64));
+        var pickup = new net.minecraftforge.event.entity.player.EntityItemPickupEvent(player, dropped);
+        zeldaswordskills_remastered.event.ZSSItemEvents.pickup(pickup);
+        expected += 11;
+        helper.assertTrue(pickup.isCanceled() && dropped.isRemoved() && data.skulltulaTokens() == expected,
+                "A full inventory prevented token collection");
+        zeldaswordskills_remastered.event.ZSSItemEvents.tick(new net.minecraftforge.event.TickEvent.PlayerTickEvent(
+                net.minecraftforge.event.TickEvent.Phase.END, player));
+        helper.assertTrue(data.skulltulaTokens() == expected && data.skulltulaTrades() == 0,
+                "Collection repeated or silently claimed rewards");
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssConfigQuest")
+    public static void skulltulaDeathLootRates(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var creature = ZSSRegistries.SKULLTULA.get().create(level);
+        var params = new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+                .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN, creature.position())
+                .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.THIS_ENTITY, creature)
+                .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.DAMAGE_SOURCE, level.damageSources().generic())
+                .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.ENTITY);
+        var normal = level.getServer().getLootData().getLootTable(ResourceLocation.fromNamespaceAndPath(
+                ZeldaSwordSkills_Remastered.MOD_ID, "entities/skulltula"));
+        var gold = level.getServer().getLootData().getLootTable(ResourceLocation.fromNamespaceAndPath(
+                ZeldaSwordSkills_Remastered.MOD_ID, "entities/skulltula_gold"));
+        int tokens = 0;
+        int hearts = 0;
+        // Sequential small seeds bias the first draws of Minecraft's legacy random source.
+        var seeds = net.minecraft.util.RandomSource.create(0x5A17C0DEL);
+        for (int roll = 0; roll < 10000; roll++) {
+            long seed = seeds.nextLong();
+            for (ItemStack loot : normal.getRandomItems(params, seed)) {
+                if (loot.is(ZSSRegistries.getItem("skulltula_token"))) tokens += loot.getCount();
+                if (loot.is(ZSSRegistries.getItem("small_heart"))) hearts += loot.getCount();
+            }
+        }
+        helper.assertTrue(tokens >= 150 && tokens <= 250, "Normal Skulltula token rate differs from 2%: " + tokens);
+        helper.assertTrue(hearts >= 4700 && hearts <= 5300, "Token pool changed the existing heart drops: " + hearts);
+        for (long seed = 1; seed <= 100; seed++) {
+            var drops = gold.getRandomItems(params, seed);
+            helper.assertTrue(drops.size() == 1 && drops.get(0).is(ZSSRegistries.getItem("skulltula_token"))
+                    && drops.get(0).getCount() == 1, "Gold Skulltula no longer drops exactly one token");
         }
         helper.succeed();
     }

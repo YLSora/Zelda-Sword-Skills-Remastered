@@ -355,6 +355,9 @@ public final class ZSSDataGenerators {
             addGossipHints(this, false);
             add("container.zeldaswordskills_remastered.pedestal", "Master Sword Pedestal");
             add("container.zeldaswordskills_remastered.locked_chest", "Locked Chest");
+            add("tooltip.zeldaswordskills_remastered.hero_bow_level", "Fairy upgrade: %s/3");
+            add("message.zeldaswordskills_remastered.hero_bow_upgrade_required", "This arrow requires a level %s Hero's Bow. Visit a Great Fairy to upgrade it.");
+            add("message.zeldaswordskills_remastered.arrow_magic_required", "This arrow requires %s magic.");
             add("tooltip.zeldaswordskills_remastered.heart_piece", "Combine four pieces to create a Bonus Heart skill orb");
             add("tooltip.zeldaswordskills_remastered.navi_bottle", "Right-click to release Navi, or bottle her again from an empty bottle");
             add("message.zeldaswordskills_remastered.navi_not_yours", "This Navi belongs to another hero");
@@ -409,11 +412,14 @@ public final class ZSSDataGenerators {
                     Map.entry("lullaby", "Zelda's Lullaby"), Map.entry("scarecrow", "Scarecrow's Song")));
             addInstrumentTranslations(this, Map.ofEntries(
                     Map.entry("instrument", "Play an instrument"), Map.entry("instrument.scarecrow", "Scarecrow melody"),
-                    Map.entry("instrument.controls", "Space: D  S: F  D: A  A: B  W: high D  Esc: close"),
+                    Map.entry("instrument.controls", "Score = key: A = Space, v = S, > = D, < = A, ^ = W. Esc: close"),
                     Map.entry("instrument.ready", "Play a learned melody"), Map.entry("instrument.playing", "Playing… %s s"),
                     Map.entry("instrument.failed", "That melody was not recognized — try again"),
+                    Map.entry("instrument.effect_failed", "Melody recognized, but its effect is unavailable under current conditions"),
+                    Map.entry("instrument.too_weak", "Melody recognized. This effect requires the Ocarina of Time or Goddess Harp"),
                     Map.entry("instrument.recorded", "Melody recorded — return in seven days"),
-                    Map.entry("instrument.success", "Song completed")));
+                    Map.entry("instrument.success", "Song completed"),
+                    Map.entry("instrument.free_play_on", "Free play: On"), Map.entry("instrument.free_play_off", "Free play: Off")));
             addSongMessages(this, Map.ofEntries(
                     Map.entry("scarecrow_not_unique", "That melody conflicts with an existing song."),
                     Map.entry("scarecrow_mismatch", "Play exactly the melody you recorded."),
@@ -494,6 +500,9 @@ public final class ZSSDataGenerators {
             addElementalDamageTranslations(this, true);
             add("container.zeldaswordskills_remastered.pedestal", "大师之剑基座");
             add("container.zeldaswordskills_remastered.locked_chest", "上锁宝箱");
+            add("tooltip.zeldaswordskills_remastered.hero_bow_level", "大妖精升级：%s/3");
+            add("message.zeldaswordskills_remastered.hero_bow_upgrade_required", "此箭需要%s级勇者之弓，请找大妖精升级。");
+            add("message.zeldaswordskills_remastered.arrow_magic_required", "此箭需要%s点魔力。");
             add("tooltip.zeldaswordskills_remastered.heart_piece", "四个碎片可合成一枚额外心之技能球");
             add("tooltip.zeldaswordskills_remastered.navi_bottle", "右键释放娜薇，也可用空瓶子再次将她收起");
             add("message.zeldaswordskills_remastered.navi_not_yours", "这只娜薇属于别的勇者");
@@ -548,10 +557,14 @@ public final class ZSSDataGenerators {
                     Map.entry("lullaby", "塞尔达摇篮曲"), Map.entry("scarecrow", "稻草人之歌")));
             addInstrumentTranslations(this, Map.ofEntries(
                     Map.entry("instrument", "演奏乐器"), Map.entry("instrument.scarecrow", "稻草人旋律"),
-                    Map.entry("instrument.controls", "空格：低音D  S：F  D：A  A：B  W：高音D  Esc：关闭"),
+                    Map.entry("instrument.controls", "曲谱=按键：A=空格，v=S，>=D，<=A，^=W。Esc：关闭"),
                     Map.entry("instrument.ready", "演奏一首已学会的旋律"), Map.entry("instrument.playing", "演奏中……%s 秒"),
-                    Map.entry("instrument.failed", "未识别该旋律，请重试"), Map.entry("instrument.recorded", "旋律已记录，请在七天后回来"),
-                    Map.entry("instrument.success", "乐曲演奏完成")));
+                    Map.entry("instrument.failed", "未识别该旋律，请重试"),
+                    Map.entry("instrument.effect_failed", "旋律已识别，但当前条件不满足，无法生效"),
+                    Map.entry("instrument.too_weak", "旋律已识别，此效果需要时之笛或女神竖琴"),
+                    Map.entry("instrument.recorded", "旋律已记录，请在七天后回来"),
+                    Map.entry("instrument.success", "乐曲演奏完成"),
+                    Map.entry("instrument.free_play_on", "自由演奏：开启"), Map.entry("instrument.free_play_off", "自由演奏：关闭")));
             addSongMessages(this, Map.ofEntries(
                     Map.entry("scarecrow_not_unique", "该旋律与现有乐曲冲突。"),
                     Map.entry("scarecrow_mismatch", "请准确演奏先前记录的旋律。"),
@@ -581,7 +594,10 @@ public final class ZSSDataGenerators {
 
     private static void addAdvancementTranslations(LanguageProvider provider, boolean chinese) {
         provider.add("advancements.zeldaswordskills_remastered.adventure_begins.tab", chinese ? "塞尔达传说" : "The Legend of Zelda");
+        provider.add("advancements.zeldaswordskills_remastered.ocarina.song.scarecrow.description",
+                chinese ? "目前暂无作用的歌曲" : "This song currently has no effect");
         for (String id : ZSSAdvancementProvider.ids()) {
+            if (id.startsWith("ocarina.song.")) continue;
             String[] text = advancementText(id);
             String title = chinese ? text[0] : englishName(id);
             provider.add("advancements.zeldaswordskills_remastered." + id + ".title", title);
@@ -965,9 +981,8 @@ public final class ZSSDataGenerators {
                 Map.entry("orca.skill_maxed", "奥卡：这个技能已经达到最高等级。"),
                 Map.entry("orca.master", "奥卡：百枚骑士纹章的训练已经全部完成。"),
                 Map.entry("cursed_man.story", "诅咒之人：黄金骷髅蜘蛛徽记可以解除我们家族的诅咒。"),
-                Map.entry("cursed_man.amount", "你已经交付了 %s 枚黄金骷髅蜘蛛徽记。"),
-                Map.entry("cursed_man.reward", "诅咒之人：感谢你的第 %s 枚徽记，这是给你的奖励。"),
-                Map.entry("cursed_man.complete", "诅咒之人：诅咒已经解除，我们永远感激你。"),
+                Map.entry("cursed_man.amount", "你已累计收集 %s 枚骷髅徽章，下一份奖励需要累计收集 %s 枚。"),
+                Map.entry("cursed_man.reward", "诅咒之人：这是累计收集 %s 枚骷髅徽章的奖励。"),
                 Map.entry("darunia.weak", "达鲁尼亚：这首莎莉亚之歌的力量还不够。"),
                 Map.entry("darunia.complete", "莎莉亚之歌治愈了达鲁尼亚；他赠予你银手套。"),
                 Map.entry("darunia.thanks", "达鲁尼亚：谢谢你再次演奏莎莉亚之歌！"))
@@ -1023,9 +1038,8 @@ public final class ZSSDataGenerators {
                 Map.entry("orca.skill_maxed", "Orca: That skill is already at its maximum level."),
                 Map.entry("orca.master", "Orca: The hundred-crest training is complete."),
                 Map.entry("cursed_man.story", "Cursed Man: Gold Skulltula Tokens can break my family's curse."),
-                Map.entry("cursed_man.amount", "You have delivered %s Gold Skulltula Tokens."),
-                Map.entry("cursed_man.reward", "Cursed Man: Thank you for token %s. Please take this reward."),
-                Map.entry("cursed_man.complete", "Cursed Man: The curse is broken. We are forever in your debt."),
+                Map.entry("cursed_man.amount", "You have collected %s Skulltula Tokens. The next reward requires %s collected tokens."),
+                Map.entry("cursed_man.reward", "Cursed Man: Here is your reward for collecting %s Skulltula Tokens."),
                 Map.entry("darunia.weak", "Darunia: This Song of Saria is not powerful enough."),
                 Map.entry("darunia.complete", "The Song of Saria cures Darunia; he rewards you with Silver Gauntlets."),
                 Map.entry("darunia.thanks", "Darunia: Thank you for playing Saria's Song again!"));
@@ -1058,6 +1072,7 @@ public final class ZSSDataGenerators {
                     .filter(block -> block != ZSSRegistries.NAVI_LIGHT.get()).forEach(this::dropSelf);
             add(ZSSRegistries.CERAMIC_JAR.get(), noDrop());
             add(ZSSRegistries.SECRET_ROOM_CORE.get(), noDrop());
+            ZSSRegistries.WARP_STONES.forEach(block -> add(block.get(), noDrop()));
             ZSSRegistries.SACRED_FLAMES.forEach(block -> add(block.get(), noDrop()));
             add(ZSSRegistries.ANCIENT_TABLET_BOMBOS.get(), noDrop());
             add(ZSSRegistries.ANCIENT_TABLET_ETHER.get(), noDrop());

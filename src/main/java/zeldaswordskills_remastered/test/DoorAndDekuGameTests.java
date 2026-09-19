@@ -31,6 +31,36 @@ public final class DoorAndDekuGameTests {
     private DoorAndDekuGameTests() { }
 
     @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft")
+    public static void onlySkeletonKeysUnlockSecretDoors(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "[Secret_Key]"));
+        player.getAbilities().instabuild = false;
+        var pos = helper.absolutePos(new BlockPos(2, 1, 2));
+        var door = ZSSRegistries.DOOR_LOCKED.get();
+        level.setBlockAndUpdate(pos, door.defaultBlockState());
+        level.setBlockAndUpdate(pos.above(), door.defaultBlockState().setValue(LockedDoorBlock.HALF, DoubleBlockHalf.UPPER));
+        var hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.NORTH, pos, false);
+        for (String id : new String[]{"small_key", "big_key"}) {
+            var wrong = new ItemStack(ZSSRegistries.getItem(id));
+            player.setItemInHand(InteractionHand.MAIN_HAND, wrong);
+            door.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
+            helper.assertTrue(!level.getBlockState(pos).getValue(LockedDoorBlock.UNLOCKED)
+                    && wrong.getCount() == 1, "Wrong key unlocked secret door or was consumed");
+        }
+        var key = new ItemStack(ZSSRegistries.getItem("skeleton_key"));
+        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        player.setItemInHand(InteractionHand.OFF_HAND, key);
+        door.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
+        helper.assertTrue(key.isEmpty() && level.getBlockState(pos).getValue(LockedDoorBlock.UNLOCKED),
+                "Secret door did not consume offhand skeleton key");
+        var spare = new ItemStack(ZSSRegistries.getItem("skeleton_key"));
+        player.setItemInHand(InteractionHand.MAIN_HAND, spare);
+        door.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
+        helper.assertTrue(spare.getCount() == 1, "Unlocked door consumed another key");
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft")
     public static void fireBypassesDekuGuard(GameTestHelper helper) {
         for (var type : java.util.List.of(ZSSRegistries.BABA_DEKU, ZSSRegistries.BABA_WITHERED)) {
             var deku = type.get().create(helper.getLevel());
@@ -88,6 +118,13 @@ public final class DoorAndDekuGameTests {
             door.use(level.getBlockState(pos.above()), level, pos.above(), player, InteractionHand.MAIN_HAND, hit);
             helper.assertTrue(!level.getBlockState(pos).getValue(LockedDoorBlock.UNLOCKED) && wrong.getCount() == 1,
                     "Wrong key unlocked door or was consumed");
+            for (String id : new String[]{"small_key", "skeleton_key"}) {
+                var other = new ItemStack(ZSSRegistries.getItem(id));
+                player.setItemInHand(InteractionHand.MAIN_HAND, other);
+                door.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
+                helper.assertTrue(!level.getBlockState(pos).getValue(LockedDoorBlock.UNLOCKED)
+                        && other.getCount() == 1, "Non-temple key unlocked temple door or was consumed");
+            }
             var key = BigKeyItem.forDungeon(ZSSRegistries.getItem("big_key"), door.dungeonType().id());
             var tooltip = new ArrayList<Component>();
             key.getItem().appendHoverText(key, level, tooltip, TooltipFlag.NORMAL);
@@ -95,7 +132,7 @@ public final class DoorAndDekuGameTests {
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STICK));
             player.setItemInHand(InteractionHand.OFF_HAND, key);
             door.use(level.getBlockState(pos.above()), level, pos.above(), player, InteractionHand.MAIN_HAND, hit);
-            helper.assertTrue(key.isEmpty(), "Matching key not consumed");
+            helper.assertTrue(key.getCount() == 1, "Matching temple key was consumed");
             door.neighborChanged(level.getBlockState(pos), level, pos, Blocks.STONE, pos.east(), false);
             for (BlockPos half : java.util.List.of(pos, pos.above())) {
                 var state = level.getBlockState(half);

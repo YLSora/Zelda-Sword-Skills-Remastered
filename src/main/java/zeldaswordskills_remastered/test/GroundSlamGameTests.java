@@ -56,6 +56,12 @@ public final class GroundSlamGameTests {
                         && excluded.contains(42), "Reset retained airborne state or mutated the landing snapshot");
         helper.assertTrue(GroundSlam.radius(1) == 1.0D && GroundSlam.radius(5) == 3.0D,
                 "Ground Slam radius does not follow the level formula");
+        state.startRisingCutImmunity(100L);
+        helper.assertTrue(state.risingCutImmune(99L), "Rising Cut did not grant ascent immunity");
+        state.finishRisingCutAscent(110L);
+        helper.assertTrue(state.risingCutImmune(139L) && !state.risingCutImmune(140L),
+                "Rising Cut did not retain immunity for thirty ticks after ascent");
+        state.reset();
 
         FakePlayer player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "[Ground_Slam]")) {
             @Override public float getAttackStrengthScale(float partialTick) { return 1.0F; }
@@ -99,6 +105,16 @@ public final class GroundSlamGameTests {
         helper.assertTrue(fall.getDistance() == 0.0F && target.getHealth() == beforeLanding
                         && Math.abs(beforeArea - bystander.getHealth() - impact) < 0.001F,
                 "Landing damaged the primary target again or missed the other armored enemy");
+        helper.assertTrue(GroundSlam.isImmobilized(target) && GroundSlam.isImmobilized(bystander),
+                "Ground Slam did not immobilize every enemy hit in its area");
+        double heldX = bystander.getX();
+        bystander.setPos(heldX + 1.0D, bystander.getY(), bystander.getZ());
+        GroundSlam.tickImmobilized();
+        helper.assertTrue(bystander.getX() == heldX, "Ground Slam immobilization did not hold enemy movement");
+        var enemyAttack = new net.minecraftforge.event.entity.living.LivingAttackEvent(player,
+                player.damageSources().mobAttack(bystander), 1.0F);
+        ZSSCombatEvents.attackerStunned(enemyAttack);
+        helper.assertTrue(enemyAttack.isCanceled(), "Ground Slam immobilization did not block enemy attacks");
         helper.assertTrue(data.combat().comboCount() == 1, "One direct hit counted more than once towards the combo");
         float afterLanding = target.getHealth();
         GroundSlam.land(player, data);

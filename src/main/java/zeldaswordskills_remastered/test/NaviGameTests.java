@@ -165,13 +165,19 @@ public final class NaviGameTests {
         helper.assertTrue(navi.isInvulnerableTo(navi.damageSources().inFire())
                         && navi.isInvulnerableTo(zombie.damageSources().mobAttack(zombie)),
                 "Navi must report immunity to ordinary damage");
-        // Only invulnerability-bypassing damage (the /kill command) still reaches her.
-        helper.assertTrue(!navi.isInvulnerableTo(navi.damageSources().genericKill()),
-                "The kill command must still be able to remove Navi");
+        helper.assertTrue(navi.isInvulnerableTo(navi.damageSources().genericKill()),
+                "Navi must also reject damage sources that bypass normal invulnerability");
 
         // Hostile AI must never be able to select her: the combat target predicate asks this.
         helper.assertTrue(!navi.canBeSeenAsEnemy() && !zombie.canAttack(navi),
                 "A hostile mob was allowed to treat Navi as an attack target");
+        var warden = EntityType.WARDEN.create(helper.getLevel());
+        helper.assertTrue(warden != null && !warden.canTargetEntity(navi) && warden.canTargetEntity(zombie),
+                "Warden sniffing must ignore Navi without ignoring ordinary living targets");
+        warden.increaseAngerAt(navi);
+        helper.assertTrue(warden.getAngerManagement().getActiveAnger(navi) == 0,
+                "Warden must not gain anger at Navi");
+        warden.discard();
         helper.assertTrue(!TargetingService.isFriendly(zombie)
                         && TargetingService.isFriendly(navi),
                 "Navi must be classified as friendly, and the zombie as hostile");

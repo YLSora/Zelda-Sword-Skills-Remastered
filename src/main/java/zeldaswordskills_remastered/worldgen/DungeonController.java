@@ -195,6 +195,7 @@ public final class DungeonController {
         core.complete();
         ZSSWorldData.get(level).setDungeonState(instanceId(level, core.getBlockPos()), true, 0L);
         DungeonBlocks.setSealed(level, core.getBlockPos(), false);
+        placeWarpStone(level, core, dungeon);
         Vec3 center = core.getBlockPos().getCenter();
         level.players().stream().filter(player -> player.distanceToSqr(center) <= 32 * 32)
                 .forEach(player -> {
@@ -204,6 +205,23 @@ public final class DungeonController {
                     });
                     zeldaswordskills_remastered.network.ZSSNetwork.syncPlayerData(player);
                 });
+    }
+
+    private static void placeWarpStone(ServerLevel level, StageNineBlockEntities.DungeonCore core, DungeonType dungeon) {
+        Direction door = core.doorSide().orElse(null);
+        if (door == null) return;
+        var block = switch (dungeon) {
+            case FIRE -> zeldaswordskills_remastered.registry.ZSSRegistries.WARP_STONE_BOLERO;
+            case FOREST -> zeldaswordskills_remastered.registry.ZSSRegistries.WARP_STONE_MINUET;
+            case END -> zeldaswordskills_remastered.registry.ZSSRegistries.WARP_STONE_PRELUDE;
+            case EARTH -> zeldaswordskills_remastered.registry.ZSSRegistries.WARP_STONE_OATH;
+            case ICE -> zeldaswordskills_remastered.registry.ZSSRegistries.WARP_STONE_NOCTURNE;
+            case DESERT -> zeldaswordskills_remastered.registry.ZSSRegistries.WARP_STONE_REQUIEM;
+            case WATER -> zeldaswordskills_remastered.registry.ZSSRegistries.WARP_STONE_SERENADE;
+        };
+        BlockPos pos = core.getBlockPos().relative(door, core.doorDistance() + 1)
+                .above(core.doorOffsetY() - 1);
+        level.setBlock(pos, block.get().defaultBlockState(), 3);
     }
 
     public static ResourceLocation instanceId(ServerLevel level, BlockPos corePos) {

@@ -4,10 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -21,7 +18,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.item.UseAnim;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.Painting;
 import net.minecraft.world.entity.decoration.PaintingVariants;
@@ -48,6 +44,7 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import zeldaswordskills_remastered.entity.NaviCreature;
 import zeldaswordskills_remastered.entity.NaviService;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
+import zeldaswordskills_remastered.world.MagicMirrorService;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -58,33 +55,14 @@ public final class SpecialItems {
     public static final class MagicMirror extends Item {
         public MagicMirror(Properties properties) { super(properties); }
         @Override public UseAnim getUseAnimation(ItemStack stack) { return UseAnim.BOW; }
-        @Override public int getUseDuration(ItemStack stack) { return 140; }
+        @Override public int getUseDuration(ItemStack stack) { return MagicMirrorService.CHARGE_TICKS; }
         @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+            if (!MagicMirrorService.canUse(player)) return InteractionResultHolder.fail(player.getItemInHand(hand));
             player.startUsingItem(hand); return InteractionResultHolder.consume(player.getItemInHand(hand));
         }
-        @Override public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-            if (!(entity instanceof ServerPlayer player) || level.dimension() != Level.OVERWORLD || player.tickCount % 10 != 0 || !level.canSeeSky(player.blockPosition())) return;
-            CompoundTag tag = stack.getOrCreateTag(); tag.putLong("return_pos", player.blockPosition().asLong()); tag.putString("return_dimension", Level.OVERWORLD.location().toString());
-        }
         @Override public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity living) {
-            if (!(living instanceof ServerPlayer player)) return stack;
-            ServerLevel destination;
-            BlockPos pos;
-            if (level.dimension() != Level.OVERWORLD) {
-                destination = player.server.getLevel(Level.OVERWORLD);
-                pos = destination == null ? null : destination.getSharedSpawnPos();
-            } else if (stack.hasTag() && stack.getTag().contains("return_pos")) {
-                destination = player.server.getLevel(Level.OVERWORLD); pos = BlockPos.of(stack.getTag().getLong("return_pos"));
-            } else { destination = null; pos = null; }
-            if (destination != null && pos != null && safe(destination, pos)) {
-                player.teleportTo(destination, pos.getX() + .5D, pos.getY(), pos.getZ() + .5D, player.getYRot(), player.getXRot());
-            } else player.displayClientMessage(Component.translatable("message.zeldaswordskills_remastered.mirror_no_destination"), true);
+            if (living instanceof ServerPlayer player) MagicMirrorService.start(player);
             return stack;
-        }
-        private static boolean safe(ServerLevel level, BlockPos pos) {
-            return level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
-                    && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()
-                    && !level.getBlockState(pos.below()).getCollisionShape(level, pos.below()).isEmpty();
         }
     }
 

@@ -9,24 +9,26 @@ package zeldaswordskills_remastered.combat;
 public final class FlashAssaultBurst {
     private FlashAssaultBurst() {}
 
-    /**
-     * Number of hits for an attack speed: at most 1.0 gives 2, then 1.5 gives 3, 2.0 gives 4, and
-     * anything faster gives 5. A faster weapon therefore lands more, smaller hits, and the weapon's
-     * class no longer decides the count.
-     */
+    /** Both hit count and damage tier follow the weapon's attack speed. */
     public static int hitCount(double attackSpeed) {
-        if (attackSpeed > 2.0D) return 5;
-        if (attackSpeed > 1.5D) return 4;
-        if (attackSpeed > 1.0D) return 3;
+        if (attackSpeed > 1.5D) return 6;
+        if (attackSpeed > 0.9D) return 4;
         return 2;
     }
 
-    /** Ticks between hits, chosen so every tier spans a comparable 12-13 tick burst. */
+    public static float damage(double attackDamage, double attackSpeed, int level) {
+        return switch (hitCount(attackSpeed)) {
+            case 2 -> (float) (attackDamage * 1.5D + 2.5D * level);
+            case 4 -> (float) (attackDamage * 0.8D + 1.2D * level);
+            default -> (float) (attackDamage * 0.65D + 0.8D * level);
+        };
+    }
+
+    /** Keeps the existing two/four-hit cadence; six hits span ten ticks. */
     public static int hitInterval(int hits) {
         return switch (hits) {
-            case 5 -> 3;
+            case 6 -> 2;
             case 4 -> 4;
-            case 3 -> 5;
             default -> 10;
         };
     }

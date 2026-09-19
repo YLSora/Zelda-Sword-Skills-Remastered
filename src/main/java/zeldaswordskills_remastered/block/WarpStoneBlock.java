@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import zeldaswordskills_remastered.capability.ZSSCapabilities;
+import zeldaswordskills_remastered.progression.ZSSAdvancementService;
 import zeldaswordskills_remastered.block.interaction.ZSSBlockInteractions;
 import zeldaswordskills_remastered.item.InstrumentItem;
 import zeldaswordskills_remastered.network.ZSSNetwork;
@@ -49,10 +50,12 @@ public final class WarpStoneBlock extends Block implements ZSSBlockInteractions.
         if (!(stack.getItem() instanceof InstrumentItem)) return InteractionResult.PASS;
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             ZSSCapabilities.get(serverPlayer).ifPresent(data -> {
+                boolean learned = data.learnSong(warpSong.songId());
                 data.setWarpPoint(warpSong.songId(), level.dimension().location(), pos);
                 ZSSNetwork.syncPlayerData(serverPlayer);
+                if (learned) ZSSAdvancementService.songLearned(serverPlayer, warpSong.songId(), data.songs().size());
                 serverPlayer.sendSystemMessage(net.minecraft.network.chat.Component.translatable(
-                        "message.zeldaswordskills_remastered.warp_saved",
+                        learned ? "message.zeldaswordskills_remastered.inscription.learned" : "message.zeldaswordskills_remastered.warp_saved",
                         net.minecraft.network.chat.Component.translatable("song.zeldaswordskills_remastered."
                                 + warpSong.songId().getPath())));
             });

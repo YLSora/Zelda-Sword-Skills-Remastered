@@ -143,7 +143,7 @@ public final class AdvancedSwordSkills {
         else if (skill.equals(ZSSContentIds.PARRY)) parry(player, data, intent.action());
         else if (skill.equals(ZSSContentIds.DASH) && intent.action() == SkillIntentMessage.Action.BEGIN) dash(player, data);
         else if (skill.equals(ZSSContentIds.CONTINUOUS_FLASH) && intent.action() == SkillIntentMessage.Action.ATTACK) {
-            if (level(data, ZSSContentIds.DASH) > 0 && TargetingService.getValidTarget(player, data).isPresent()
+            if (level(data, ZSSContentIds.DASH) > 0 && TargetingService.getWeaponTarget(player, data).isPresent()
                     && data.combat().queueDashTap(player.level().getGameTime())
                     && !data.combat().dashPending()) continueDash(player, data);
         }
@@ -186,6 +186,9 @@ public final class AdvancedSwordSkills {
         tickDash(player, data, now);
         tickSpin(player, data, now);
         if (!data.combat().risingCutActive(now)) data.combat().clearRisingCut();
+        if (data.combat().risingCutImmune(now) && player.getDeltaMovement().y <= 0.0D) {
+            data.combat().finishRisingCutAscent(now);
+        }
         tickRisingCutTrail(player, data, now);
         if (data.combat().charging(ZSSContentIds.SPIN_ATTACK)) {
             Vec3 motion = player.getDeltaMovement();
@@ -206,7 +209,7 @@ public final class AdvancedSwordSkills {
         Vec3 side = validatedSide(player, direction);
         if (side.lengthSqr() < 0.25D) return;
         if (!data.combat().acceptDodgeTap(now, side)) return;
-        data.combat().startDodge(now);
+        data.combat().startDodge(now, level);
         var groundPos = player.getOnPos();
         float friction = player.level().getBlockState(groundPos).getFriction(player.level(), groundPos, player);
         double speed = dodgeImpulseSpeed(friction);
@@ -308,7 +311,7 @@ public final class AdvancedSwordSkills {
         // Armor-piercing: the blow lands in full against any armor.
         DamageSource source = new DamageSource(player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                 .getHolderOrThrow(SWORD_BREAK_DAMAGE), player);
-        if (attempt.hit(target.hurt(source, damage))) {
+        if (attempt.hit(BasicSwordSkill.hurtLockedTarget(player, data, target, source, damage))) {
             // A landed Sword Break leaves the enemy unable to attack or move for its own, longer
             // window. The pin is re-armed after a short grace so the knockback below still carries
             // before the hold takes over; releasing it outright would forfeit the immobility half.
@@ -332,7 +335,7 @@ public final class AdvancedSwordSkills {
     private static void releaseDash(ServerPlayer player, ZSSPlayerData data, boolean continued) {
         int level = continued ? level(data, ZSSContentIds.CONTINUOUS_FLASH) : level(data, ZSSContentIds.DASH);
         long now = player.level().getGameTime();
-        LivingEntity target = TargetingService.getValidTarget(player, data).orElse(null);
+        LivingEntity target = TargetingService.getWeaponTarget(player, data).orElse(null);
         if (level <= 0 || !player.isAlive() || player.isSpectator() || (!continued && !player.onGround()) || target == null) return;
         double range = dashDistance(level);
         if (player.distanceToSqr(target) > range * range || !player.hasLineOfSight(target)) return;
@@ -445,7 +448,7 @@ public final class AdvancedSwordSkills {
     private static boolean hurtDash(ServerPlayer player, ZSSPlayerData data, LivingEntity target, float damage) {
         int immunity = target.invulnerableTime;
         if (data.combat().continuedDash()) target.invulnerableTime = 0;
-        boolean hit = target.hurt(player.damageSources().playerAttack(player), damage);
+        boolean hit = BasicSwordSkill.hurtLockedTarget(player, data, target, player.damageSources().playerAttack(player), damage);
         if (!hit) target.invulnerableTime = immunity;
         return hit;
     }
@@ -487,7 +490,7 @@ public final class AdvancedSwordSkills {
         int level = level(data, ZSSContentIds.SPIN_ATTACK);
         if (intent.action() == SkillIntentMessage.Action.ATTACK) {
             long now = player.level().getGameTime();
-            if (level > 0 && !data.combat().spinPending() && !data.combat().spinCoolingDown(now) && TargetingService.isHoldingSword(player)) {
+            if (level > 0 && !data.combat().spinPending() && !data.combat().spinCoolingDown(now) && TargetingService.isHoldingWeapon(player)) {
                 data.combat().startSpin(now + PlayerCombatState.SPIN_ROUND_TICKS, now + 20L);
                 applySpinRound(player, data, Vec3.ZERO);
                 ZSSNetwork.syncSpinState(player, data.combat());
@@ -495,7 +498,7 @@ public final class AdvancedSwordSkills {
             return;
         }
         if (intent.action() == SkillIntentMessage.Action.BEGIN) {
-            if (level > 0 && !data.combat().spinPending() && !data.combat().spinCoolingDown(player.level().getGameTime()) && TargetingService.isHoldingSword(player)) {
+            if (level > 0 && !data.combat().spinPending() && !data.combat().spinCoolingDown(player.level().getGameTime()) && TargetingService.isHoldingWeapon(player)) {
                 data.combat().beginCharge(ZSSContentIds.SPIN_ATTACK, player.level().getGameTime(), intent.direction().orElse(Vec3.ZERO));
             }
             return;
@@ -508,7 +511,7 @@ public final class AdvancedSwordSkills {
         boolean charged = data.combat().charged(ZSSContentIds.SPIN_ATTACK, player.level().getGameTime(), 26 - level);
         Vec3 chargeDirection = intent.direction().orElse(data.combat().chargeDirection());
         data.combat().clearCharge();
-        if (!charged || data.combat().spinPending() || data.combat().spinCoolingDown(player.level().getGameTime()) || !TargetingService.isHoldingSword(player)) return;
+        if (!charged || data.combat().spinPending() || data.combat().spinCoolingDown(player.level().getGameTime()) || !TargetingService.isHoldingWeapon(player)) return;
         long now = player.level().getGameTime();
         data.combat().startSpin(now + PlayerCombatState.SPIN_ROUND_TICKS, now + 20L);
         applySpinRound(player, data, chargeDirection);
@@ -520,13 +523,13 @@ public final class AdvancedSwordSkills {
         int superLevel = level(data, ZSSContentIds.SUPER_SPIN_ATTACK);
         int spinLevel = level(data, ZSSContentIds.SPIN_ATTACK);
         if (superLevel <= 0 || spinLevel <= 0 || !data.combat().spinActive(now) || !fullHealth(player)
-                || data.combat().spinRounds() >= superLevel + 2 || !TargetingService.isHoldingSword(player)) return;
+                || data.combat().spinRounds() >= superLevel + 2 || !TargetingService.isHoldingWeapon(player)) return;
         data.combat().registerSuperSpinTap(now);
     }
 
     private static void tickSpin(ServerPlayer player, ZSSPlayerData data, long now) {
         if (!data.combat().spinPending()) return;
-        if (!player.isAlive() || player.isSpectator() || !TargetingService.isHoldingSword(player)) {
+        if (!player.isAlive() || player.isSpectator() || !TargetingService.isHoldingWeapon(player)) {
             data.combat().finishSpin();
             ZSSNetwork.syncSpinState(player, data.combat());
             return;
@@ -602,7 +605,7 @@ public final class AdvancedSwordSkills {
         if (action == SkillIntentMessage.Action.BEGIN) {
             // Sneak + jump while locked on arms the window. No ground check: it would race the
             // jump packet and randomly reject the activation. The lift happens on a landed hit.
-            if (level > 0 && player.isShiftKeyDown() && TargetingService.isHoldingSword(player)
+            if (level > 0 && player.isShiftKeyDown() && TargetingService.isHoldingWeapon(player)
                     && !data.combat().risingCutCoolingDown(now)
                     && TargetingService.getLockedTarget(player, data).isPresent()) {
                 data.combat().armRisingCut(now + RISING_CUT_WINDOW_TICKS);
@@ -612,11 +615,11 @@ public final class AdvancedSwordSkills {
         if (action != SkillIntentMessage.Action.ATTACK || !data.combat().risingCutActive(now)) return;
         try (var attempt = FatalStrike.watchAttack(player, data)) {
         data.combat().clearRisingCut();
-        LivingEntity target = validSwordTarget(player, data);
+        LivingEntity target = validWeaponTarget(player, data);
         double range = 2.0D + level;
         if (target == null || player.distanceToSqr(target) > range * range) return;
         float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        if (!attempt.hit(target.hurt(player.damageSources().playerAttack(player), damage))) return;
+        if (!attempt.hit(BasicSwordSkill.hurtLockedTarget(player, data, target, player.damageSources().playerAttack(player), damage))) return;
         player.resetAttackStrengthTicker();
         // A landed hit lifts the player again: the crouch-jump already carried them up, and the
         // connecting strike adds a second boost, producing the double-jump effect.
@@ -625,6 +628,7 @@ public final class AdvancedSwordSkills {
         if (level(data, ZSSContentIds.LEAPING_BLOW) > 0) data.combat().armGroundSlam();
         player.hurtMarked = true;
         data.combat().startRisingCutCooldown(now + RISING_CUT_COOLDOWN_TICKS);
+        data.combat().startRisingCutImmunity(now + RISING_CUT_TRAIL_TICKS + 30L);
         data.combat().startRisingCutTrail(now, now + RISING_CUT_TRAIL_TICKS);
         boolean blockingPlayer = target instanceof Player targetPlayer && targetPlayer.isUsingItem();
         if (!blockingPlayer) {
@@ -746,12 +750,11 @@ public final class AdvancedSwordSkills {
             play(player, ZSSRegistries.SWORD_MISS.get());
             return true;
         }
-        // An early dodge may confirm one locked melee attack after the four-tick immunity
-        // window. The confirmation grace does not protect against other damage.
-        if (FlashAssault.confirmDodge(player, data, source)) return true;
+        if (data.combat().risingCutImmune(now)) return true;
         // Dash immunity is granted at release and covers every damage source, not just the target.
         if (data.combat().dashImmune(now)) return true;
         if (data.combat().flashAssault().immune(now)) return true;
+        if (data.combat().helmSplitter().hitImmune(now)) return true;
         if (!(source.getEntity() instanceof LivingEntity attacker)) return false;
         if (data.combat().helmSplitter().immune(attacker.getUUID(), now)) return true;
         return tryParry(player, data, attacker, source.getDirectEntity() instanceof Projectile projectile ? projectile : null);
@@ -762,6 +765,7 @@ public final class AdvancedSwordSkills {
         long now = player.level().getGameTime();
         tickParry(player, data, now);
         if (data.combat().dodgeActive(now) || data.combat().dashImmune(now)
+                || data.combat().helmSplitter().hitImmune(now)
                 || data.combat().flashAssault().immune(now) || data.combat().helmSplitter().immune(attacker.getUUID(), now)) return false;
         return tryParry(player, data, attacker, projectile);
     }
@@ -947,8 +951,8 @@ public final class AdvancedSwordSkills {
         else if (player.getHealth() > player.getMaxHealth()) player.setHealth(player.getMaxHealth());
     }
 
-    private static LivingEntity validSwordTarget(ServerPlayer player, ZSSPlayerData data) {
-        LivingEntity target = TargetingService.getValidTarget(player, data).orElse(null);
+    private static LivingEntity validWeaponTarget(ServerPlayer player, ZSSPlayerData data) {
+        LivingEntity target = TargetingService.getWeaponTarget(player, data).orElse(null);
         return target != null && player.distanceToSqr(target) <= MELEE_DISTANCE_SQUARED ? target : null;
     }
 

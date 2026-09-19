@@ -62,13 +62,25 @@ public final class SongService {
         ZSSNetwork.syncSongState(player, new SongStateMessage(SongStateMessage.Status.CLOSED, List.of(), Optional.empty(), 0L, false));
     }
 
-    public static void note(ServerPlayer player, ZSSPlayerData data, SongNote note) {
+    public static void setFreePlay(ServerPlayer player, ZSSPlayerData data, boolean freePlay) {
+        PlayerSongState state = data.songState();
+        if (!state.open() || state.matchedSong() != null) return;
+        state.setFreePlay(freePlay);
+        sync(player, data, freePlay ? SongStateMessage.Status.FREE_PLAY : SongStateMessage.Status.OPEN, Optional.empty(), 0L);
+    }
+
+    public static void note(ServerPlayer player, ZSSPlayerData data, SongNote note, int semitoneOffset) {
         PlayerSongState state = data.songState();
         HeldInstrument instrument = heldInstrument(player);
         long now = player.level().getGameTime();
-        if (!state.open() || instrument == null || !instrument.id().equals(state.instrumentId()) || !state.addNote(note, now)) return;
+        if (!state.open() || instrument == null || !instrument.id().equals(state.instrumentId()) || !state.addNote(note)) return;
+        float pitch = note.pitch() * (float) Math.pow(2.0D, semitoneOffset / 12.0D);
+        player.level().playSound(null, player.blockPosition(), ZSSRegistries.NOTE_OCARINA.get(), SoundSource.PLAYERS, 1.2F, pitch);
+        if (state.freePlay()) {
+            sync(player, data, SongStateMessage.Status.FREE_PLAY, Optional.empty(), 0L);
+            return;
+        }
         state.waitForRecognition(now + RECOGNITION_TICKS);
-        player.level().playSound(null, player.blockPosition(), ZSSRegistries.NOTE_OCARINA.get(), SoundSource.PLAYERS, 1.2F, note.pitch());
         if (state.scarecrowMode()) {
             if (state.notes().size() == 8) handleScarecrowEntry(player, data);
             else sync(player, data, SongStateMessage.Status.OPEN, Optional.empty(), 0L);
@@ -121,7 +133,9 @@ public final class SongService {
         boolean success = perform(player, data, song, strength);
         List<SongNote> notes = state.hudNotes();
         state.reset();
-        ZSSNetwork.syncSongState(player, new SongStateMessage(success ? SongStateMessage.Status.SUCCESS : SongStateMessage.Status.FAILED,
+        SongStateMessage.Status status = success ? SongStateMessage.Status.SUCCESS
+                : strength < 5 ? SongStateMessage.Status.INSTRUMENT_TOO_WEAK : SongStateMessage.Status.EFFECT_FAILED;
+        ZSSNetwork.syncSongState(player, new SongStateMessage(status,
                 notes, Optional.of(song), 0L, false));
         ZSSNetwork.syncPlayerData(player);
     }

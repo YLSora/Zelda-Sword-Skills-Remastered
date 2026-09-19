@@ -37,29 +37,26 @@ public final class FlashAssaultGameTests {
     private FlashAssaultGameTests() {}
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
-    public static void earlyDodgeGraceConfirmsOnceAndExtendsImmunity(GameTestHelper helper) {
+    public static void dodgeConfirmsOnlyWithinTwentyTicksWithoutExtendingImmunity(GameTestHelper helper) {
         FakePlayer player = player(helper, new ItemStack(Items.IRON_AXE));
         ZSSPlayerData data = data(player);
         IronGolem target = target(helper, player.position().add(2, 0, 0));
         data.combat().setTarget(target.getId());
         long now = helper.getLevel().getGameTime();
-        for (int delay = 4; delay <= 10; delay++) {
+        for (int delay = 0; delay <= 24; delay++) {
             data.combat().flashAssault().reset();
-            data.combat().startDodge(now - delay);
+            data.combat().startDodge(now - delay, 1);
             data.combat().flashAssault().startDodge(now - delay, target.getId());
-            helper.assertTrue(!AdvancedSwordSkills.onAttacked(player, data, player.damageSources().inFire())
-                            && !AdvancedSwordSkills.onAttacked(player, data, player.damageSources().fall())
-                            && !AdvancedSwordSkills.onAttacked(player, data, player.damageSources().indirectMagic(target, target)),
-                    "Grace accidentally extended immunity to non-melee damage");
-            helper.assertTrue(AdvancedSwordSkills.onAttacked(player, data, player.damageSources().mobAttack(target)) == (delay < 10),
-                    "Early dodge confirmation must accept delays 4 through 9 but reject 10");
-            helper.assertTrue(AdvancedSwordSkills.onAttacked(player, data, player.damageSources().mobAttack(target)) == (delay < 10),
-                    "Confirmed dodge must protect subsequent attacks until the extended deadline");
+            for (var source : new net.minecraft.world.damagesource.DamageSource[] {
+                    player.damageSources().inFire(), player.damageSources().fall(),
+                    player.damageSources().indirectMagic(target, target), player.damageSources().mobAttack(target)}) {
+                helper.assertTrue(AdvancedSwordSkills.onAttacked(player, data, source) == (delay < 20),
+                        "Dodge immunity must stop at twenty ticks for every damage source");
+            }
             var state = data.combat().flashAssault();
-            helper.assertTrue(!state.confirmDodge(target.getId(), now)
-                            && state.immune(now + 13 - delay) == (delay < 10)
-                            && !state.immune(now + 14 - delay),
-                    "Dodge extension must end fourteen ticks after dodge start, without repeat confirmation");
+            helper.assertTrue(state.ready(now) == (delay < 20)
+                            && !state.confirmDodge(target.getId(), now) && !state.immune(now),
+                    "Dodge success was confirmed late, repeated, or granted extra immunity");
         }
         target.discard();
         helper.succeed();
@@ -93,7 +90,7 @@ public final class FlashAssaultGameTests {
         IronGolem other = target(helper, player.position().add(-2, 0, 0));
         long now = helper.getLevel().getGameTime();
         data.combat().setTarget(target.getId());
-        data.combat().startDodge(now);
+        data.combat().startDodge(now, 1);
         var state = data.combat().flashAssault();
         state.startDodge(now, target.getId());
         Arrow arrow = new Arrow(helper.getLevel(), target);
@@ -108,9 +105,9 @@ public final class FlashAssaultGameTests {
                 && state.ready(now) && state.ready(now + 59) && !state.ready(now + 60), "Melee success window differs from sixty ticks");
         helper.assertTrue(!state.confirmDodge(target.getId(), now + 10) && !state.ready(now + 60),
                 "Repeated hits during one dodge refreshed the success window");
-        helper.assertTrue(state.immune(now + 13) && !state.immune(now + 14)
-                        && data.combat().dodgeActive(now + 3) && !data.combat().dodgeActive(now + 4),
-                "Confirmed dodge must extend immunity by ten ticks without extending the dodge action");
+        helper.assertTrue(!state.immune(now)
+                        && data.combat().dodgeActive(now + 19) && !data.combat().dodgeActive(now + 20),
+                "Confirmed dodge must retain exactly twenty ticks of immunity");
         helper.assertTrue(!state.acceptForwardTap(now + 54) && !state.acceptForwardTap(now + 60),
                 "The second tap at the sixty-tick deadline started an expired approach");
         data.combat().clearTarget();
@@ -161,22 +158,17 @@ public final class FlashAssaultGameTests {
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void weaponBurstsDamageTimingComboAndSingleConsumption(GameTestHelper helper) {
-        // Hit count now follows the held weapon's attack speed, not its class. Vanilla speeds are
-        // 4.0 + the MAINHAND modifier: iron sword 1.6 -> 4 hits, iron axe 0.9 -> 2 hits, a bare
-        // stick with no modifier (base 4.0) -> 5 hits, and the ZSS master sword 1.6 -> 4 hits.
+        // Include both axe tiers and a six-hit weapon to exercise float boundaries and all sounds.
         ItemStack[] weapons = {new ItemStack(Items.IRON_SWORD), new ItemStack(Items.IRON_AXE), new ItemStack(Items.STICK),
-                new ItemStack(ZSSRegistries.MASTER_SWORD.get())};
-        int[] totals = {4, 2, 5, 4};
-        int[] intervals = {4, 10, 3, 4};
-        double[] attackScales = {0.5D, 0.75D, 1.0D, 0.5D};
-        double[] levelBonuses = {0.1D, 0.15D, 0.2D, 0.1D};
-        double[] knockbackPerLevel = {0.5D, 1.5D, 1.0D, 0.5D};
-        // The published thresholds, checked directly so a wrong boundary cannot hide behind the
-        // weapon table above: <=1.0 -> 2, then >1.5 -> 3, >2.0 -> 4, and anything faster -> 5.
-        helper.assertTrue(FlashAssault.hitCount(0.9D) == 2 && FlashAssault.hitCount(1.0D) == 2
-                        && FlashAssault.hitCount(1.1D) == 3 && FlashAssault.hitCount(1.5D) == 3
-                        && FlashAssault.hitCount(1.6D) == 4 && FlashAssault.hitCount(2.0D) == 4
-                        && FlashAssault.hitCount(2.1D) == 5 && FlashAssault.hitCount(4.0D) == 5,
+                new ItemStack(ZSSRegistries.MASTER_SWORD.get()), new ItemStack(Items.DIAMOND_AXE)};
+        int[] totals = {6, 2, 6, 6, 4};
+        int[] intervals = {2, 10, 2, 2, 4};
+        double[] attackScales = {0.65D, 1.5D, 0.65D, 0.65D, 0.8D};
+        double[] levelBonuses = {0.8D, 2.5D, 0.8D, 0.8D, 1.2D};
+        double[] knockbackPerLevel = {0.5D, 1.5D, 1.0D, 0.5D, 1.5D};
+        helper.assertTrue(FlashAssault.hitCount(0.9D) == 2 && FlashAssault.hitCount(0.9001D) == 4
+                        && FlashAssault.hitCount(1.0D) == 4 && FlashAssault.hitCount(1.5D) == 4
+                        && FlashAssault.hitCount(1.5001D) == 6 && FlashAssault.hitCount(4.0D) == 6,
                 "Flash Assault hit counts do not follow the published attack-speed thresholds");
         for (int index = 0; index < weapons.length; index++) {
             for (int level : new int[] {1, 5}) {
@@ -232,15 +224,15 @@ public final class FlashAssaultGameTests {
         arm(player, target);
         FlashAssault.tick(player, data);
         FlashAssault.handle(player, data, SkillIntentMessage.Action.ATTACK);
-        for (int tick = 1; tick <= 12; tick++) {
+        for (int tick = 1; tick <= 10; tick++) {
             helper.runAfterDelay(tick, () -> FlashAssault.tick(player, data));
         }
         helper.runAfterDelay(13, () -> {
             helper.assertTrue(!data.combat().flashAssault().busy(), "Completed assault left an active action behind");
             data.combat().clearTarget();
         });
-        for (int tick : new int[] {5, 11, 12, 13, 20, 31, 32, 39, 40, 60}) {
-            boolean immune = tick < 32;
+        for (int tick : new int[] {5, 11, 12, 13, 20, 29, 30, 31, 32, 39, 40, 60}) {
+            boolean immune = tick < 30;
             helper.runAfterDelay(tick, () -> {
                 // Process late/repeated attack requests as well as normal ticks: neither may renew immunity.
                 FlashAssault.handle(player, data, SkillIntentMessage.Action.ATTACK);
@@ -408,7 +400,7 @@ public final class FlashAssaultGameTests {
         ZSSPlayerData data = data(player);
         data.combat().setTarget(target.getId());
         long now = player.level().getGameTime();
-        data.combat().startDodge(now);
+        data.combat().startDodge(now, 1);
         data.combat().flashAssault().startDodge(now, target.getId());
         AdvancedSwordSkills.onAttacked(player, data, player.damageSources().mobAttack(target));
         FlashAssault.handle(player, data, SkillIntentMessage.Action.BEGIN);

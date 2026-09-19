@@ -152,6 +152,39 @@ public final class ToolProjectileGameTests {
     }
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void floorHookReleasesNearbyPlayerAndCannotReattach(GameTestHelper helper) {
+        FakePlayer owner = player(helper);
+        BlockPos floor = helper.absolutePos(new BlockPos(6, 2, 6));
+        for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-6, 1, -6), floor.offset(6, 4, 6)))
+            helper.getLevel().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-6, 0, -6), floor.offset(6, 0, 6)))
+            helper.getLevel().setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
+        helper.getLevel().setBlockAndUpdate(floor, ZSSRegistries.HOOK_TARGET_ALL.get().defaultBlockState());
+        Vec3 point = Vec3.atBottomCenterOf(floor.above());
+        owner.setPos(point.add(0, 0, -4));
+        owner.setNoGravity(false);
+        ToolProjectile hook = hook(helper, owner);
+        try {
+            BlockHitResult hit = new BlockHitResult(point, Direction.UP, floor, false);
+            hook.onHitBlock(hit);
+            helper.assertTrue(hook.isAnchored(), "Floor hook did not start pulling");
+            for (int tick = 0; tick < 20 && hook.isAnchored(); tick++) {
+                hook.tick();
+                owner.move(net.minecraft.world.entity.MoverType.SELF, owner.getDeltaMovement());
+            }
+            helper.assertTrue(!hook.isAnchored() && owner.position().distanceTo(point) < 1.0D,
+                    "Floor hook must release near the impact before its lifetime expires");
+            helper.assertTrue(!owner.isNoGravity() && owner.getDeltaMovement().lengthSqr() == 0,
+                    "Release must restore gravity and stop pulling");
+            hook.onHitBlock(hit);
+            helper.assertTrue(!hook.isAnchored(), "Returning hook reattached to its floor impact");
+        } finally {
+            hook.discard();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void playerPullStopsAtSolidObstacle(GameTestHelper helper) {
         FakePlayer owner = player(helper);
         Vec3 start = owner.position();
@@ -509,6 +542,149 @@ public final class ToolProjectileGameTests {
         helper.assertTrue(!ToolBlockRules.canAttachWhip(helper.getLevel(), anchor, Blocks.DIRT.defaultBlockState())
                 && ToolBlockRules.canAttachWhip(helper.getLevel(), anchor, Blocks.SANDSTONE.defaultBlockState()),
                 "Magic whip hardness/sandstone exception is incorrect");
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void tornadoImpactsPushCreaturesAndItems(GameTestHelper helper) {
+        FakePlayer owner = player(helper);
+        Vec3 impact = Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 4, 5)));
+        var cow = EntityType.COW.create(helper.getLevel());
+        cow.setPos(impact.add(1, 0, 0));
+        cow.setNoAi(true);
+        cow.setNoGravity(true);
+        helper.getLevel().addFreshEntity(cow);
+        ItemEntity item = new ItemEntity(helper.getLevel(), impact.x - 1, impact.y, impact.z,
+                new ItemStack(Items.DIAMOND, 3));
+        item.setNoGravity(true);
+        item.setDeltaMovement(Vec3.ZERO);
+        helper.getLevel().addFreshEntity(item);
+        ItemEntity outside = new ItemEntity(helper.getLevel(), impact.x + 4, impact.y, impact.z,
+                new ItemStack(Items.EMERALD));
+        outside.setNoGravity(true);
+        outside.setDeltaMovement(Vec3.ZERO);
+        helper.getLevel().addFreshEntity(outside);
+        helper.startSequence().thenWaitUntil(() -> helper.assertTrue(
+                helper.getLevel().getEntitiesOfClass(ItemEntity.class, item.getBoundingBox()).contains(item)
+                        && helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.Cow.class,
+                        cow.getBoundingBox()).contains(cow), "Impact targets must be visible to world queries"))
+                .thenExecute(() -> {
+                    for (boolean entityHit : new boolean[]{false, true}) {
+                        for (Vec3 motion : new Vec3[]{new Vec3(0, -0.5D, 1), new Vec3(0, -1, 0)}) {
+                            cow.setDeltaMovement(Vec3.ZERO);
+                            item.setDeltaMovement(Vec3.ZERO);
+                            ToolProjectile wind = new ToolProjectile(ZSSRegistries.CYCLONE_PROJECTILE.get(),
+                                    helper.getLevel(), owner, ToolProjectile.Mode.WIND);
+                            wind.setDeltaMovement(motion);
+                            if (entityHit) wind.onHitEntity(new EntityHitResult(cow, impact));
+                            else wind.onHitBlock(new BlockHitResult(impact, Direction.UP,
+                                    BlockPos.containing(impact).below(), false));
+                            helper.assertTrue(cow.getDeltaMovement().horizontalDistance() >= 0.79D
+                                            && cow.getDeltaMovement().y > 0 && cow.hurtMarked,
+                                    "Tornado must push and synchronize nearby creatures on either impact type");
+                            helper.assertTrue(Math.abs(item.getDeltaMovement().horizontalDistance() - 0.8D) < 1.0E-6D
+                                            && item.getDeltaMovement().y == 0.15D && item.hurtMarked
+                                            && item.isAlive() && item.getItem().getCount() == 3,
+                                    "Tornado must push dropped items once without consuming or damaging them");
+                            helper.assertTrue(outside.getDeltaMovement().lengthSqr() == 0,
+                                    "Tornado must not push items outside the impact area");
+                            helper.assertTrue(wind.isRemoved(), "Tornado must finish after impact");
+                        }
+                    }
+                    cow.discard();
+                    item.discard();
+                    outside.discard();
+                }).thenSucceed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void iceImpactsExtinguishOnlyThreeByThreeByTwo(GameTestHelper helper) {
+        FakePlayer owner = player(helper);
+        BlockPos center = helper.absolutePos(new BlockPos(5, 5, 5));
+        var level = helper.getLevel();
+        for (Direction face : Direction.values()) {
+            BlockPos struck = center.relative(face.getOpposite());
+            level.setBlock(struck, Blocks.STONE.defaultBlockState(), 2);
+            Vec3 impact = Vec3.atCenterOf(center).subtract(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5D));
+            for (boolean entityHit : new boolean[]{false, true}) {
+                // Supported fire avoids unrelated neighbor updates extinguishing boundary samples.
+                for (BlockPos pos : BlockPos.betweenClosed(center.offset(-3, -1, -2), center.offset(3, 2, 2)))
+                    level.setBlock(pos, Blocks.OAK_LEAVES.defaultBlockState(), 2);
+                for (BlockPos pos : BlockPos.betweenClosed(center.offset(-2, -1, -2), center.offset(2, 2, 2)))
+                    if ((pos.getX() - center.getX()) % 2 == 0)
+                        level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 2);
+                ToolProjectile ice = new ToolProjectile(ZSSRegistries.MAGIC_SPELL.get(), level, owner, ToolProjectile.Mode.ICE);
+                var cow = EntityType.COW.create(level);
+                cow.setPos(Vec3.atCenterOf(center));
+                if (entityHit) ice.onHitEntity(new EntityHitResult(cow, cow.position()));
+                else ice.onHitBlock(new BlockHitResult(impact, face, struck, false));
+                for (BlockPos pos : BlockPos.betweenClosed(center.offset(-2, -1, -2), center.offset(2, 2, 2))) {
+                    if ((pos.getX() - center.getX()) % 2 != 0) {
+                        helper.assertTrue(level.getBlockState(pos).is(Blocks.OAK_LEAVES), "Ice must not remove fire supports");
+                        continue;
+                    }
+                    boolean inside = Math.abs(pos.getX() - center.getX()) <= 1
+                            && Math.abs(pos.getZ() - center.getZ()) <= 1
+                            && pos.getY() >= center.getY() && pos.getY() <= center.getY() + 1;
+                    helper.assertTrue(level.getBlockState(pos).isAir() == inside,
+                            "Ice extinguishing bounds are incorrect: " + face + ", entityHit=" + entityHit + ", pos=" + pos);
+                }
+                helper.assertTrue(!entityHit || cow.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN),
+                        "Ice impact must preserve the direct-hit slowing effect");
+                helper.assertTrue(ice.isRemoved(), "Ice projectile must finish after impact");
+            }
+        }
+        for (BlockPos pos : BlockPos.betweenClosed(center.offset(-3, -1, -2), center.offset(3, 2, 2)))
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        level.setBlock(center.below(), Blocks.SOUL_SOIL.defaultBlockState(), 2);
+        level.setBlock(center, Blocks.SOUL_FIRE.defaultBlockState(), 2);
+        ToolProjectile soulIce = new ToolProjectile(ZSSRegistries.MAGIC_SPELL.get(), level, owner, ToolProjectile.Mode.ICE);
+        soulIce.onHitBlock(new BlockHitResult(Vec3.atBottomCenterOf(center), Direction.UP, center.below(), false));
+        helper.assertTrue(level.getBlockState(center).isAir(), "Ice must extinguish soul fire");
+        for (var source : new net.minecraft.world.level.block.Block[]{Blocks.WATER, Blocks.LAVA}) {
+            level.setBlock(center, source.defaultBlockState(), 2);
+            ToolProjectile ice = new ToolProjectile(ZSSRegistries.MAGIC_SPELL.get(), level, owner, ToolProjectile.Mode.ICE);
+            ice.onHitBlock(new BlockHitResult(Vec3.atBottomCenterOf(center.above()), Direction.UP, center, false));
+            helper.assertTrue(level.getBlockState(center).is(source == Blocks.WATER ? Blocks.ICE : Blocks.OBSIDIAN),
+                    "Area extinguishing must preserve water/lava conversion");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void fireImpactsIgniteOnlyThreeByThreeByTwo(GameTestHelper helper) {
+        FakePlayer owner = player(helper);
+        BlockPos center = helper.absolutePos(new BlockPos(5, 5, 5));
+        var level = helper.getLevel();
+        for (boolean entityHit : new boolean[]{false, true}) {
+            for (BlockPos pos : BlockPos.betweenClosed(center.offset(-3, -1, -3), center.offset(3, 3, 3)))
+                level.setBlock(pos, pos.getY() == center.getY() - 1
+                        ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+            // Leaves support the second layer of fire; stone must never be replaced.
+            BlockPos leaves = center.above();
+            level.setBlock(leaves, Blocks.OAK_LEAVES.defaultBlockState(), 2);
+            BlockPos stone = center.offset(1, 0, 1);
+            level.setBlock(stone, Blocks.STONE.defaultBlockState(), 2);
+            ToolProjectile fire = new ToolProjectile(ZSSRegistries.MAGIC_SPELL.get(), level, owner, ToolProjectile.Mode.FIRE);
+            var cow = EntityType.COW.create(level);
+            cow.setPos(Vec3.atCenterOf(center));
+            if (entityHit) fire.onHitEntity(new EntityHitResult(cow, cow.position()));
+            else fire.onHitBlock(new BlockHitResult(Vec3.atBottomCenterOf(center), Direction.UP, center.below(), false));
+            for (BlockPos pos : BlockPos.betweenClosed(center.offset(-2, 0, -2), center.offset(2, 2, 2))) {
+                if (pos.equals(leaves) || pos.equals(stone)) continue;
+                int dx = Math.abs(pos.getX() - center.getX());
+                int dz = Math.abs(pos.getZ() - center.getZ());
+                boolean expected = dx <= 1 && dz <= 1 && (pos.getY() == center.getY()
+                        || pos.getY() == center.getY() + 1 && (dx + dz == 1 || pos.equals(stone.above())));
+                helper.assertTrue(level.getBlockState(pos).is(net.minecraft.tags.BlockTags.FIRE) == expected,
+                        "Fire impact must respect area bounds and fire placement rules: " + pos);
+            }
+            helper.assertTrue(level.getBlockState(leaves).is(Blocks.OAK_LEAVES)
+                            && level.getBlockState(stone).is(Blocks.STONE),
+                    "Fire impact must not replace solid blocks");
+            helper.assertTrue(!entityHit || cow.isOnFire(), "Fire must preserve direct-hit burning");
+            helper.assertTrue(fire.isRemoved(), "Fire projectile must finish after impact");
+        }
         helper.succeed();
     }
 

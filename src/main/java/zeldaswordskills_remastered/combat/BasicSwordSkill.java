@@ -14,6 +14,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import zeldaswordskills_remastered.capability.ZSSPlayerData;
+import zeldaswordskills_remastered.capability.ZSSCapabilities;
 import zeldaswordskills_remastered.entity.ElementalDamage;
 import zeldaswordskills_remastered.network.SkillIntentMessage;
 import zeldaswordskills_remastered.network.ZSSNetwork;
@@ -24,7 +25,6 @@ public final class BasicSwordSkill {
     private static final int[] COMBO_MAXIMUM = {0, 5, 5, 7, 7, 10, 10, 12, 14, 16, 20};
     private static final int[] COMBO_DURATION = {0, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60};
     private static final int[] DAMAGE_BREAK_THRESHOLD = {0, 1, 1, 3, 3, 5, 5, 7, 7, 9, 10};
-    private static final double MAXIMUM_MELEE_DISTANCE_SQUARED = 16.0D;
     /**
      * Fraction of the main-hand weapon's recovery that must have elapsed before a plain locked
      * attack lands. Vanilla derives that recovery from the held item's {@code ATTACK_SPEED}
@@ -60,14 +60,14 @@ public final class BasicSwordSkill {
         // one keeps its own cadence. Sword skills above and below are gated by their own windows.
         if (level <= 0 || player.getAttackStrengthScale(0.5F) < LOCKED_ATTACK_RECOVERY) return false;
         LivingEntity target = TargetingService.getLockedTarget(player, data).orElse(null);
-        boolean holdingSword = TargetingService.isHoldingSword(player);
-        if (holdingSword && GroundSlam.tryStrike(player, data, target)) return true;
-        if (holdingSword && FatalStrike.tryStrike(player, data, target)) {
+        boolean holdingWeapon = TargetingService.isHoldingWeapon(player);
+        if (holdingWeapon && GroundSlam.tryStrike(player, data, target)) return true;
+        if (holdingWeapon && FatalStrike.tryStrike(player, data, target)) {
             player.resetAttackStrengthTicker();
             player.swing(InteractionHand.MAIN_HAND, false);
             return true;
         }
-        if (target == null || player.distanceToSqr(target) > MAXIMUM_MELEE_DISTANCE_SQUARED) {
+        if (target == null || !player.canReach(target, 0.0D)) {
             miss(player, data);
             return false;
         }
@@ -76,7 +76,7 @@ public final class BasicSwordSkill {
         player.resetAttackStrengthTicker();
         // The initiating client already swung on press; only observers need the animation packet.
         player.swing(InteractionHand.MAIN_HAND, false);
-        if (!target.hurt(player.damageSources().playerAttack(player), damage)) {
+        if (!hurtLockedTarget(player, data, target, player.damageSources().playerAttack(player), damage)) {
             miss(player, data);
             return false;
         }
@@ -87,6 +87,24 @@ public final class BasicSwordSkill {
         ZSSAdvancementService.comboHit(player, data.combat().comboCount());
         ZSSNetwork.syncCombatState(player, data.combat());
         return true;
+    }
+
+    /** Shared-target skills must not be suppressed by another locking player's last hit. */
+    public static boolean hurtLockedTarget(ServerPlayer player, ZSSPlayerData data, LivingEntity target,
+                                           DamageSource source, float damage) {
+        DamageSource previous = target.getLastDamageSource();
+        if (target.invulnerableTime > 10 && data.combat().targetId() == target.getId()
+                && previous != null && previous.getEntity() instanceof ServerPlayer other && other != player
+                && ZSSCapabilities.get(other).map(otherData -> otherData.combat().targetId() == target.getId()).orElse(false)) {
+            // Bypass only this hit's cooldown check; retain armor, shields and damage event hooks.
+            source = new DamageSource(source.typeHolder(), source.getDirectEntity(), source.getEntity(), source.sourcePositionRaw()) {
+                @Override
+                public boolean is(net.minecraft.tags.TagKey<DamageType> tag) {
+                    return tag.equals(DamageTypeTags.BYPASSES_COOLDOWN) || super.is(tag);
+                }
+            };
+        }
+        return target.hurt(source, damage);
     }
 
     /**

@@ -16,6 +16,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 import zeldaswordskills_remastered.ZeldaSwordSkills_Remastered;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
+import zeldaswordskills_remastered.registry.ZSSContentIds;
+import zeldaswordskills_remastered.song.SongCatalog;
 import zeldaswordskills_remastered.item.BigKeyItem;
 import zeldaswordskills_remastered.worldgen.DungeonType;
 
@@ -24,10 +26,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** Modern data-driven replacement for the legacy Zelda achievement page. */
 public final class ZSSAdvancementProvider extends AdvancementProvider {
-    private static final List<Node> NODES = List.of(
+    private static final List<ResourceLocation> SONGS = ZSSContentIds.SONGS.stream().sorted().toList();
+    private static final List<Node> NODES = Stream.concat(List.of(
             n("adventure_begins", null, "kokiri_sword"),
             n("bombs_away", "adventure_begins", "standard_bomb"), n("bomb_junkie", "bombs_away", "bomb_bag", true),
             n("boss_battle", "adventure_begins", "big_key"),
@@ -62,7 +67,7 @@ public final class ZSSAdvancementProvider extends AdvancementProvider {
             n("orca.master", "orca.second", "darknut_sword", true), n("ocarina.craft", null, "fairy_ocarina"),
             n("ocarina.song", "ocarina.craft", "writable_book", false), n("ocarina.scarecrow", "ocarina.song", "pumpkin", true),
             n("ocarina.maestro", "ocarina.song", "ocarina_of_time", true)
-    );
+    ).stream(), SONGS.stream().map(song -> n("ocarina.song." + song.getPath(), "ocarina.song", "fairy_ocarina"))).toList();
 
     public ZSSAdvancementProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         super(output, registries, List.of(ZSSAdvancementProvider::generate));
@@ -81,8 +86,23 @@ public final class ZSSAdvancementProvider extends AdvancementProvider {
                     ? ResourceLocation.fromNamespaceAndPath("minecraft", "textures/block/stone.png") : null;
             Component title = Component.translatable("advancements.zeldaswordskills_remastered." + node.id() + ".title");
             Component description = Component.translatable("advancements.zeldaswordskills_remastered." + node.id() + ".description");
+            if (node.id().startsWith("ocarina.song.")) {
+                ResourceLocation song = id(node.id().substring("ocarina.song.".length()));
+                title = Component.translatable("song." + song.getNamespace() + "." + song.getPath());
+                if (!song.equals(ZSSContentIds.SCARECROW)) {
+                    String notes = SongCatalog.get(song).orElseThrow().notes().stream().map(note -> switch (note) {
+                        case D1 -> "A";
+                        case F1 -> "v";
+                        case A2 -> ">";
+                        case B2 -> "<";
+                        case D2 -> "^";
+                    }).collect(Collectors.joining(" ", "[ ", " ]"));
+                    description = Component.literal(notes);
+                }
+            }
+            boolean hiddenUntilEarned = node.id().startsWith("ocarina.song.");
             DisplayInfo display = new DisplayInfo(icon, title, description, background,
-                    node.challenge() ? FrameType.CHALLENGE : FrameType.TASK, true, true, false);
+                    node.challenge() ? FrameType.CHALLENGE : FrameType.TASK, true, true, hiddenUntilEarned);
             float[] position = position(node.id());
             display.setLocation(position[0], position[1]);
             Advancement.Builder builder = Advancement.Builder.advancement()
@@ -125,6 +145,10 @@ public final class ZSSAdvancementProvider extends AdvancementProvider {
     }
 
     private static float[] position(String id) {
+        if (id.startsWith("ocarina.song.")) {
+            int index = SONGS.indexOf(id(id.substring("ocarina.song.".length())));
+            return new float[]{2 + 2 * (index % 4), -2 - 2 * (index / 4)};
+        }
         return switch (id) {
             case "adventure_begins" -> new float[]{0, 1};
             case "bombs_away" -> new float[]{-4, -2}; case "bomb_junkie" -> new float[]{-4, -4};

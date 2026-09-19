@@ -85,12 +85,6 @@ public final class IaiSlash {
         public void reset() { clear(); cooldownUntil = 0L; attributeWeapon = null; }
     }
 
-    public static boolean isAttackWeapon(Player player) {
-        return !player.getMainHandItem().isEmpty() && (TargetingService.isHoldingSword(player)
-                || player.getMainHandItem().getAttributeModifiers(EquipmentSlot.MAINHAND)
-                .get(Attributes.ATTACK_DAMAGE).stream().anyMatch(modifier -> modifier.getAmount() > 0.0D));
-    }
-
     private static boolean validEnemy(ServerPlayer player, LivingEntity target) {
         return target != player && target.isAlive() && target.isAttackable() && !target.isSpectator()
                 && TargetingService.hasAutonomousBehaviour(target) && !TargetingService.isFriendly(target)
@@ -146,7 +140,7 @@ public final class IaiSlash {
             cancel(player, data);
             return;
         }
-        state.draw(player.getInventory().selected, isAttackWeapon(player), now);
+        state.draw(player.getInventory().selected, TargetingService.isHoldingWeapon(player), now);
     }
 
     /** Only the actual attack target can trigger the skill; no custom auto-hit request exists. */
@@ -168,7 +162,7 @@ public final class IaiSlash {
             cancel(player, data);
             return false;
         }
-        if (!state.ready(now) || !isAttackWeapon(player) || !validEnemy(player, target)
+        if (!state.ready(now) || !TargetingService.isHoldingWeapon(player) || !validEnemy(player, target)
                 || !player.canReach(target, 0.0D) || !player.hasLineOfSight(target)) {
             cancel(player, data);
             return false;

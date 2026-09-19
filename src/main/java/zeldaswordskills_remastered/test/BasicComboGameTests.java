@@ -39,6 +39,44 @@ public final class BasicComboGameTests {
     private BasicComboGameTests() { }
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void sharedTargetDamageAndLocksRemainIndependent(GameTestHelper helper) {
+        FakePlayer first = player(helper);
+        FakePlayer second = player(helper);
+        var firstData = ZSSCapabilities.get(first).orElseThrow(() -> new AssertionError("Missing player data"));
+        var secondData = ZSSCapabilities.get(second).orElseThrow(() -> new AssertionError("Missing player data"));
+        var target = mob(helper, EntityType.ZOMBIE, first.position().add(0, 0, 3));
+        target.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
+        target.getAttribute(Attributes.ARMOR).setBaseValue(0);
+        target.setHealth(100);
+        first.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STONE));
+        TargetingService.handle(first, firstData, TargetIntentMessage.Action.ACQUIRE);
+        TargetingService.handle(second, secondData, TargetIntentMessage.Action.ACQUIRE);
+        TargetingService.handle(first, firstData, TargetIntentMessage.Action.NEXT);
+        helper.assertTrue(firstData.combat().targetId() == target.getId()
+                && secondData.combat().targetId() == target.getId(), "Held item or another player's lock prevented targeting");
+        helper.assertTrue(BasicSwordSkill.hurtLockedTarget(first, firstData, target, first.damageSources().playerAttack(first), 5), "First hit failed");
+        float health = target.getHealth();
+        helper.assertTrue(BasicSwordSkill.hurtLockedTarget(second, secondData, target, second.damageSources().playerAttack(second), 5)
+                && target.getHealth() == health - 5, "Shared target rejected or reduced second player's hit");
+        helper.assertTrue(!BasicSwordSkill.hurtLockedTarget(second, secondData, target, second.damageSources().playerAttack(second), 5),
+                "Same-player cooldown was bypassed");
+        first.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+        firstData.setSkillLevel(ZSSContentIds.RISING_CUT, 1);
+        firstData.combat().armRisingCut(helper.getLevel().getGameTime() + 20);
+        zeldaswordskills_remastered.combat.AdvancedSwordSkills.handleIntent(first, firstData,
+                new zeldaswordskills_remastered.network.SkillIntentMessage(ZSSContentIds.RISING_CUT,
+                        zeldaswordskills_remastered.network.SkillIntentMessage.Action.ATTACK, java.util.Optional.empty()));
+        helper.assertTrue(first.getDeltaMovement().y > 0 && firstData.combat().comboCount() == 1,
+                "Another player's hit suppressed Rising Cut or its combo");
+        TargetingService.handle(first, firstData, TargetIntentMessage.Action.CLEAR);
+        helper.assertTrue(secondData.combat().targetId() == target.getId(), "Clearing one lock cleared another player's lock");
+        helper.assertTrue(!BasicSwordSkill.hurtLockedTarget(first, firstData, target, first.damageSources().playerAttack(first), 1),
+                "Unlocked attack bypassed cooldown");
+        target.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void incomingDamageKeepsPhysicalCombos(GameTestHelper helper) {
         FakePlayer player = player(helper);
         ZSSPlayerData data = ZSSCapabilities.get(player).orElseThrow(() -> new AssertionError("Missing player data"));

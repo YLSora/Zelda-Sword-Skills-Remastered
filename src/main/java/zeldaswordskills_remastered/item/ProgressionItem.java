@@ -39,7 +39,7 @@ public final class ProgressionItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        // Tokens are delivered as physical items to Cursed Man.
+        // Tokens count toward lifetime collection on pickup, not through manual use.
         if (kind == Kind.SKULLTULA_TOKEN) return InteractionResultHolder.fail(stack);
         if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResultHolder.sidedSuccess(stack, true);
         boolean changed = apply(serverPlayer, stack);
@@ -64,11 +64,23 @@ public final class ProgressionItem extends Item {
 
     public boolean applyOnPickup(ServerPlayer player, ItemStack stack) {
         if (kind == Kind.SMALL_HEART) return consumeSmallHearts(player, stack, true);
-        if (kind == Kind.SKILL_ORB || kind == Kind.HEART_PIECE || kind == Kind.SKILL_WIPER
-                || kind == Kind.SKULLTULA_TOKEN) return false;
+        if (kind == Kind.SKULLTULA_TOKEN) return consumeSkulltulaTokens(player, stack);
+        if (kind == Kind.SKILL_ORB || kind == Kind.HEART_PIECE || kind == Kind.SKILL_WIPER) return false;
         if (!apply(player, stack)) return false;
         stack.shrink(1);
         return true;
+    }
+
+    public static boolean consumeSkulltulaTokens(ServerPlayer player, ItemStack stack) {
+        if (player.isCreative() || !player.isAlive() || stack.isEmpty()
+                || !(stack.getItem() instanceof ProgressionItem item) || item.kind != Kind.SKULLTULA_TOKEN) return false;
+        return ZSSCapabilities.get(player).map(data -> {
+            int added = data.addSkulltulaTokens(stack.getCount());
+            if (added <= 0) return false;
+            stack.shrink(added);
+            ZSSNetwork.syncPlayerData(player);
+            return true;
+        }).orElse(false);
     }
 
     public static boolean consumeSmallHearts(ServerPlayer player, ItemStack stack) {

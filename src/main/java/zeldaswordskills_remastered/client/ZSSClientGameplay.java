@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -35,6 +36,7 @@ import zeldaswordskills_remastered.registry.ZSSContentIds;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
 import zeldaswordskills_remastered.song.ScarecrowStructure;
 import zeldaswordskills_remastered.entity.npc.QuestNpc;
+import zeldaswordskills_remastered.quest.QuestService;
 
 import java.util.Optional;
 
@@ -261,7 +263,7 @@ public final class ZSSClientGameplay {
         Minecraft minecraft = Minecraft.getInstance();
         refreshPlayerBinding(minecraft);
         if (event.getEntity() != minecraft.player || minecraft.screen != null
-                || ZSSClientCombatState.iaiTargetId() < 0 || !IaiSlash.isAttackWeapon(minecraft.player)) return;
+                || ZSSClientCombatState.iaiTargetId() < 0 || !TargetingService.isHoldingWeapon(minecraft.player)) return;
         // Empty swings have no vanilla server attack packet. Send only a cancellation intent.
         send(ZSSContentIds.MORTAL_DRAW, SkillIntentMessage.Action.CANCEL, Optional.empty());
         ZSSClientCombatState.clearIaiTarget();
@@ -328,7 +330,12 @@ public final class ZSSClientGameplay {
         ItemStack main = minecraft.player.getMainHandItem();
         ItemStack offhand = minecraft.player.getOffhandItem();
         if (!(main.getItem() instanceof InstrumentItem) && !(offhand.getItem() instanceof InstrumentItem)) return;
-        if (minecraft.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof QuestNpc) return;
+        if (minecraft.hitResult instanceof EntityHitResult hit) {
+            if (hit.getEntity() instanceof QuestNpc) return;
+            if (hit.getEntity() instanceof Villager villager
+                    && (QuestService.isNamedSongTeacher(villager, main)
+                    || QuestService.isNamedSongTeacher(villager, offhand))) return;
+        }
         if (minecraft.hitResult instanceof BlockHitResult hit
                 && minecraft.level.getBlockState(hit.getBlockPos()).getBlock() instanceof zeldaswordskills_remastered.block.WarpStoneBlock) return;
         boolean scarecrow = minecraft.hitResult instanceof BlockHitResult hit
@@ -396,7 +403,7 @@ public final class ZSSClientGameplay {
 
         if (tick < helmReadyUntil && !player.onGround() && player.getY() > helmParryY + 0.05D) helmJumped = true;
         if (helmAttackQueued) {
-            if (tick >= helmReadyUntil) helmAttackQueued = false;
+            if (tick >= helmReadyUntil || !TargetingService.isHoldingSword(player)) helmAttackQueued = false;
             else if (helmJumped && !player.onGround()) {
                 clearFlashConflictingInputs();
                 send(ZSSContentIds.HELM_SPLITTER, SkillIntentMessage.Action.ATTACK, Optional.empty());
@@ -442,7 +449,7 @@ public final class ZSSClientGameplay {
                 // Keep charging until the attack key is released.
             }
         }
-        if (ZSSClientCombatState.iaiTargetId() < 0 && attack && TargetingService.isHoldingSword(player) && spinSequenceReadyUntil >= tick && spinChargeStarted < 0
+        if (ZSSClientCombatState.iaiTargetId() < 0 && attack && TargetingService.isHoldingWeapon(player) && spinSequenceReadyUntil >= tick && spinChargeStarted < 0
                 && spinActiveUntil <= tick && learned(ZSSContentIds.SPIN_ATTACK) && tick >= spinCooldownUntil) {
             send(ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.ATTACK, Optional.empty());
             spinActiveUntil = tick + 8;
@@ -579,7 +586,7 @@ public final class ZSSClientGameplay {
         return minecraft.player != null && minecraft.level != null && !ZSSClientFlashAssault.busy()
                 && ZSSClientCombatState.dashImmune(minecraft.level.getGameTime())
                 && ZSSClientCombatState.hasTarget() && learned(ZSSContentIds.DASH)
-                && learned(ZSSContentIds.CONTINUOUS_FLASH) && TargetingService.isHoldingSword(minecraft.player);
+                && learned(ZSSContentIds.CONTINUOUS_FLASH) && TargetingService.isHoldingWeapon(minecraft.player);
     }
 
     private static void pressContinuousDash(Minecraft minecraft) {
@@ -603,8 +610,8 @@ public final class ZSSClientGameplay {
             return true;
         }
         // Flash Assault handles its confirmed follow-up before reaching this method.
-        // Other items must not be swallowed by sword-only charges or gestures.
-        if (!TargetingService.isHoldingSword(player)) {
+        // Non-weapons must not be swallowed by weapon charges or gestures.
+        if (!TargetingService.isHoldingWeapon(player)) {
             if (spinChargeStarted >= 0) send(ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.CANCEL, Optional.empty());
             clearFlashConflictingInputs();
             if (!ZSSClientCombatState.hasTarget()) return false;
@@ -615,7 +622,7 @@ public final class ZSSClientGameplay {
             send(ZSSContentIds.SUPER_SPIN_ATTACK, SkillIntentMessage.Action.ATTACK, Optional.empty());
             return true;
         }
-        if (tick < helmReadyUntil && learned(ZSSContentIds.HELM_SPLITTER)
+        if (TargetingService.isHoldingSword(player) && tick < helmReadyUntil && learned(ZSSContentIds.HELM_SPLITTER)
                 && (minecraft.options.keyJump.isDown() || !player.onGround()
                 && (helmJumped || player.getY() > helmParryY + 0.05D))) {
             if (spinChargeStarted >= 0) send(ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.CANCEL, Optional.empty());
@@ -636,7 +643,7 @@ public final class ZSSClientGameplay {
         // a zero deadline is the "no follow-up" sentinel, so it never matches on its own.
         // Always consume this press, including misses and a lost/changed lock. The server alone
         // decides whether the recorded enemy is still a valid target; no ordinary hit accompanies it.
-        if (swordBreakReadyUntil > 0 && tick < swordBreakReadyUntil
+        if (TargetingService.isHoldingSword(player) && swordBreakReadyUntil > 0 && tick < swordBreakReadyUntil
                 && learned(ZSSContentIds.SWORD_BREAK)) {
             send(ZSSContentIds.SWORD_BREAK, SkillIntentMessage.Action.ATTACK, Optional.empty());
             swordBreakReadyUntil = 0;
@@ -683,7 +690,7 @@ public final class ZSSClientGameplay {
         // Descending after either second jump uses the actual left-click target. The server
         // confirms the jump and hit; Spin Attack may not delay this click.
         if (ZSSClientCombatState.groundSlamReady() && learned(ZSSContentIds.LEAPING_BLOW) && !player.onGround()
-                && player.getDeltaMovement().y < 0.0D && TargetingService.isHoldingSword(player)) {
+                && player.getDeltaMovement().y < 0.0D && TargetingService.isHoldingWeapon(player)) {
             if (spinChargeStarted >= 0) send(ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.CANCEL, Optional.empty());
             spinChargeStarted = spinChargeToneTick = -1;
             return false;

@@ -37,6 +37,7 @@ public final class ZSSPlayerData {
     private final Set<ResourceLocation> completedDungeons = new java.util.HashSet<>();
     private boolean receivedStartingGear;
     private int skulltulaTokens;
+    private int skulltulaTrades;
     private int knightsCrestsGiven;
     private int orcaChoiceTier;
     private final Map<ResourceLocation, Integer> skills = new LinkedHashMap<>();
@@ -73,6 +74,7 @@ public final class ZSSPlayerData {
         magic.put("completed_dungeons", saveIds(completedDungeons));
         magic.putBoolean("received_starting_gear", receivedStartingGear);
         magic.putInt("skulltula_tokens", skulltulaTokens);
+        magic.putInt("skulltula_trades", skulltulaTrades);
         magic.putInt("knights_crests_given", knightsCrestsGiven);
         magic.putInt("orca_choice_tier", orcaChoiceTier);
         root.put("magic_stats", magic);
@@ -151,6 +153,7 @@ public final class ZSSPlayerData {
                         .map(zeldaswordskills_remastered.worldgen.DungeonType::id).collect(java.util.stream.Collectors.toSet()), "dungeon");
         receivedStartingGear = magic.getBoolean("received_starting_gear");
         skulltulaTokens = magic.getInt("skulltula_tokens");
+        skulltulaTrades = magic.getInt("skulltula_trades");
         knightsCrestsGiven = magic.getInt("knights_crests_given");
         orcaChoiceTier = Mth.clamp(magic.getInt("orca_choice_tier"), 0, 5);
         loadLevels(root.getList("skills", Tag.TAG_COMPOUND), skills, MAX_SKILLS, ZSSContentIds.SKILLS, "skill");
@@ -255,9 +258,14 @@ public final class ZSSPlayerData {
     }
 
     public boolean addSkulltulaToken() {
-        if (skulltulaTokens >= 100) return false;
-        skulltulaTokens++;
-        return true;
+        return addSkulltulaTokens(1) > 0;
+    }
+
+    public int addSkulltulaTokens(int amount) {
+        if (amount <= 0 || skulltulaTokens == Integer.MAX_VALUE) return 0;
+        int added = Math.min(amount, Integer.MAX_VALUE - skulltulaTokens);
+        skulltulaTokens += added;
+        return added;
     }
 
     public boolean clearSkills() {
@@ -282,6 +290,12 @@ public final class ZSSPlayerData {
     public boolean receivedStartingGear() { return receivedStartingGear; }
     public void markReceivedStartingGear() { receivedStartingGear = true; }
     public int skulltulaTokens() { return skulltulaTokens; }
+    public int skulltulaTrades() { return skulltulaTrades; }
+    public boolean advanceSkulltulaTrade() {
+        if (skulltulaTrades >= skulltulaTokens / 10) return false;
+        skulltulaTrades++;
+        return true;
+    }
     public int knightsCrestsGiven() { return knightsCrestsGiven; }
     public int orcaChoiceTier() { return orcaChoiceTier; }
     public void setOrcaChoiceTier(int tier) { orcaChoiceTier = Mth.clamp(tier, 0, 5); }
@@ -407,7 +421,8 @@ public final class ZSSPlayerData {
         maxMagic = Mth.clamp(Float.isFinite(maxMagic) ? maxMagic : 0.0F, 0.0F, configuredMaximumMagic());
         currentMagic = Mth.clamp(Float.isFinite(currentMagic) ? currentMagic : 0.0F, 0.0F, maxMagic);
         secretRooms = Math.max(0, secretRooms);
-        skulltulaTokens = Mth.clamp(skulltulaTokens, 0, 100);
+        skulltulaTokens = Math.max(0, skulltulaTokens);
+        skulltulaTrades = Mth.clamp(skulltulaTrades, 0, skulltulaTokens / 10);
         knightsCrestsGiven = Mth.clamp(knightsCrestsGiven, 0, 100);
     }
 

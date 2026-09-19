@@ -1,0 +1,29 @@
+{
+  "parent": "zeldaswordskills_remastered:ocarina.song",
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "text": "[ < ^ > < ^ > ]"
+    },
+    "frame": "task",
+    "hidden": true,
+    "icon": {
+      "item": "zeldaswordskills_remastered:fairy_ocarina"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "song.zeldaswordskills_remastered.lullaby"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -50,10 +50,19 @@ public final class ZSSCommands {
                         .requires(source -> source.hasPermission(2))
                         .then(Commands.literal("learn")
                                 .then(Commands.argument("song", ResourceLocationArgument.id())
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(ZSSContentIds.SONGS, builder))
                                         .executes(context -> learnSong(context.getSource().getPlayerOrException(),
                                                 ResourceLocationArgument.getId(context, "song")))))
                         .then(Commands.literal("forget")
                                 .then(Commands.argument("song", ResourceLocationArgument.id())
+                                        .suggests((context, builder) -> {
+                                            if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                                                return ZSSCapabilities.get(player)
+                                                        .map(data -> SharedSuggestionProvider.suggestResource(data.songs(), builder))
+                                                        .orElseGet(() -> builder.buildFuture());
+                                            }
+                                            return builder.buildFuture();
+                                        })
                                         .executes(context -> forgetSong(context.getSource().getPlayerOrException(),
                                                 ResourceLocationArgument.getId(context, "song"))))))
                 .then(Commands.literal("quest")

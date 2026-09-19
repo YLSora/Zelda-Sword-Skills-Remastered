@@ -392,17 +392,18 @@ public final class ZSSGameTests {
                 "A scarecrow melody conflicting with a fixed song was accepted");
         PlayerSongState songState = new PlayerSongState();
         songState.open(id("ocarina_of_time"), false);
-        helper.assertTrue(songState.addNote(SongNote.D1, 20L) && !songState.addNote(SongNote.F1, 20L)
-                        && songState.addNote(SongNote.F1, 21L),
-                "Song input did not enforce one note per server tick");
+        helper.assertTrue(songState.addNote(SongNote.D1) && songState.addNote(SongNote.F1)
+                        && songState.addNote(SongNote.F1)
+                        && songState.notes().equals(List.of(SongNote.D1, SongNote.F1, SongNote.F1)),
+                "Song input lost ordered or repeated notes");
         songState.match(ZSSContentIds.TIME, 111L);
-        helper.assertTrue(!songState.addNote(SongNote.A2, 22L) && songState.completionDeadline() == 111L,
+        helper.assertTrue(!songState.addNote(SongNote.A2) && songState.completionDeadline() == 111L,
                 "Song input continued after a completed melody matched");
         PlayerSongState pagedHud = new PlayerSongState();
         pagedHud.open(id("ocarina_of_time"), false);
-        for (int index = 0; index < 8; index++) pagedHud.addNote(SongNote.D1, 30L + index);
+        for (int index = 0; index < 8; index++) pagedHud.addNote(SongNote.D1);
         helper.assertTrue(pagedHud.hudNotes().size() == 8, "Song HUD did not fill all eight note slots");
-        pagedHud.addNote(SongNote.D2, 38L);
+        pagedHud.addNote(SongNote.D2);
         helper.assertTrue(pagedHud.hudNotes().equals(List.of(SongNote.D2)),
                 "The ninth note did not clear the previous HUD page and return to slot one");
         pagedHud.waitForRecognition(98L);
@@ -495,7 +496,7 @@ public final class ZSSGameTests {
         helper.assertTrue(invalidRejected, "Invalid skill action was accepted by the network decoder");
 
         FriendlyByteBuf songIntentBuffer = new FriendlyByteBuf(Unpooled.buffer());
-        SongIntentMessage songIntent = new SongIntentMessage(SongIntentMessage.Action.NOTE, Optional.of(SongNote.D2));
+        SongIntentMessage songIntent = new SongIntentMessage(SongIntentMessage.Action.NOTE, Optional.of(SongNote.D2), 0);
         SongIntentMessage.encode(songIntent, songIntentBuffer);
         helper.assertTrue(songIntent.equals(SongIntentMessage.decode(songIntentBuffer)), "Valid song intent did not round-trip");
         FriendlyByteBuf invalidSongIntent = new FriendlyByteBuf(Unpooled.buffer());
@@ -556,11 +557,15 @@ public final class ZSSGameTests {
                 "Dodge accepted a late tap or a change of direction");
         combat.setTarget(42);
         combat.recordHit(42, 4.0F, 5, 150L);
-        combat.startDodge(140L);
-        helper.assertTrue(combat.dodgeActive(140L) && combat.dodgeActive(143L) && !combat.dodgeActive(144L),
-                "Dodge immunity must last exactly four ticks");
-        helper.assertTrue(combat.dodgeOnCooldown(144L) && combat.dodgeOnCooldown(149L) && !combat.dodgeOnCooldown(150L),
-                "Dodge must cool down for six ticks after its movement ends");
+        int[] dodgeCooldowns = {80, 70, 60, 50, 40};
+        for (int dodgeLevel = 1; dodgeLevel <= 5; dodgeLevel++) {
+            combat.startDodge(140L, dodgeLevel);
+            helper.assertTrue(combat.dodgeActive(140L) && combat.dodgeActive(159L) && !combat.dodgeActive(160L),
+                    "Dodge immunity must last exactly twenty ticks at every level");
+            long deadline = 140L + dodgeCooldowns[dodgeLevel - 1];
+            helper.assertTrue(combat.dodgeOnCooldown(deadline - 1) && !combat.dodgeOnCooldown(deadline),
+                    "Dodge cooldown must follow the level table from activation");
+        }
         helper.assertTrue(combat.targetId() == 42 && combat.comboCount() == 1 && combat.comboDeadline() == 150L,
                 "Dodge must preserve the existing combo without adding hits or extending its deadline");
         for (float friction : new float[]{0.6F, 0.98F}) {
@@ -764,13 +769,13 @@ public final class ZSSGameTests {
         ZSSPlayerData dodgeData = new ZSSPlayerData();
         dodgeData.setSkillLevel(id("dodge"), 1);
         long dodgeTime = helper.getLevel().getGameTime();
-        dodgeData.combat().startDodge(dodgeTime);
+        dodgeData.combat().startDodge(dodgeTime, 1);
         helper.assertTrue(AdvancedSwordSkills.onAttacked(combatPlayer, dodgeData, combatPlayer.damageSources().inFire())
                         && AdvancedSwordSkills.onAttacked(combatPlayer, dodgeData, combatPlayer.damageSources().fall()),
                 "Dodge must block environmental damage even without a living attacker");
-        dodgeData.combat().startDodge(dodgeTime - 4L);
+        dodgeData.combat().startDodge(dodgeTime - 20L, 1);
         helper.assertTrue(!AdvancedSwordSkills.onAttacked(combatPlayer, dodgeData, combatPlayer.damageSources().inFire()),
-                "Dodge immunity continued after its four-tick window");
+                "Dodge immunity continued after its twenty-tick window");
         ZSSPlayerData dashData = new ZSSPlayerData();
         dashData.setSkillLevel(id("dash"), 1);
         long dashTime = helper.getLevel().getGameTime();
@@ -2254,7 +2259,7 @@ public final class ZSSGameTests {
         List<RegistryObject<EntityType<LegacyCreature>>> types = List.of(
                 ZSSRegistries.DARKNUT, ZSSRegistries.DARKNUT_MIGHTY, ZSSRegistries.DARKNUT_BOSS);
         double[] health = {100.0D, 200.0D, 500.0D};
-        double[] attack = {16.0D, 24.0D, 32.0D};
+        double[] attack = {10.0D, 12.0D, 15.0D};
         double[] armor = {10.0D, 15.0D, 20.0D};
         for (int index = 0; index < types.size(); index++) {
             LegacyCreature creature = types.get(index).get().create(helper.getLevel());
@@ -2510,8 +2515,8 @@ public final class ZSSGameTests {
         for (int index = 0; index < notes.size(); index++) {
             SongNote note = notes.get(index);
             helper.runAtTickTime(index + 1L, () -> {
-                SongService.note(player, data, note);
-                SongService.note(weakPlayer, weakData, note);
+                SongService.note(player, data, note, 0);
+                SongService.note(weakPlayer, weakData, note, 0);
             });
         }
         helper.runAtTickTime(90L, () -> {

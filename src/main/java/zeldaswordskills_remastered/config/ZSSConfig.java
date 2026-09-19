@@ -48,7 +48,6 @@ public final class ZSSConfig {
         public final ForgeConfigSpec.BooleanValue resetSkillsOnDeath;
         public final ForgeConfigSpec.BooleanValue giveStartingItems;
         public final ForgeConfigSpec.BooleanValue naturalMonsterSpawning;
-        public final ForgeConfigSpec.IntValue skulltulaRewardRate;
         public final ForgeConfigSpec.BooleanValue canTargetPlayers;
         public final ForgeConfigSpec.IntValue intentsPerSecond;
         public final ForgeConfigSpec.IntValue maximumHeartContainers;
@@ -83,8 +82,6 @@ public final class ZSSConfig {
             builder.pop();
 
             builder.push("gameplay");
-            skulltulaRewardRate = builder.comment("Game days between Cursed Man's recurring rewards after 100 tokens; 0 disables recurring rewards.")
-                    .defineInRange("skulltulaRewardRate", 7, 0, 30);
             naturalMonsterSpawning = builder.comment("Allow natural ZSS monster spawning. Also requires doMobSpawning; does not affect dungeon encounters or explicit summons.")
                     .define("naturalMonsterSpawning", true);
             masterMode = builder.comment("Enable Master Mode: five base hearts, double enemy health and damage, no dropped Small Hearts, and no natural magic regeneration.")

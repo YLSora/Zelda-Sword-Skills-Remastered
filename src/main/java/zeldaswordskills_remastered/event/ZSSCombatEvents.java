@@ -149,6 +149,7 @@ public final class ZSSCombatEvents {
     public static void holdParriedAttackers(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.level.isClientSide) return;
         AdvancedSwordSkills.holdParriedAttackers();
+        GroundSlam.tickImmobilized();
     }
 
     /**
@@ -162,7 +163,7 @@ public final class ZSSCombatEvents {
     @SubscribeEvent
     public static void attackerStunned(LivingAttackEvent event) {
         if (event.getSource().getEntity() instanceof LivingEntity attacker
-                && AdvancedSwordSkills.parryLocked(attacker)) event.setCanceled(true);
+                && (AdvancedSwordSkills.parryLocked(attacker) || GroundSlam.isImmobilized(attacker))) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

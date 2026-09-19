@@ -5,6 +5,10 @@
     "entries": [
       { "type": "minecraft:item", "name": "zeldaswordskills_remastered:small_heart", "conditions": [{ "condition": "minecraft:random_chance", "chance": 0.5 }] }
     ]
+  }, {
+    "rolls": 1.0,
+    "conditions": [{ "condition": "minecraft:random_chance", "chance": 0.02 }],
+    "entries": [{ "type": "minecraft:item", "name": "zeldaswordskills_remastered:skulltula_token" }]
   }],
   "random_sequence": "zeldaswordskills_remastered:entities/skulltula"
 }

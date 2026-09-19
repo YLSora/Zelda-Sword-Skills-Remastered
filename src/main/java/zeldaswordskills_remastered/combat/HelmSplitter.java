@@ -34,6 +34,7 @@ public final class HelmSplitter {
         private UUID protectedTarget;
         private boolean airborne;
         private long immuneUntil;
+        private long hitImmuneUntil;
         private double fallGrace;
 
         public void arm(int target, long until, double y) {
@@ -65,6 +66,8 @@ public final class HelmSplitter {
         public boolean immune(UUID attacker, long now) {
             return attacker.equals(protectedTarget) && (airborne || now < immuneUntil);
         }
+        public void hit(long now) { hitImmuneUntil = now + 30L; }
+        public boolean hitImmune(long now) { return now < hitImmuneUntil; }
         public double fallGrace() { return fallGrace; }
         public void clearFallGrace() { fallGrace = 0.0D; }
         public void interruptFlight() {
@@ -73,7 +76,7 @@ public final class HelmSplitter {
             immuneUntil = 0L;
             clearFallGrace();
         }
-        public void reset() { clearOpening(); interruptFlight(); }
+        public void reset() { clearOpening(); interruptFlight(); hitImmuneUntil = 0L; }
     }
 
     public static long window(int level) { return AdvancedSwordSkills.swordBreakWindow(level); }
@@ -101,7 +104,8 @@ public final class HelmSplitter {
         long now = player.level().getGameTime();
         int level = data.activeSkillLevel(ZSSContentIds.HELM_SPLITTER);
         state.observeJump(player.getY(), player.onGround());
-        if (level <= 0 || !state.ready(now) || !state.jumped() || player.onGround()) return false;
+        if (level <= 0 || !state.ready(now) || !state.jumped() || player.onGround()
+                || !TargetingService.isHoldingSword(player)) return false;
         int targetId = state.targetId();
         state.clearOpening();
         data.combat().useSwordBreak();
@@ -124,6 +128,7 @@ public final class HelmSplitter {
             DamageSource source = new DamageSource(player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                     .getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ZSSContentIds.HELM_SPLITTER)), player);
             if (attempt.hit(target.hurt(source, damage))) {
+                state.hit(now);
                 player.serverLevel().sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.MAGMA_BLOCK.defaultBlockState()),
                         target.getX(), target.getBoundingBox().maxY, target.getZ(),
                         20, target.getBbWidth() * 0.25D, 0.1D, target.getBbWidth() * 0.25D, 0.15D);

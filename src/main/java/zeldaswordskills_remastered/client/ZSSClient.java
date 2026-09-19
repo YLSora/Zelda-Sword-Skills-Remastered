@@ -31,6 +31,12 @@ public final class ZSSClient {
     }
 
     @SubscribeEvent
+    public static void registerReloadListeners(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener)
+                manager -> MagicMirrorEffect.releaseRenderer());
+    }
+
+    @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("combat", ZSSCombatOverlay::render);
         ZeldaSwordSkills_Remastered.LOGGER.info("ZeldaSwordSkills_Remastered client setup complete");
@@ -58,7 +64,7 @@ public final class ZSSClient {
             ItemProperties.register(ZSSRegistries.getItem("magic_mirror"),
                     ResourceLocation.fromNamespaceAndPath(ZeldaSwordSkills_Remastered.MOD_ID, "using"), (stack, level, living, seed) -> {
                         if (living == null || !living.isUsingItem() || living.getUseItem() != stack) return 0.0F;
-                        return Math.min(1.0F, (stack.getUseDuration() - living.getUseItemRemainingTicks()) / 140.0F);
+                        return Math.min(1.0F, (stack.getUseDuration() - living.getUseItemRemainingTicks()) / (float) stack.getUseDuration());
                     });
             ItemProperties.register(ZSSRegistries.getItem("skill_orb"),
                     ResourceLocation.fromNamespaceAndPath(ZeldaSwordSkills_Remastered.MOD_ID, "skill"), (stack, level, living, seed) -> {

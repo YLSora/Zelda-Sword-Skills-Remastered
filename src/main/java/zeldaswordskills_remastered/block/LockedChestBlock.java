@@ -78,7 +78,6 @@ public class LockedChestBlock extends BaseEntityBlock implements SongBlockListen
 
     private static boolean consumeKey(Player player, InteractionHand hand) {
         ItemStack key = player.getItemInHand(hand);
-        if (key.is(ZSSRegistries.getItem("skeleton_key"))) return true;
         if (!key.is(ZSSRegistries.getItem("small_key"))) return false;
         if (!player.getAbilities().instabuild) key.shrink(1);
         return true;

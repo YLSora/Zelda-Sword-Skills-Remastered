@@ -295,21 +295,6 @@
               "function": "minecraft:set_count"
             }
           ],
-          "name": "zeldaswordskills_remastered:skeleton_key"
-        },
-        {
-          "type": "minecraft:item",
-          "functions": [
-            {
-              "add": false,
-              "count": {
-                "type": "minecraft:uniform",
-                "max": 1.0,
-                "min": 1.0
-              },
-              "function": "minecraft:set_count"
-            }
-          ],
           "name": "zeldaswordskills_remastered:magic_container"
         },
         {

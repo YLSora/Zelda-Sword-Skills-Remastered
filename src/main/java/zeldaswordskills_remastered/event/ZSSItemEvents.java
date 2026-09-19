@@ -50,7 +50,7 @@ public final class ZSSItemEvents {
     @SubscribeEvent
     public static void tick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) return;
-        consumeInventoryHearts(player);
+        consumeInventoryPickups(player);
         if (player.isAlive() && player.tickCount % 40 == 0) {
             ZSSCapabilities.get(player).ifPresent(data -> {
                 if (!ZSSConfig.SERVER.masterMode.get() && data.restoreMagic(1.0F))
@@ -82,13 +82,15 @@ public final class ZSSItemEvents {
         }
     }
 
-    private static void consumeInventoryHearts(ServerPlayer player) {
+    private static void consumeInventoryPickups(ServerPlayer player) {
         if (player.isCreative() || !player.isAlive()) return;
         boolean consumed = false;
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             consumed |= ProgressionItem.consumeSmallHearts(player, player.getInventory().getItem(slot));
+            consumed |= ProgressionItem.consumeSkulltulaTokens(player, player.getInventory().getItem(slot));
         }
         consumed |= ProgressionItem.consumeSmallHearts(player, player.containerMenu.getCarried());
+        consumed |= ProgressionItem.consumeSkulltulaTokens(player, player.containerMenu.getCarried());
         if (consumed) {
             player.getInventory().setChanged();
             player.containerMenu.broadcastChanges();
@@ -215,9 +217,10 @@ public final class ZSSItemEvents {
         if (!player.getInventory().add(broken)) player.drop(broken, false);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void arrowLoose(ArrowLooseEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getBow().getItem() instanceof ZeldaCombatItems.HeroBow)) return;
+        if (event.getCharge() < 0 || net.minecraft.world.item.BowItem.getPowerForTime(event.getCharge()) < 0.1F) return;
         ItemStack ammo = player.getProjectile(event.getBow());
         if (!(ammo.getItem() instanceof ZeldaCombatItems.ElementArrow arrow)) return;
         float cost = switch (arrow.kind()) {
@@ -227,7 +230,12 @@ public final class ZSSItemEvents {
         };
         if (cost == 0.0F) return;
         boolean paid = ZSSCapabilities.get(player).map(data -> data.consumeMagic(cost)).orElse(false);
-        if (!paid) { event.setCanceled(true); return; }
+        if (!paid) {
+            event.setCanceled(true);
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.zeldaswordskills_remastered.arrow_magic_required", cost), true);
+            return;
+        }
         zeldaswordskills_remastered.network.ZSSNetwork.syncPlayerData(player);
     }
 

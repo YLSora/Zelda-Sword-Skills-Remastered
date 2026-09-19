@@ -52,5 +52,5 @@ public record SongStateMessage(Status status, List<SongNote> notes, Optional<Res
         context.setPacketHandled(true);
     }
 
-    public enum Status { OPEN, MATCHED, FAILED, RECORDED, SUCCESS, CLOSED }
+    public enum Status { OPEN, MATCHED, FAILED, RECORDED, SUCCESS, CLOSED, EFFECT_FAILED, INSTRUMENT_TOO_WEAK, FREE_PLAY }
 }

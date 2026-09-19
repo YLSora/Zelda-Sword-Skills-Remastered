@@ -32,7 +32,7 @@ public final class FatalStrike {
     public static void tick(ServerPlayer player, ZSSPlayerData data) {
         PlayerCombatState state = data.combat();
         long now = player.level().getGameTime();
-        LivingEntity target = TargetingService.getValidTarget(player, data).orElse(null);
+        LivingEntity target = TargetingService.getWeaponTarget(player, data).orElse(null);
         int level = data.activeSkillLevel(ZSSContentIds.ENDING_BLOW);
         if (!player.isAlive() || player.isSpectator() || target == null || level <= 0) {
             if (state.clearFocus()) ZSSNetwork.syncCombatState(player, state);
@@ -70,11 +70,11 @@ public final class FatalStrike {
             return true;
         }
         // All vanilla jump-critical damage is suppressed during focus; other skill damage is untouched.
-        if (TargetingService.getValidTarget(player, data).filter(locked -> locked == target).isEmpty()) {
+        if (TargetingService.getWeaponTarget(player, data).filter(locked -> locked == target).isEmpty()) {
             miss(player, data);
             return true;
         }
-        if (player.distanceToSqr(target) > 16.0D) {
+        if (!player.canReach(target, 0.0D)) {
             miss(player, data);
             return true;
         }
@@ -84,7 +84,7 @@ public final class FatalStrike {
         float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) * multiplier(level);
         DamageSource source = new DamageSource(player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                 .getHolderOrThrow(DAMAGE), player);
-        if (!target.hurt(source, damage)) {
+        if (!BasicSwordSkill.hurtLockedTarget(player, data, target, source, damage)) {
             miss(player, data);
             return true;
         }

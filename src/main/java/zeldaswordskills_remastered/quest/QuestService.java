@@ -19,7 +19,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import zeldaswordskills_remastered.ZeldaSwordSkills_Remastered;
 import zeldaswordskills_remastered.capability.ZSSCapabilities;
 import zeldaswordskills_remastered.capability.ZSSPlayerData;
-import zeldaswordskills_remastered.config.ZSSConfig;
 import zeldaswordskills_remastered.entity.npc.QuestNpc;
 import zeldaswordskills_remastered.item.InstrumentItem;
 import zeldaswordskills_remastered.network.ZSSNetwork;
@@ -34,7 +33,6 @@ import java.util.Map;
 public final class QuestService {
     private static final int ZELDA_OCARINA_TICKS = 45;
     private static final int BIGGORON_WAIT_TICKS = 48_000;
-    private static final String NEXT_SKULLTULA_REWARD = "zss_next_skulltula_reward";
 
     private static final List<MaskTrade> MASKS = List.of(
             new MaskTrade("keaton_mask", 8, 16),
@@ -174,14 +172,15 @@ public final class QuestService {
     }
 
     public static boolean interactVillager(ServerPlayer player, Villager villager, InteractionHand hand) {
+        if (player.getItemInHand(hand).is(Items.NAME_TAG)) return false;
         final boolean[] handled = {false};
         ZSSCapabilities.get(player).ifPresent(data -> {
             initialize(player, data);
-            if (tryConvertZelda(player, data, villager, hand)
+            if (isCursedMan(villager) && interactCursedMan(player, data, hand)
+                    || teachNamedSong(player, data, villager, hand)
+                    || tryConvertZelda(player, data, villager, hand)
                     || tryConvertBarnes(player, villager, hand)
                     || tryConvertMaskShop(player, data, villager, hand)
-                    || isCursedMan(villager) && !player.getItemInHand(hand).is(Items.NAME_TAG)
-                    && interactCursedMan(player, data, villager, hand)
                     || trySellMask(player, data, villager, hand)) {
                 handled[0] = true;
             } else if (isBiggoronTarget(villager)) {
@@ -192,13 +191,49 @@ public final class QuestService {
         return handled[0];
     }
 
+    /** Returns whether an instrument interaction should be handled by ZSS instead of vanilla trading. */
+    public static boolean isNamedSongTeacher(Villager villager, ItemStack held) {
+        if (!(held.getItem() instanceof InstrumentItem) || !villager.hasCustomName()) return false;
+        return switch (villager.getCustomName().getString()) {
+            case "Impa", "英帕", "Malon", "玛隆", "Saria", "萨莉亚",
+                    "Guru-Guru", "咕噜咕噜", "Scarecrow", "稻草人" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean teachNamedSong(ServerPlayer player, ZSSPlayerData data, Villager villager, InteractionHand hand) {
+        if (!isNamedSongTeacher(villager, player.getItemInHand(hand))) return false;
+        String name = villager.hasCustomName() ? villager.getCustomName().getString() : "";
+        ResourceLocation song = switch (name) {
+            case "Impa", "英帕" -> ZSSContentIds.LULLABY;
+            case "Malon", "玛隆" -> ZSSContentIds.EPONA;
+            case "Saria", "萨莉亚" -> ZSSContentIds.SARIA;
+            case "Guru-Guru", "咕噜咕噜" -> ZSSContentIds.STORMS;
+            default -> null;
+        };
+        if (song == null && (name.equals("Scarecrow") || name.equals("稻草人"))) {
+            if (data.scarecrowNotes().isEmpty()) {
+                player.sendSystemMessage(Component.literal("请先在稻草人处记录旋律，再向稻草人学习稻草人之歌。"));
+                return true;
+            }
+            song = ZSSContentIds.SCARECROW;
+        }
+        if (song == null) return false;
+        boolean learned = data.learnSong(song);
+        if (learned) ZSSAdvancementService.songLearned(player, song, data.songs().size());
+        sync(player);
+        player.sendSystemMessage(Component.translatable(
+                "message.zeldaswordskills_remastered.inscription.learned",
+                Component.translatable("song.zeldaswordskills_remastered." + song.getPath())));
+        return true;
+    }
+
     public static boolean attackForTrade(ServerPlayer player, Entity target) {
         final boolean[] handled = {false};
         ZSSCapabilities.get(player).ifPresent(data -> {
             initialize(player, data);
-            if (target instanceof Villager villager && isCursedMan(villager)
-                    && isItem(player.getMainHandItem(), "skulltula_token")) {
-                interactCursedMan(player, data, villager, InteractionHand.MAIN_HAND);
+            if (target instanceof Villager villager && isCursedMan(villager)) {
+                interactCursedMan(player, data, InteractionHand.MAIN_HAND);
                 handled[0] = true;
                 return;
             }
@@ -580,47 +615,27 @@ public final class QuestService {
         sync(player);
     }
 
-    private static boolean interactCursedMan(ServerPlayer player, ZSSPlayerData data, Villager villager, InteractionHand hand) {
-        ItemStack held = player.getItemInHand(hand);
-        if (!isItem(held, "skulltula_token") && data.skulltulaTokens() < 100) {
-            if (data.skulltulaTokens() > 0) tell(player, "cursed_man.amount", data.skulltulaTokens());
+    private static boolean interactCursedMan(ServerPlayer player, ZSSPlayerData data, InteractionHand hand) {
+        if (hand != InteractionHand.MAIN_HAND) return true;
+        int nextTrade = data.skulltulaTrades() + 1;
+        long required = nextTrade * 10L;
+        if (data.skulltulaTokens() < required) {
+            if (data.skulltulaTokens() > 0) tell(player, "cursed_man.amount", data.skulltulaTokens(), required);
             else tell(player, "cursed_man.story");
             return true;
         }
-        if (data.skulltulaTokens() >= 100) {
-            int days = ZSSConfig.SERVER.skulltulaRewardRate.get();
-            long now = player.level().getGameTime();
-            var persistent = villager.getPersistentData();
-            // A newly named villager must also wait before offering recurring rewards.
-            if (days > 0 && !persistent.contains(NEXT_SKULLTULA_REWARD)) {
-                persistent.putLong(NEXT_SKULLTULA_REWARD, now + 24_000L * days);
-            }
-            if (days > 0 && now >= persistent.getLong(NEXT_SKULLTULA_REWARD)) {
-                persistent.putLong(NEXT_SKULLTULA_REWARD, now + 24_000L * days);
-                give(player, new ItemStack(Items.EMERALD, 64));
-                tell(player, "cursed_man.reward", 100);
-            } else tell(player, "cursed_man.complete");
-            return true;
-        }
-        held.shrink(1);
-        data.addSkulltulaToken();
-        int total = data.skulltulaTokens();
-        ItemStack reward = switch (total) {
-            case 10 -> stack("whip", 1);
-            case 20 -> stack("zora_tunic_chestplate", 1);
-            case 30 -> cursedBombBag();
-            case 40 -> zeldaswordskills_remastered.item.BigKeyItem.forDungeon(ZSSRegistries.getItem("big_key"),
+        ItemStack reward = switch ((nextTrade - 1) % 5) {
+            case 0 -> stack("whip", 1);
+            case 1 -> stack("zora_tunic_chestplate", 1);
+            case 2 -> cursedBombBag();
+            case 3 -> zeldaswordskills_remastered.item.BigKeyItem.forDungeon(ZSSRegistries.getItem("big_key"),
                     zeldaswordskills_remastered.worldgen.DungeonType.values()[player.getRandom().nextInt(zeldaswordskills_remastered.worldgen.DungeonType.values().length)].id());
-            case 50 -> randomSkillOrb(player, data);
-            case 100 -> new ItemStack(Items.EMERALD, 64);
-            default -> ItemStack.EMPTY;
+            default -> randomSkillOrb(player, data);
         };
-        if (total == 100 && ZSSConfig.SERVER.skulltulaRewardRate.get() > 0) {
-            villager.getPersistentData().putLong(NEXT_SKULLTULA_REWARD,
-                    player.level().getGameTime() + 24_000L * ZSSConfig.SERVER.skulltulaRewardRate.get());
-        }
-        if (!reward.isEmpty()) give(player, reward);
-        tell(player, reward.isEmpty() ? "cursed_man.amount" : "cursed_man.reward", total);
+        data.advanceSkulltulaTrade();
+        give(player, reward);
+        if (nextTrade % 10 == 0) give(player, new ItemStack(Items.EMERALD, 64));
+        tell(player, "cursed_man.reward", (int) required);
         sync(player);
         return true;
     }
@@ -633,9 +648,11 @@ public final class QuestService {
     }
 
     private static ItemStack randomSkillOrb(ServerPlayer player, ZSSPlayerData data) {
+        boolean allMaxed = ZSSContentIds.SKILLS.stream()
+                .allMatch(id -> data.skillLevel(id) >= data.skillMaximum(id));
+        if (allMaxed) return stack("light_arrow", 16);
         List<ResourceLocation> candidates = ZSSContentIds.SKILLS.stream()
-                .filter(id -> !id.equals(ZSSContentIds.BONUS_HEART)
-                        && data.skillLevel(id) < data.skillMaximum(id)).toList();
+                .filter(id -> data.skillLevel(id) < data.skillMaximum(id)).toList();
         if (candidates.isEmpty()) return stack("light_arrow", 16);
         ItemStack orb = stack("skill_orb", 1);
         orb.getOrCreateTag().putString(zeldaswordskills_remastered.item.ProgressionItem.SKILL_TAG,
@@ -698,9 +715,10 @@ public final class QuestService {
     }
 
     private static boolean tryConvertOrca(ServerPlayer player, ZSSPlayerData data, Villager villager) {
-        if (villager.isBaby() || !villager.getName().getString().equals("Orca")
+        if (villager.isBaby() || !(villager.getName().getString().equals("Orca")
+                || villager.getName().getString().equals("奥卡"))
                 || !isItem(player.getMainHandItem(), "knights_crest")) return false;
-        QuestNpc orca = convertVillager(player, villager, ZSSRegistries.ORCA.get(), "Orca");
+        QuestNpc orca = convertVillager(player, villager, ZSSRegistries.ORCA.get(), villager.getName().getString());
         if (orca == null) return false;
         interactOrca(player, data, InteractionHand.MAIN_HAND);
         return true;
@@ -712,11 +730,29 @@ public final class QuestService {
 
     private static QuestNpc convertVillager(ServerPlayer player, Villager villager,
                                              net.minecraft.world.entity.EntityType<QuestNpc> type, String name) {
-        QuestNpc npc = type.create(player.serverLevel());
+        return convertVillager(villager, type, name);
+    }
+
+    public static void convertNamedVillager(Villager villager) {
+        if (villager.isBaby() || !villager.hasCustomName() || villager.isRemoved()) return;
+        String name = villager.getCustomName().getString();
+        net.minecraft.world.entity.EntityType<QuestNpc> type = switch (name) {
+            case "Biggoron", "大哥隆" -> ZSSRegistries.GORON.get();
+            case "Zelda", "Princess Zelda", "塞尔达", "塞尔达公主" -> ZSSRegistries.ZELDA.get();
+            case "Barnes", "巴恩斯" -> ZSSRegistries.BARNES.get();
+            // The Mask Salesman and Orca still require their quest-item interactions.
+            default -> null;
+        };
+        if (type != null) convertVillager(villager, type, name);
+    }
+
+    private static QuestNpc convertVillager(Villager villager,
+                                             net.minecraft.world.entity.EntityType<QuestNpc> type, String name) {
+        QuestNpc npc = type.create(villager.level());
         if (npc == null) return null;
         npc.moveTo(villager.getX(), villager.getY(), villager.getZ(), villager.getYRot(), villager.getXRot());
         npc.setCustomName(Component.literal(name));
-        if (!player.serverLevel().addFreshEntity(npc)) return null;
+        if (!villager.level().addFreshEntity(npc)) return null;
         villager.discard();
         return npc;
     }
@@ -739,8 +775,8 @@ public final class QuestService {
     }
 
     private static boolean matchesTarget(Entity target, BiggoronTrade trade) {
-        if (!target.getName().getString().equals(trade.targetName())) return false;
         if (trade.goron()) return target instanceof QuestNpc npc && npc.role() == QuestNpc.Role.GORON;
+        if (!target.getName().getString().equals(trade.targetName())) return false;
         if (!(target instanceof Villager villager) || villager.getVillagerData().getProfession() != trade.profession()) return false;
         return !trade.baby() || villager.isBaby();
     }

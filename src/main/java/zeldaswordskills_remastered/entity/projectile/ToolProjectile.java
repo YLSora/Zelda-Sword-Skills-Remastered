@@ -22,6 +22,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -244,6 +246,7 @@ public final class ToolProjectile extends ThrowableItemProjectile {
                 Vec3 destination = pullingOwner ? hookAnchor.subtract(0.0D, player.getBbHeight() * 0.5D, 0.0D)
                         : HookshotPull.destination(player, target, hookLaunchYaw);
                 if (target.level() != level() || (!pullingOwner && !HookshotPull.canGrab(target))
+                        || (pullingOwner && player.getBoundingBox().inflate(0.5D).contains(hookAnchor))
                         || distanceToSqr(player) > (configuredRange + 4.0D) * (configuredRange + 4.0D)
                         || !hookPull.tick(destination, pullingOwner ? 0.8D : 0.15D)) {
                     if (target instanceof ItemEntity item && item.distanceToSqr(player) < 1.0D) {
@@ -337,7 +340,6 @@ public final class ToolProjectile extends ThrowableItemProjectile {
                 case FIRE -> living.setSecondsOnFire(5);
                 case ICE -> living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 2));
                 case LIGHTNING -> living.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), 50, 0));
-                case WIND -> living.push(getDeltaMovement().x * 1.2D, 0.65D, getDeltaMovement().z * 1.2D);
                 case SEED, NUT -> living.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), mode == Mode.NUT ? 40 : 15));
                 default -> { }
             }
@@ -353,6 +355,7 @@ public final class ToolProjectile extends ThrowableItemProjectile {
             setDeltaMovement(Vec3.ZERO);
             return;
         }
+        applyRodImpact(hit.getLocation());
         if (level() instanceof ServerLevel server) spawnElementParticles(server, mode, 16, 0.3D);
         if (mode.isBoomerang()) entityData.set(RETURNING, true);
         else discard();
@@ -360,6 +363,7 @@ public final class ToolProjectile extends ThrowableItemProjectile {
 
     @Override protected void onHitBlock(BlockHitResult hit) {
         Mode mode = mode();
+        if (mode == Mode.HOOKSHOT && (isAnchored() || isReturning())) return;
         if (!level().isClientSide && level() instanceof ServerLevel server) {
             if (mode == Mode.HOOKSHOT && getOwner() instanceof net.minecraft.server.level.ServerPlayer player) {
                 var state = server.getBlockState(hit.getBlockPos());
@@ -397,18 +401,43 @@ public final class ToolProjectile extends ThrowableItemProjectile {
                     return;
                 }
             }
-            BlockPos pos = hit.getBlockPos().relative(hit.getDirection());
-            if (mode == Mode.FIRE && server.getBlockState(pos).canBeReplaced() && BaseFireBlock.canBePlacedAt(server, pos, hit.getDirection()))
-                server.setBlockAndUpdate(pos, BaseFireBlock.getState(server, pos));
-            else if (mode == Mode.ICE) {
+            if (mode == Mode.ICE) {
                 BlockPos source = hit.getBlockPos();
                 if (server.getBlockState(source).is(Blocks.WATER)) server.setBlockAndUpdate(source, Blocks.ICE.defaultBlockState());
                 else if (server.getBlockState(source).is(Blocks.LAVA)) server.setBlockAndUpdate(source, Blocks.OBSIDIAN.defaultBlockState());
             }
+            // Keep impacts on a block boundary in the space outside the struck face.
+            applyRodImpact(hit.getLocation().add(Vec3.atLowerCornerOf(hit.getDirection().getNormal()).scale(0.001D)));
         }
         if (mode.isBoomerang()) entityData.set(RETURNING, true);
         else if (mode != Mode.HOOKSHOT) discard();
         if (level() instanceof ServerLevel server) spawnElementParticles(server, mode, 16, 0.3D);
+    }
+
+    private void applyRodImpact(Vec3 impact) {
+        if (!(level() instanceof ServerLevel server)) return;
+        if (mode() == Mode.WIND) {
+            Vec3 horizontal = getDeltaMovement().multiply(1.0D, 0.0D, 1.0D).normalize();
+            for (Entity target : server.getEntities(getOwner(), new AABB(impact, impact).inflate(2.0D),
+                    entity -> entity.isAlive() && !entity.isSpectator()
+                            && (entity instanceof LivingEntity || entity instanceof ItemEntity))) {
+                // Vertical shots spread out from the impact instead of losing their horizontal push.
+                Vec3 direction = horizontal.lengthSqr() > 1.0E-8D ? horizontal
+                        : target.position().subtract(impact).multiply(1.0D, 0.0D, 1.0D).normalize();
+                target.push(direction.x * 0.8D, target instanceof LivingEntity ? 0.65D : 0.15D, direction.z * 0.8D);
+                target.hurtMarked = true;
+            }
+        } else if (mode() == Mode.ICE || mode() == Mode.FIRE) {
+            BlockPos source = BlockPos.containing(impact);
+            for (BlockPos pos : BlockPos.betweenClosed(source.offset(-1, 0, -1), source.offset(1, 1, 1))) {
+                if (mode() == Mode.ICE) {
+                    if (server.getBlockState(pos).is(BlockTags.FIRE)) server.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+                } else if (server.getBlockState(pos).canBeReplaced()
+                        && BaseFireBlock.canBePlacedAt(server, pos, net.minecraft.core.Direction.UP)) {
+                    server.setBlockAndUpdate(pos, BaseFireBlock.getState(server, pos));
+                }
+            }
+        }
     }
 
     private void spawnElementParticles(ServerLevel level, Mode mode, int count, double spread) {

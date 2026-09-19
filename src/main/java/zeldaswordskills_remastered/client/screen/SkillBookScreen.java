@@ -122,7 +122,7 @@ public final class SkillBookScreen extends Screen {
                         slot.id().equals(selected) ? 0xFFFFE080 : 0xFFFFFFFF);
             }
         }
-        String tokens = Integer.toString(minecraft.player.getInventory().countItem(ZSSRegistries.getItem("skulltula_token")));
+        String tokens = "\u2620 " + data.skulltulaTokens();
         graphics.drawString(font, tokens, left + 128 - font.width(tokens), top + 159, TEXT_COLOR, false);
         renderDescription(graphics, data, left, top);
         if (hovered != null) {

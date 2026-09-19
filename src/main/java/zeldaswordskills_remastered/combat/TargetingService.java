@@ -29,7 +29,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class TargetingService {
-    private static final double MINIMUM_VIEW_DOT = 0.25D;
+    private static final double MINIMUM_VIEW_DOT = 0.35D;
+    private static final double[] LOCK_RANGES = {0, 8, 8, 10, 12, 14, 16, 18, 20, 22, 24};
     public static final TagKey<net.minecraft.world.item.Item> SWORDS = TagKey.create(Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(zeldaswordskills_remastered.ZeldaSwordSkills_Remastered.MOD_ID, "swords"));
 
@@ -42,8 +43,7 @@ public final class TargetingService {
             return;
         }
         int level = data.activeSkillLevel(ZSSContentIds.SWORD_BASIC);
-        if (level <= 0 || !isHoldingSword(player) && data.activeSkillLevel(ZSSContentIds.FLASH_ASSAULT) <= 0
-                && !data.combat().iaiSlash().active()) {
+        if (level <= 0) {
             clear(player, data);
             return;
         }
@@ -117,6 +117,21 @@ public final class TargetingService {
         return data.activeSkillLevel(ZSSContentIds.SWORD_BASIC);
     }
 
+    public static double lockRange(int level) {
+        return LOCK_RANGES[Mth.clamp(level, 0, 10)];
+    }
+
+    public static java.util.Optional<LivingEntity> getWeaponTarget(ServerPlayer player, ZSSPlayerData data) {
+        return isHoldingWeapon(player) ? getLockedTarget(player, data) : java.util.Optional.empty();
+    }
+
+    public static boolean isHoldingWeapon(Player player) {
+        return !player.getMainHandItem().isEmpty() && (isHoldingSword(player)
+                || player.getMainHandItem().getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND)
+                .get(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).stream()
+                .anyMatch(modifier -> modifier.getAmount() > 0.0D));
+    }
+
     public static boolean isHoldingSword(Player player) {
         ItemStack stack = player.getMainHandItem();
         return stack.getItem() instanceof SwordItem || stack.is(ItemTags.SWORDS) || stack.is(SWORDS);
@@ -157,7 +172,7 @@ public final class TargetingService {
     }
 
     private static List<LivingEntity> candidates(ServerPlayer player, int level) {
-        double range = 6.0D + level;
+        double range = lockRange(level);
         AABB bounds = player.getBoundingBox().inflate(range);
         return player.level().getEntitiesOfClass(LivingEntity.class, bounds,
                         target -> isValid(player, target, level, true))
@@ -170,7 +185,7 @@ public final class TargetingService {
         // Friends are not enemies: a sword skill never locks a passive animal, an NPC or a fairy.
         if (isFriendly(target)) return false;
         if (target instanceof Player && !ZSSConfig.SERVER.canTargetPlayers.get()) return false;
-        double range = 6.0D + level;
+        double range = lockRange(level);
         if (player.distanceToSqr(target) > range * range || !player.hasLineOfSight(target)) return false;
         if (!requireViewCone) return true;
         Vec3 direction = target.getBoundingBox().getCenter().subtract(player.getEyePosition()).normalize();

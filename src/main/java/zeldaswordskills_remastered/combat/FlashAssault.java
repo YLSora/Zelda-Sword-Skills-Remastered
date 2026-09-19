@@ -39,16 +39,13 @@ import java.util.Optional;
 public final class FlashAssault {
     public static final int READY_TICKS = 60;
     public static final int FOLLOW_UP_TICKS = 20;
-    public static final int DODGE_IMMUNITY_EXTENSION_TICKS = 10;
     public static final int IMMUNITY_TICKS = 20;
     public static final int COOLDOWN_TICKS = 60;
     public static final int DOUBLE_TAP_TICKS = 6;
-    /** Allows an early dodge against melee attacks with no visible wind-up. */
-    public static final int DODGE_CONFIRM_GRACE_TICKS = 6;
     private static final ResourceKey<DamageType> DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, ZSSContentIds.FLASH_ASSAULT);
     private static final TagKey<DamageType> MELEE_ATTACKS = TagKey.create(Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(ZeldaSwordSkills_Remastered.MOD_ID, "melee_attacks"));
-    private static final float[] PITCHES = {1.2F, 1.3F, 1.45F, 1.6F, 1.8F};
+    private static final float[] PITCHES = {1.2F, 1.3F, 1.45F, 1.6F, 1.8F, 2.0F};
 
     private FlashAssault() {}
 
@@ -86,11 +83,11 @@ public final class FlashAssault {
             dodgeTarget = targetId;
             dodgeConfirmed = false;
             dodgeStartedAt = now;
-            dodgeUntil = now + PlayerCombatState.DODGE_DURATION_TICKS;
+            dodgeUntil = now + PlayerCombatState.DODGE_IMMUNITY_TICKS;
         }
         public boolean dodgeConfirmable(long now) {
             return dodgeTarget >= 0 && !dodgeConfirmed && dodgeStartedAt != Long.MIN_VALUE
-                    && now >= dodgeStartedAt && now < dodgeUntil + DODGE_CONFIRM_GRACE_TICKS;
+                    && now >= dodgeStartedAt && now < dodgeUntil;
         }
         public boolean confirmDodge(int targetId, long now) {
             if (targetId < 0 || dodgeTarget != targetId || dodgeConfirmed || busy() || coolingDown(now)
@@ -100,8 +97,6 @@ public final class FlashAssault {
             targetInvalidated = false;
             readyUntil = now + READY_TICKS;
             firstTap = Long.MIN_VALUE;
-            // Extend the original dodge deadline once, without extending movement or cooldown.
-            immuneUntil = Math.max(immuneUntil, dodgeUntil + DODGE_IMMUNITY_EXTENSION_TICKS);
             return true;
         }
         public boolean ready(long now) { return target >= 0 && !targetInvalidated && now < readyUntil; }
@@ -377,14 +372,12 @@ public final class FlashAssault {
     public static int hitCount(double attackSpeed) {
         return FlashAssaultBurst.hitCount(attackSpeed);
     }
-    /** Ticks between hits, chosen so every tier spans a comparable 12-13 tick burst. */
+    /** Ticks between hits for the selected speed tier. */
     public static int hitInterval(int hits) { return FlashAssaultBurst.hitInterval(hits); }
 
-    /** Per-hit damage uses the weapon class multiplier plus an additive level bonus. */
+    /** Per-hit damage uses the same attack-speed tier as the hit count. */
     public static float damage(double attackDamage, ItemStack weapon, int level) {
-        if (isSword(weapon)) return (float) (attackDamage * 0.50D + 0.10D * level);
-        if (isAxe(weapon)) return (float) (attackDamage * 0.75D + 0.15D * level);
-        return (float) (attackDamage + 0.20D * level);
+        return FlashAssaultBurst.damage(attackDamage, weaponAttackSpeed(weapon), level);
     }
 
     /** Distance is calibrated through the existing vanilla knockback impulse helper. */
@@ -415,6 +408,7 @@ public final class FlashAssault {
                     ? speed + modifier.getAmount()
                     : speed * (1.0D + modifier.getAmount());
         }
-        return speed;
+        // Vanilla weapon modifiers originate as floats (4 - 3.1F is slightly above 0.9).
+        return Math.round(speed * 1_000_000.0D) / 1_000_000.0D;
     }
 }

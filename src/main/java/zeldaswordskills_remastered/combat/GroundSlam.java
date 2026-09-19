@@ -12,6 +12,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.block.Blocks;
 import zeldaswordskills_remastered.capability.ZSSPlayerData;
@@ -19,18 +20,53 @@ import zeldaswordskills_remastered.registry.ZSSContentIds;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
 import zeldaswordskills_remastered.network.ZSSNetwork;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 /** A successful descending melee hit primes one landing; its fall immunity outlives the impact window. */
 public final class GroundSlam {
     private static final ResourceKey<DamageType> DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE,
             ZSSContentIds.LEAPING_BLOW);
+    private static final long IMMOBILIZE_TICKS = 30L;
+    private static final Map<UUID, HeldEntity> IMMOBILIZED = new HashMap<>();
 
     private GroundSlam() { }
+
+    private record HeldEntity(LivingEntity entity, long until, double x, double z) { }
+
+    public static boolean isImmobilized(Entity entity) {
+        if (!(entity instanceof LivingEntity living)) return false;
+        HeldEntity held = IMMOBILIZED.get(living.getUUID());
+        if (held == null || held.until() <= living.level().getGameTime() || !living.isAlive()) {
+            IMMOBILIZED.remove(living.getUUID());
+            return false;
+        }
+        return true;
+    }
+
+    public static void tickImmobilized() {
+        IMMOBILIZED.entrySet().removeIf(entry -> {
+            HeldEntity held = entry.getValue();
+            LivingEntity entity = held.entity();
+            if (!entity.isAlive() || held.until() <= entity.level().getGameTime()) return true;
+            entity.setPos(held.x(), entity.getY(), held.z());
+            entity.setDeltaMovement(0.0D, entity.getDeltaMovement().y, 0.0D);
+            entity.hurtMarked = true;
+            return false;
+        });
+    }
+
+    private static void immobilize(LivingEntity target, long now) {
+        IMMOBILIZED.put(target.getUUID(), new HeldEntity(target, now + IMMOBILIZE_TICKS, target.getX(), target.getZ()));
+        target.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), (int) IMMOBILIZE_TICKS, 0));
+    }
 
     public static boolean canStrike(ServerPlayer player, ZSSPlayerData data) {
         // Server-player velocity can retain the launch impulse; fallDistance follows movement packets.
         return data.activeSkillLevel(ZSSContentIds.LEAPING_BLOW) > 0 && data.combat().groundSlamReady()
                 && player.isAlive() && !player.isSpectator() && !player.onGround() && player.fallDistance > 0.0F
-                && !fallInterrupted(player) && TargetingService.isHoldingSword(player);
+                && !fallInterrupted(player) && TargetingService.isHoldingWeapon(player);
     }
 
     /** True consumes the attack, including refusals; no ordinary hit accompanies this skill. */
@@ -41,11 +77,12 @@ public final class GroundSlam {
         player.swing(InteractionHand.MAIN_HAND, true);
         try (var attempt = FatalStrike.watchAttack(player, data)) {
             if (target == null || !target.isAlive() || !target.isAttackable() || target.isSpectator()
-                    || player.distanceToSqr(target) > 16.0D || !player.hasLineOfSight(target)) return true;
+                    || !player.canReach(target, 0.0D) || !player.hasLineOfSight(target)) return true;
             int level = data.activeSkillLevel(ZSSContentIds.LEAPING_BLOW);
             float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) + 2.0F * level;
             if (attempt.hit(target.hurt(source(player), damage))) {
                 data.combat().groundSlamHit(target.getId(), player.level().getGameTime());
+                immobilize(target, player.level().getGameTime());
                 BasicSwordSkill.recordComboHit(player, data, target, damage);
                 feedback(player, radius(level));
             }
@@ -72,7 +109,7 @@ public final class GroundSlam {
         clear(player, data);
         int level = data.activeSkillLevel(ZSSContentIds.LEAPING_BLOW);
         if (!impact || level <= 0 || !player.isAlive() || fallInterrupted(player)
-                || !TargetingService.isHoldingSword(player)) return immune;
+                || !TargetingService.isHoldingWeapon(player)) return immune;
         double radius = radius(level);
         float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) + 0.75F * level;
         int weakness = (AdvancedSwordSkills.isMasterSwordAtFullHealth(player) ? 110 : 50) + 10 * level;
@@ -84,6 +121,7 @@ public final class GroundSlam {
                         && player.distanceToSqr(target) <= radius * radius)) {
             if (target.hurt(source(player), damage)) {
                 hit = true;
+                immobilize(target, player.level().getGameTime());
                 target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, weakness));
                 BasicSwordSkill.recordComboHit(player, data, target, damage);
             }

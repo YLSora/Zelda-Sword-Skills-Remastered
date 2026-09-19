@@ -52,7 +52,7 @@ public final class DungeonLootTables implements LootTableSubProvider {
                 item("boomerang",1,1,2), item("heavy_boots"), item("hover_boots"), item("pegasus_boots"), item("rubber_boots"),
                 item("empty_spirit_crystal"), item("deku_leaf"), LootItem.lootTableItem(Items.ENCHANTED_GOLDEN_APPLE),
                 item("wooden_hammer",1,1,2), item("hero_bow",1,1,2), item("hookshot",1,1,2), item("hookshot_extender"),
-                item("claw_upgrade"), item("multi_hook_upgrade"), item("ocarina_of_time"), item("skeleton_key"),
+                item("claw_upgrade"), item("multi_hook_upgrade"), item("ocarina_of_time"),
                 item("magic_container"), item("magic_mirror"), item("master_ore"), item("blue_potion"), item("rocs_feather"),
                 item("hylian_shield",1,1,2), item("slingshot",1,1,2), item("whip",1,1,2))));
         out.accept(id("chests/pools/locked"), table(pool(1,3,
@@ -75,7 +75,9 @@ public final class DungeonLootTables implements LootTableSubProvider {
         out.accept(id("chests/pools/big_keys"), table(keys));
         for (DungeonType type : DungeonType.values()) {
             String environment = switch(type) { case FIRE -> "nether"; case WATER -> "ocean"; case EARTH -> "mountain"; default -> "land"; };
-            LootTable.Builder reward = base(environment, true).withPool(reference("boss").setRolls(UniformGenerator.between(1,2)));
+            float keyChance = type == DungeonType.FIRE ? .75F : .30F;
+            LootTable.Builder reward = base(environment, true).withPool(skeletonKey(keyChance))
+                    .withPool(reference("boss").setRolls(UniformGenerator.between(1,2)));
             String pendant = switch(type) { case DESERT -> "pendant_courage"; case ICE -> "pendant_power"; case WATER -> "pendant_wisdom"; default -> null; };
             if (pendant != null) reward.withPool(pool(1,1,item(pendant)));
             out.accept(id("chests/pools/" + type.getSerializedName()), table(pool(1,1, themed(type))));
@@ -86,11 +88,12 @@ public final class DungeonLootTables implements LootTableSubProvider {
                         .when(LootItemRandomChanceCondition.randomChance(.01F)));
             }
             out.accept(temple(type,true), reward);
-            out.accept(temple(type,false), base(environment,true));
+            out.accept(temple(type,false), base(environment,true).withPool(skeletonKey(keyChance)));
         }
         for (String environment : new String[]{"land","mountain","ocean","nether","lava"}) {
             for (boolean locked : new boolean[]{false,true}) {
                 LootTable.Builder loot = base(environment,locked)
+                        .withPool(skeletonKey(.30F))
                         .withPool(pool(1,1,item("heart_piece")));
                 if (locked) loot.withPool(reference("boss").when(LootItemRandomChanceCondition.randomChance(.25F)))
                         .withPool(reference("big_keys").when(LootItemRandomChanceCondition.randomChance(.2F)));
@@ -152,13 +155,16 @@ public final class DungeonLootTables implements LootTableSubProvider {
         String[] items = switch(type) {
             case DESERT -> new String[]{"boomerang","hover_boots","hookshot_extender","gibdo_mask","fire_rod"};
             case EARTH -> new String[]{"pegasus_boots","wooden_hammer","blast_mask","claw_upgrade","broken_sword"};
-            case FIRE -> new String[]{"skeleton_key","hero_bow","multi_hook_upgrade","majora_mask","goron_tunic_chestplate"};
+            case FIRE -> new String[]{"hero_bow","multi_hook_upgrade","majora_mask","goron_tunic_chestplate"};
             case FOREST -> new String[]{"deku_leaf","hero_bow","hookshot","hawkeye_mask","whip"};
             case ICE -> new String[]{"boomerang","hover_boots","silver_gauntlets","giants_mask","ice_rod"};
             case WATER -> new String[]{"heavy_boots","stone_mask","slingshot","zora_tunic_chestplate"};
             case END -> new String[]{"rubber_boots","wooden_hammer","hero_bow","hawkeye_mask","tornado_rod"};
         };
         return java.util.Arrays.stream(items).map(DungeonLootTables::item).toArray(LootPoolSingletonContainer.Builder<?>[]::new);
+    }
+    private static LootPool.Builder skeletonKey(float chance) {
+        return pool(1, 1, item("skeleton_key")).when(LootItemRandomChanceCondition.randomChance(chance));
     }
     private static LootItem.Builder item(String name) { return item(name,1,1,1); }
     private static LootItem.Builder item(String name,int min,int max,int weight) {

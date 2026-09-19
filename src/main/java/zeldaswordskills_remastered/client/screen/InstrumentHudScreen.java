@@ -1,9 +1,11 @@
 package zeldaswordskills_remastered.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -30,6 +32,7 @@ public final class InstrumentHudScreen extends Screen {
     private long seenRevision;
     private int closeAtTick = -1;
     private boolean cancelOnClose = true;
+    private Button freePlayButton;
 
     public InstrumentHudScreen() {
         super(Component.translatable("hud.zeldaswordskills_remastered.instrument"));
@@ -42,13 +45,32 @@ public final class InstrumentHudScreen extends Screen {
     }
 
     @Override
+    protected void init() {
+        freePlayButton = addRenderableWidget(Button.builder(freePlayLabel(), button -> {
+            ZSSNetwork.sendSongIntent(new SongIntentMessage(ZSSClientSongState.status() == SongStateMessage.Status.FREE_PLAY
+                    ? SongIntentMessage.Action.FREE_PLAY_OFF : SongIntentMessage.Action.FREE_PLAY_ON));
+        }).bounds((width - Math.min(180, width - 16)) / 2, 0, Math.min(180, width - 16), 20).build());
+        updateFreePlayButton();
+    }
+
+    private void updateFreePlayButton() {
+        freePlayButton.setMessage(freePlayLabel());
+        SongStateMessage.Status status = ZSSClientSongState.status();
+        freePlayButton.active = status == SongStateMessage.Status.OPEN || status == SongStateMessage.Status.FAILED
+                || status == SongStateMessage.Status.FREE_PLAY;
+    }
+
+    @Override
     public void tick() {
         if (minecraft == null || minecraft.player == null) return;
         if (seenRevision != ZSSClientSongState.revision()) {
             seenRevision = ZSSClientSongState.revision();
+            updateFreePlayButton();
             SongStateMessage.Status status = ZSSClientSongState.status();
             if (status == SongStateMessage.Status.SUCCESS || status == SongStateMessage.Status.RECORDED) {
                 closeAtTick = minecraft.player.tickCount + 30;
+            } else if (status == SongStateMessage.Status.INSTRUMENT_TOO_WEAK || status == SongStateMessage.Status.EFFECT_FAILED) {
+                closeAtTick = minecraft.player.tickCount + 60;
             } else if (status == SongStateMessage.Status.CLOSED) {
                 closeWithoutCancel();
                 return;
@@ -68,10 +90,11 @@ public final class InstrumentHudScreen extends Screen {
         int textWidth = Math.max(80, Math.min(280, width - 16));
         List<FormattedCharSequence> headingLines = font.split(heading, textWidth);
         List<FormattedCharSequence> statusLines = font.split(status, textWidth);
+        int statusLineCount = Math.max(1, statusLines.size());
         List<FormattedCharSequence> controlLines = font.split(controls, textWidth);
         int lineHeight = font.lineHeight;
-        int contentHeight = (headingLines.size() + statusLines.size() + controlLines.size()) * lineHeight
-                + HUD_HEIGHT + 12;
+        int contentHeight = (headingLines.size() + statusLineCount + controlLines.size()) * lineHeight
+                + HUD_HEIGHT + 36;
         int contentTop = Math.max(8, (height - contentHeight) / 2);
         int left = (width - HUD_WIDTH) / 2;
         int top = contentTop + headingLines.size() * lineHeight + 4;
@@ -88,7 +111,15 @@ public final class InstrumentHudScreen extends Screen {
 
         int textY = top + HUD_HEIGHT + 4;
         drawCenteredLines(graphics, statusLines, textY, 0xFFFFFF);
-        drawCenteredLines(graphics, controlLines, textY + statusLines.size() * lineHeight + 4, 0xBFBFBF);
+        drawCenteredLines(graphics, controlLines, textY + statusLineCount * lineHeight + 4, 0xBFBFBF);
+        freePlayButton.setY(textY + (statusLineCount + controlLines.size()) * lineHeight + 8);
+        super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private Component freePlayLabel() {
+        return Component.translatable(ZSSClientSongState.status() == SongStateMessage.Status.FREE_PLAY
+                ? "hud.zeldaswordskills_remastered.instrument.free_play_on"
+                : "hud.zeldaswordskills_remastered.instrument.free_play_off");
     }
 
     private void drawCenteredLines(GuiGraphics graphics, List<FormattedCharSequence> lines, int y, int color) {
@@ -99,6 +130,7 @@ public final class InstrumentHudScreen extends Screen {
 
     private Component statusText() {
         return switch (ZSSClientSongState.status()) {
+            case FREE_PLAY -> Component.empty();
             case MATCHED -> {
                 Minecraft game = Minecraft.getInstance();
                 long now = game.level == null ? 0L : game.level.getGameTime();
@@ -106,6 +138,8 @@ public final class InstrumentHudScreen extends Screen {
                 yield Component.translatable("hud.zeldaswordskills_remastered.instrument.playing", String.format("%.1f", ticks / 20.0D));
             }
             case FAILED -> Component.translatable("hud.zeldaswordskills_remastered.instrument.failed");
+            case EFFECT_FAILED -> Component.translatable("hud.zeldaswordskills_remastered.instrument.effect_failed");
+            case INSTRUMENT_TOO_WEAK -> Component.translatable("hud.zeldaswordskills_remastered.instrument.too_weak");
             case RECORDED -> Component.translatable("hud.zeldaswordskills_remastered.instrument.recorded");
             case SUCCESS -> Component.translatable("hud.zeldaswordskills_remastered.instrument.success");
             default -> Component.translatable("hud.zeldaswordskills_remastered.instrument.ready");
@@ -114,6 +148,7 @@ public final class InstrumentHudScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_UP || keyCode == GLFW.GLFW_KEY_DOWN) return true;
         SongNote note = switch (keyCode) {
             case GLFW.GLFW_KEY_SPACE -> SongNote.D1;
             case GLFW.GLFW_KEY_S -> SongNote.F1;
@@ -131,6 +166,7 @@ public final class InstrumentHudScreen extends Screen {
 
     @Override
     public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_UP || keyCode == GLFW.GLFW_KEY_DOWN) return true;
         pressedKeys.remove(keyCode);
         return super.keyReleased(keyCode, scanCode, modifiers);
     }
@@ -144,8 +180,13 @@ public final class InstrumentHudScreen extends Screen {
 
     private void play(SongNote note) {
         if (ZSSClientSongState.status() != SongStateMessage.Status.OPEN
-                && ZSSClientSongState.status() != SongStateMessage.Status.FAILED) return;
-        ZSSNetwork.sendSongIntent(new SongIntentMessage(SongIntentMessage.Action.NOTE, java.util.Optional.of(note)));
+                && ZSSClientSongState.status() != SongStateMessage.Status.FAILED
+                && ZSSClientSongState.status() != SongStateMessage.Status.FREE_PLAY) return;
+        if (minecraft == null) return;
+        long window = minecraft.getWindow().getWindow();
+        int semitoneOffset = (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_UP) ? 1 : 0)
+                - (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_DOWN) ? 1 : 0);
+        ZSSNetwork.sendSongIntent(new SongIntentMessage(SongIntentMessage.Action.NOTE, java.util.Optional.of(note), semitoneOffset));
     }
 
     private void closeWithoutCancel() {

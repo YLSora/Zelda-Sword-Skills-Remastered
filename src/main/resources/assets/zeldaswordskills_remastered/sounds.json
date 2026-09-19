@@ -1,4 +1,7 @@
 {
+  "world_warp": {
+    "sounds": ["zeldaswordskills_remastered:world_warp"]
+  },
   "get_heart": {
     "sounds": ["zeldaswordskills_remastered:get_heart"]
   },

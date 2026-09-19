@@ -83,8 +83,12 @@ public final class NaviCreature extends LegacyCreature {
     @Override protected void pushEntities() {}
     // Dimension following is recreated by NaviService at the owner's position, never through portals.
     @Override public boolean canChangeDimensions() { return false; }
-    @Override public boolean isInvulnerableTo(DamageSource source) { return !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY); }
+    @Override public boolean isInvulnerableTo(DamageSource source) { return true; }
     @Override public boolean canBeSeenAsEnemy() { return false; }
+    @Override public boolean isInvulnerable() { return true; }
+    @Override public boolean hurt(DamageSource source, float amount) {
+        return !isInvulnerableTo(source) && super.hurt(source, amount);
+    }
     @Override public boolean causeFallDamage(float distance, float multiplier, DamageSource source) { return false; }
 
     @Override

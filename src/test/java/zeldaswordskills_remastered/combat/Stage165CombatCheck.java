@@ -14,25 +14,30 @@ public final class Stage165CombatCheck {
                 + "Sword combo-damage accumulation and Iai Slash deadlines passed.");
     }
 
-    /** The published thresholds: <=1.0 -> 2, >1.0 and <=1.5 -> 3, >1.5 and <=2.0 -> 4, >2.0 -> 5. */
+    /** The speed bands share boundaries for hit count and per-hit damage. */
     private static void flashAssaultHitCounts() {
         require(FlashAssaultBurst.hitCount(0.45D) == 2, "Megaton hammer speed must give 2 hits");
         require(FlashAssaultBurst.hitCount(0.6D) == 2, "Skull hammer speed must give 2 hits");
         require(FlashAssaultBurst.hitCount(0.8D) == 2, "Wooden hammer speed must give 2 hits");
         require(FlashAssaultBurst.hitCount(0.9D) == 2, "Biggoron sword speed must give 2 hits");
-        require(FlashAssaultBurst.hitCount(1.0D) == 2, "The 1.0 boundary belongs to the two-hit band");
-        require(FlashAssaultBurst.hitCount(1.0001D) == 3, "Just above 1.0 must give 3 hits");
-        require(FlashAssaultBurst.hitCount(1.2D) == 3, "Darknut sword speed must give 3 hits");
-        require(FlashAssaultBurst.hitCount(1.5D) == 3, "The 1.5 boundary belongs to the three-hit band");
-        require(FlashAssaultBurst.hitCount(1.5001D) == 4, "Just above 1.5 must give 4 hits");
-        require(FlashAssaultBurst.hitCount(1.6D) == 4, "Ordinary sword speed must give 4 hits");
-        require(FlashAssaultBurst.hitCount(2.0D) == 4, "The 2.0 boundary belongs to the four-hit band");
-        require(FlashAssaultBurst.hitCount(2.0001D) == 5, "Just above 2.0 must give 5 hits");
-        require(FlashAssaultBurst.hitCount(4.0D) == 5, "A bare hand must give 5 hits");
+        require(FlashAssaultBurst.hitCount(0.9001D) == 4, "Just above 0.9 must give 4 hits");
+        require(FlashAssaultBurst.hitCount(1.0D) == 4, "Diamond axe speed must give 4 hits");
+        require(FlashAssaultBurst.hitCount(1.2D) == 4, "Darknut sword speed must give 4 hits");
+        require(FlashAssaultBurst.hitCount(1.5D) == 4, "The 1.5 boundary belongs to the four-hit band");
+        require(FlashAssaultBurst.hitCount(1.5001D) == 6, "Just above 1.5 must give 6 hits");
+        require(FlashAssaultBurst.hitCount(1.6D) == 6, "Ordinary sword speed must give 6 hits");
+        require(FlashAssaultBurst.hitCount(4.0D) == 6, "A bare hand must give 6 hits");
+        for (int level = 1; level <= 5; level++) {
+            require(Math.abs(FlashAssaultBurst.damage(8, 0.9D, level) - (12 + 2.5D * level)) < 0.0001D,
+                    "Slow tier damage differs");
+            require(Math.abs(FlashAssaultBurst.damage(8, 1.5D, level) - (6.4D + 1.2D * level)) < 0.0001D,
+                    "Medium tier damage differs");
+            require(Math.abs(FlashAssaultBurst.damage(8, 1.5001D, level) - (5.2D + 0.8D * level)) < 0.0001D,
+                    "Fast tier damage differs");
+        }
         // Intervals keep every tier inside a comparable burst and stay ordered by hit count.
-        require(FlashAssaultBurst.hitInterval(5) == 3, "Five hits use a three-tick interval");
+        require(FlashAssaultBurst.hitInterval(6) == 2, "Six hits use a two-tick interval");
         require(FlashAssaultBurst.hitInterval(4) == 4, "Four hits use a four-tick interval");
-        require(FlashAssaultBurst.hitInterval(3) == 5, "Three hits use a five-tick interval");
         require(FlashAssaultBurst.hitInterval(2) == 10, "Two hits use a ten-tick interval");
     }
 

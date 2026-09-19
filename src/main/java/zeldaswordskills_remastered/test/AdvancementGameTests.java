@@ -34,7 +34,7 @@ public final class AdvancementGameTests {
 
     @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft")
     public static void treeLoadsWithSemanticCriteria(GameTestHelper helper) {
-        helper.assertTrue(ZSSAdvancementProvider.ids().size() == 58, "Expected 58 advancement nodes");
+        helper.assertTrue(ZSSAdvancementProvider.ids().size() == 74, "Expected 74 advancement nodes");
         for (String id : ZSSAdvancementProvider.ids()) {
             var node = advancement(helper, id);
             helper.assertTrue(node.getCriteria().size() == 1 && node.getCriteria().containsKey("event"),
@@ -48,6 +48,34 @@ public final class AdvancementGameTests {
                 "Wrong parent: " + child));
         for (String root : new String[]{"adventure_begins", "skill.basic", "orca.thief", "ocarina.craft"})
             helper.assertTrue(advancement(helper, root).getParent() == null, "Root acquired parent: " + root);
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft")
+    public static void songsUnlockIndependently(GameTestHelper helper) {
+        for (ResourceLocation song : ZSSContentIds.SONGS) {
+            withPlayer(helper, player -> {
+                var data = ZSSCapabilities.get(player).orElseThrow(IllegalStateException::new);
+                helper.assertTrue(data.learnSong(song), "First learning failed: " + song);
+                ZSSAdvancementService.songLearned(player, song, data.songs().size());
+                for (ResourceLocation other : ZSSContentIds.SONGS) {
+                    String id = "ocarina.song." + other.getPath();
+                    expect(helper, player, id, other.equals(song));
+                    helper.assertTrue(advancement(helper, id).getParent() == advancement(helper, "ocarina.song"),
+                            "Song requires another song: " + other);
+                    helper.assertTrue(advancement(helper, id).getDisplay().isHidden(),
+                            "Unlearned song advancement is visible: " + other);
+                }
+                expect(helper, player, "ocarina.song", true);
+                expect(helper, player, "ocarina.maestro", false);
+                expect(helper, player, "ocarina.scarecrow", song.equals(ZSSContentIds.SCARECROW));
+                expect(helper, player, "skill.basic", false);
+                expect(helper, player, "boss_battle", false);
+                helper.assertTrue(!data.learnSong(song), "Duplicate song counted as new: " + song);
+                ZSSAdvancementService.songLearned(player, song, data.songs().size());
+                expect(helper, player, "ocarina.song." + song.getPath(), true);
+            });
+        }
         helper.succeed();
     }
 

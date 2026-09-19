@@ -5,8 +5,9 @@ import net.minecraft.world.phys.Vec3;
 import zeldaswordskills_remastered.registry.ZSSContentIds;
 
 public final class PlayerCombatState {
+    /** The physical dodge movement remains four ticks; immunity/perfect-dodge window is separate. */
     public static final int DODGE_DURATION_TICKS = 4;
-    public static final int DODGE_COOLDOWN_TICKS = 6;
+    public static final int DODGE_IMMUNITY_TICKS = 20;
     public static final int PARRY_COOLDOWN_TICKS = 60;
     public static final int SPIN_ROUND_TICKS = 8;
     public static final int SWORD_BEAM_COOLDOWN_TICKS = 40;
@@ -38,6 +39,8 @@ public final class PlayerCombatState {
     private final java.util.Set<Integer> groundSlamHitTargets = new java.util.HashSet<>();
     private long risingCutUntil;
     private long risingCutCooldownUntil;
+    private long risingCutImmuneUntil;
+    private boolean risingCutAscending;
     private long risingCutTrailStart;
     private long risingCutTrailUntil;
     /** Blocks of fall a landed Rising Cut covers without damage; zero when no waiver is pending. */
@@ -154,9 +157,9 @@ public final class PlayerCombatState {
         }
     }
 
-    public void startDodge(long now) {
-        dodgeUntil = now + DODGE_DURATION_TICKS;
-        dodgeCooldownUntil = dodgeUntil + DODGE_COOLDOWN_TICKS;
+    public void startDodge(long now, int level) {
+        dodgeUntil = now + DODGE_IMMUNITY_TICKS;
+        dodgeCooldownUntil = now + 90 - 10 * net.minecraft.util.Mth.clamp(level, 1, 5);
     }
     public boolean dodgeActive(long now) { return now < dodgeUntil; }
     public boolean dodgeOnCooldown(long now) { return now < dodgeCooldownUntil; }
@@ -233,6 +236,17 @@ public final class PlayerCombatState {
 
     public void startRisingCutCooldown(long until) { risingCutCooldownUntil = until; }
     public boolean risingCutCoolingDown(long now) { return now < risingCutCooldownUntil; }
+    public void startRisingCutImmunity(long until) {
+        risingCutImmuneUntil = until;
+        risingCutAscending = true;
+    }
+    public boolean risingCutImmune(long now) { return now < risingCutImmuneUntil; }
+    public void finishRisingCutAscent(long now) {
+        if (risingCutAscending) {
+            risingCutAscending = false;
+            risingCutImmuneUntil = now + 30L;
+        }
+    }
 
     /**
      * A landed Rising Cut waives the fall damage of the climb it just started. The waiver covers
@@ -508,7 +522,8 @@ public final class PlayerCombatState {
         dashLastEffect = dashLastSound = Long.MIN_VALUE;
         swordBeamCooldownUntil = 0L;
         dashHitTargets.clear();
-        risingCutCooldownUntil = risingCutTrailStart = risingCutTrailUntil = 0L;
+        risingCutCooldownUntil = risingCutTrailStart = risingCutTrailUntil = risingCutImmuneUntil = 0L;
+        risingCutAscending = false;
         clearRisingCutFallGrace();
         iaiSlash.reset();
         flashAssault.reset();

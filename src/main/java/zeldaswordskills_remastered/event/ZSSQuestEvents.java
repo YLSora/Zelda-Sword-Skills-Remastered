@@ -22,6 +22,12 @@ public final class ZSSQuestEvents {
     }
 
     @SubscribeEvent
+    public static void namedVillager(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+        if (event.getEntity() instanceof Villager villager && !villager.level().isClientSide
+                && villager.hasCustomName()) QuestService.convertNamedVillager(villager);
+    }
+
+    @SubscribeEvent
     public static void interactEntity(PlayerInteractEvent.EntityInteract event) {
         if (event.getTarget() instanceof NaviCreature) {
             if (event.getEntity().getItemInHand(event.getHand()).is(Items.GLASS_BOTTLE)) {
@@ -44,6 +50,12 @@ public final class ZSSQuestEvents {
         }
         if (event.getEntity().level().isClientSide && event.getTarget() instanceof Villager villager
                 && QuestService.isCursedMan(villager) && !event.getEntity().getItemInHand(event.getHand()).is(Items.NAME_TAG)) {
+            event.setCancellationResult(InteractionResult.SUCCESS);
+            event.setCanceled(true);
+            return;
+        }
+        if (event.getEntity().level().isClientSide && event.getTarget() instanceof Villager villager
+                && QuestService.isNamedSongTeacher(villager, event.getEntity().getItemInHand(event.getHand()))) {
             event.setCancellationResult(InteractionResult.SUCCESS);
             event.setCanceled(true);
             return;

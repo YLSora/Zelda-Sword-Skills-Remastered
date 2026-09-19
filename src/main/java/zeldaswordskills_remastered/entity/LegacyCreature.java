@@ -157,8 +157,8 @@ public class LegacyCreature extends PathfinderMob implements zeldaswordskills_re
     public enum Family { DARKNUT, FAIRY, CHU, BABA, KEESE, OCTOROK, SKULLTULA, WIZZROBE, FIRE_BOSS, FOREST_BOSS }
 
     public enum Kind {
-        DARKNUT_STANDARD("darknut", "darknut_standard", Family.DARKNUT, 100, 16, .225, 10, .8, 40, 12),
-        DARKNUT_MIGHTY("darknut_mighty", "darknut_standard", Family.DARKNUT, 200, 24, .225, 15, .8, 40, 20),
+        DARKNUT_STANDARD("darknut", "darknut_standard", Family.DARKNUT, 100, 10, .225, 10, .8, 40, 12),
+        DARKNUT_MIGHTY("darknut_mighty", "darknut_standard", Family.DARKNUT, 200, 12, .225, 15, .8, 40, 20),
         FAIRY("fairy", "fairy", Family.FAIRY, 4, 0, .25, 0, 0, 12, 0),
         NAVI("navi", "fairy", Family.FAIRY, 4, 0, .28, 0, 0, 12, 0),
         CHU_RED("chu", "chu_red", Family.CHU, 16, 2, .22, 2, 0, 16, 4),
@@ -181,7 +181,7 @@ public class LegacyCreature extends PathfinderMob implements zeldaswordskills_re
         WIZZROBE_ICE("wizzrobe_ice", "wizzrobe_ice", Family.WIZZROBE, 30, 4, .25, 0, 1, 40, 8),
         WIZZROBE_LIGHTNING("wizzrobe_lightning", "wizzrobe_lightning", Family.WIZZROBE, 30, 4, .25, 0, 1, 40, 8),
         WIZZROBE_WIND("wizzrobe_wind", "wizzrobe_wind", Family.WIZZROBE, 30, 4, .25, 0, 1, 40, 8),
-        DARKNUT_BOSS("darknut_boss", "darknut_standard", Family.DARKNUT, 500, 32, .225, 20, .8, 48, 50),
+        DARKNUT_BOSS("darknut_boss", "darknut_standard", Family.DARKNUT, 500, 15, .225, 20, .8, 48, 50),
         WIZZROBE_GRAND("wizzrobe_grand", "wizzrobe_fire_grand", Family.WIZZROBE, 300, 8, .25, 8, 1, 48, 50),
         FIRE_BOSS("fire_boss", "wizzrobe_fire", Family.FIRE_BOSS, 150, 12, .25, 0, 1, 40, 8),
         FOREST_BOSS("forest_boss", "skulltula_gold", Family.FOREST_BOSS, 100, 10, .27, 10, .5, 20, 12),

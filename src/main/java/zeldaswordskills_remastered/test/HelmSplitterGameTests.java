@@ -28,6 +28,56 @@ public final class HelmSplitterGameTests {
     private HelmSplitterGameTests() {}
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void onlySuccessfulHitsGrantThirtyTicksOfFullProtection(GameTestHelper helper) {
+        for (boolean hit : new boolean[] {false, true}) {
+            FakePlayer player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "helm_immunity"));
+            player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(1, 2, 1))));
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+            var data = ZSSCapabilities.get(player).orElseThrow(() -> new AssertionError("Missing player capability"));
+            data.setSkillLevel(ZSSContentIds.SWORD_BASIC, 5);
+            data.setSkillLevel(ZSSContentIds.HELM_SPLITTER, 1);
+            var target = EntityType.IRON_GOLEM.create(helper.getLevel());
+            target.setPos(player.position().add(0, 0, 2));
+            target.setNoAi(true);
+            target.setInvulnerable(!hit);
+            helper.getLevel().addFreshEntity(target);
+            data.combat().setTarget(target.getId());
+            long now = helper.getLevel().getGameTime();
+            var state = data.combat().helmSplitter();
+            state.arm(target.getId(), now + 20, player.getY());
+            player.setPos(player.position().add(0, 0.5D, 0));
+            player.setOnGround(false);
+            helper.assertTrue(HelmSplitter.tryStrike(player, data) && state.hitImmune(now) == hit,
+                    "Only a successful damage application may grant hit immunity");
+            FakePlayer other = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "other_attacker"));
+            var arrow = new net.minecraft.world.entity.projectile.Arrow(helper.getLevel(), other);
+            for (int delay : new int[] {0, 19, 20}) {
+                helper.runAfterDelay(delay, () -> {
+                    for (var source : new net.minecraft.world.damagesource.DamageSource[] {
+                            player.damageSources().generic(), player.damageSources().inFire(),
+                            player.damageSources().playerAttack(other), player.damageSources().arrow(arrow, other)}) {
+                        var event = new net.minecraftforge.event.entity.living.LivingAttackEvent(player, source, 1);
+                        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event);
+                        helper.assertTrue(event.isCanceled() == (hit && state.hitImmune(helper.getLevel().getGameTime())),
+                                "Helm Splitter damage-event immunity differs at tick " + delay);
+                    }
+                });
+            }
+            helper.runAfterDelay(21, () -> {
+                state.land(helper.getLevel().getGameTime());
+                helper.assertTrue(state.hitImmune(helper.getLevel().getGameTime()) == hit,
+                        "Landing changed the existing full-protection deadline");
+                state.hit(helper.getLevel().getGameTime());
+                data.combat().reset();
+                helper.assertTrue(!state.hitImmune(helper.getLevel().getGameTime()),
+                        "Lifecycle reset retained hit immunity");
+                target.discard();
+            });
+        }
+        helper.runAfterDelay(22, helper::succeed);
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void parryJumpDealsOneArmorPiercingComboAndPreservesDoubleJump(GameTestHelper helper) {
         for (int level : new int[] {1, 5}) {
             FakePlayer player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "helm_test"));
@@ -68,8 +118,12 @@ public final class HelmSplitterGameTests {
             helper.assertTrue(player.getDeltaMovement().y > 0 && player.getDeltaMovement().horizontalDistanceSqr() > 0,
                     "Helm Splitter omitted its upward or rearward movement");
             helper.assertTrue(AdvancedSwordSkills.onAttacked(player, data, player.damageSources().mobAttack(target))
-                            && !AdvancedSwordSkills.onAttacked(player, data, player.damageSources().inFire()),
-                    "Helm Splitter protection failed to distinguish the target and environmental damage");
+                            && AdvancedSwordSkills.onAttacked(player, data, player.damageSources().inFire())
+                            && AdvancedSwordSkills.onAttacked(player, data, player.damageSources().generic()),
+                    "A successful Helm Splitter must protect against all damage sources");
+            helper.assertTrue(data.combat().helmSplitter().hitImmune(now + 29)
+                            && !data.combat().helmSplitter().hitImmune(now + 30),
+                    "Hit immunity must expire exactly thirty ticks after the hit");
             double waiver = HelmSplitter.fallGrace(level);
             var fall = new net.minecraftforge.event.entity.living.LivingFallEvent(player, (float) waiver + 7, 1);
             ZSSCombatEvents.playerFall(fall);

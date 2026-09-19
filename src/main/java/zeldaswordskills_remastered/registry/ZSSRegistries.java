@@ -120,19 +120,19 @@ public final class ZSSRegistries {
     public static final RegistryObject<Item> MIRROR_SHIELD = item("mirror_shield", () -> new ZeldaCombatItems.Shield(true, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> BROKEN_SWORD = sword("broken_sword", Tiers.WOOD, 0, -2.4F, false, false);
     public static final RegistryObject<Item> KOKIRI_SWORD = sword("kokiri_sword", Tiers.WOOD, 3, -2.4F, false, false);
-    // Stage 16.5 weapon retune. Vanilla totals are "1 + tier bonus + modifier" for attack damage
+    // Vanilla totals are "1 + tier bonus + modifier" for attack damage
     // and "4.0 + modifier" for attack speed, with tier bonuses WOOD 0 / STONE 1 / IRON 2 /
     // DIAMOND 3 / NETHERITE 4. Every modifier below is chosen to land on the published totals;
     // weapons the task did not name keep their previous values, including attack speed.
-    // Ordon 10, Giant 20, Biggoron 32 @ 0.9, Master 15, Tempered 20, Golden 25, True Master 30,
+    // Ordon 7, Giant 10, Biggoron 16 @ 0.9, Master 8, Tempered 10, Golden 12, True Master 15,
     // Darknut 10.
-    public static final RegistryObject<Item> ORDON_SWORD = sword("ordon_sword", Tiers.STONE, 8, -2.4F, false, false);
-    public static final RegistryObject<Item> GIANT_SWORD = sword("giant_sword", Tiers.IRON, 17, -3.0F, true, false);
-    public static final RegistryObject<Item> BIGGORON_SWORD = sword("biggoron_sword", Tiers.DIAMOND, 28, -3.1F, true, false);
-    public static final RegistryObject<Item> MASTER_SWORD = sword("master_sword", Tiers.DIAMOND, 11, -2.4F, false, true);
-    public static final RegistryObject<Item> TEMPERED_SWORD = sword("tempered_sword", Tiers.DIAMOND, 16, -2.4F, false, true);
-    public static final RegistryObject<Item> GOLDEN_SWORD = sword("golden_sword", Tiers.NETHERITE, 20, -2.4F, false, true);
-    public static final RegistryObject<Item> TRUE_MASTER_SWORD = sword("true_master_sword", Tiers.NETHERITE, 25, -2.4F, false, true);
+    public static final RegistryObject<Item> ORDON_SWORD = sword("ordon_sword", Tiers.STONE, 5, -2.4F, false, false);
+    public static final RegistryObject<Item> GIANT_SWORD = sword("giant_sword", Tiers.IRON, 7, -3.0F, true, false);
+    public static final RegistryObject<Item> BIGGORON_SWORD = sword("biggoron_sword", Tiers.DIAMOND, 12, -3.1F, true, false);
+    public static final RegistryObject<Item> MASTER_SWORD = sword("master_sword", Tiers.DIAMOND, 4, -2.4F, false, true);
+    public static final RegistryObject<Item> TEMPERED_SWORD = sword("tempered_sword", Tiers.DIAMOND, 6, -2.4F, false, true);
+    public static final RegistryObject<Item> GOLDEN_SWORD = sword("golden_sword", Tiers.NETHERITE, 7, -2.4F, false, true);
+    public static final RegistryObject<Item> TRUE_MASTER_SWORD = sword("true_master_sword", Tiers.NETHERITE, 10, -2.4F, false, true);
     public static final RegistryObject<Item> DARKNUT_SWORD = sword("darknut_sword", Tiers.IRON, 7, -2.8F, true, false);
     public static final RegistryObject<Item> FAIRY_OCARINA = item("fairy_ocarina", () -> new InstrumentItem(1, new Item.Properties()));
     public static final RegistryObject<Item> OCARINA_OF_TIME = item("ocarina_of_time", () -> new InstrumentItem(5, new Item.Properties()));
@@ -450,6 +450,7 @@ public final class ZSSRegistries {
     public static final RegistryObject<SoundEvent> NAVI_INTERACT = sound("navi_interact");
     public static final RegistryObject<SoundEvent> GET_ITEM = sound("get_item");
     public static final RegistryObject<SoundEvent> GET_HEART = sound("get_heart");
+    public static final RegistryObject<SoundEvent> WORLD_WARP = sound("world_warp");
     public static final Map<ResourceLocation, RegistryObject<SoundEvent>> SONG_SOUNDS = Map.ofEntries(
             songSound("epona"), songSound("healing"), songSound("saria"), songSound("soaring"), songSound("storms"),
             songSound("sun"), songSound("time"), songSound("bolero"), songSound("minuet"), songSound("prelude"),
@@ -588,7 +589,7 @@ public final class ZSSRegistries {
 
     private static RegistryObject<WarpStoneBlock> warpStone(String path, WarpStoneBlock.WarpSong song) {
         return BLOCKS.register(path, () -> new WarpStoneBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.STONE).strength(2.0F, 12.0F).lightLevel(state -> 7).sound(SoundType.STONE), song));
+                .mapColor(MapColor.STONE).strength(-1.0F, 3600000.0F).lightLevel(state -> 7).sound(SoundType.STONE), song));
     }
 
     private static RegistryObject<Item> sword(String path, net.minecraft.world.item.Tier tier, int damage, float speed,
@@ -649,11 +650,11 @@ public final class ZSSRegistries {
         boots("hover_boots", EquipmentItem.Gear.HOVER_BOOTS, ArmorMaterials.GOLD);
         boots("pegasus_boots", EquipmentItem.Gear.PEGASUS_BOOTS, ArmorMaterials.LEATHER);
         boots("rubber_boots", EquipmentItem.Gear.RUBBER_BOOTS, ArmorMaterials.LEATHER);
-        // Stage 16.5 hammer retune: wooden 15 @ 0.8, skull 25 @ 0.6, megaton 40 @ 0.45, expressed
+        // Total damage/speed: wooden 10 @ 0.8, skull 14 @ 0.7, megaton 18 @ 0.6, expressed
         // as the vanilla damage modifier over the tier base and speed modifier over the 4.0 base.
-        item("wooden_hammer", () -> new ZeldaCombatItems.Hammer(Tiers.WOOD, 14, -3.2F, ZSSBlockInteractions.Weight.VERY_LIGHT, false, new Item.Properties()));
-        item("skull_hammer", () -> new ZeldaCombatItems.Hammer(Tiers.IRON, 22, -3.4F, ZSSBlockInteractions.Weight.MEDIUM, true, new Item.Properties()));
-        item("megaton_hammer", () -> new ZeldaCombatItems.Hammer(Tiers.DIAMOND, 36, -3.55F, ZSSBlockInteractions.Weight.VERY_HEAVY, true, new Item.Properties()));
+        item("wooden_hammer", () -> new ZeldaCombatItems.Hammer(Tiers.WOOD, 9, -3.2F, ZSSBlockInteractions.Weight.VERY_LIGHT, false, new Item.Properties()));
+        item("skull_hammer", () -> new ZeldaCombatItems.Hammer(Tiers.IRON, 11, -3.3F, ZSSBlockInteractions.Weight.MEDIUM, true, new Item.Properties()));
+        item("megaton_hammer", () -> new ZeldaCombatItems.Hammer(Tiers.DIAMOND, 14, -3.4F, ZSSBlockInteractions.Weight.VERY_HEAVY, true, new Item.Properties()));
         tool("boomerang", StageNineToolItem.Kind.BOOMERANG, 1); tool("magic_boomerang", StageNineToolItem.Kind.BOOMERANG, 2);
         item("hero_bow", () -> new ZeldaCombatItems.HeroBow(new Item.Properties().stacksTo(1)));
         arrow("bomb_arrow", ZeldaCombatItems.ArrowKind.BOMB); arrow("fire_bomb_arrow", ZeldaCombatItems.ArrowKind.FIRE_BOMB);

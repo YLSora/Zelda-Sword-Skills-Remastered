@@ -69,7 +69,7 @@ public final class LockedDoorBlock extends HorizontalDirectionalBlock {
         BlockState lowerState = level.getBlockState(lower);
         if (!lowerState.is(this)) return InteractionResult.CONSUME;
         if (!lowerState.getValue(UNLOCKED)) {
-            if (!consumeKey(player, hand) && !consumeKey(player,
+            if (!useKey(player, hand) && !useKey(player,
                     hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND)) {
                 level.playSound(null, pos, SoundEvents.CHEST_LOCKED, SoundSource.BLOCKS, .7F, .8F);
                 return InteractionResult.CONSUME;
@@ -83,13 +83,16 @@ public final class LockedDoorBlock extends HorizontalDirectionalBlock {
         }
         return InteractionResult.CONSUME;
     }
-    private boolean consumeKey(Player player, InteractionHand hand) {
+    private boolean useKey(Player player, InteractionHand hand) {
         ItemStack key = player.getItemInHand(hand);
-        if (key.is(ZSSRegistries.getItem("skeleton_key"))) return true;
-        String required = bossDoor() ? "big_key" : "small_key";
-        if (!key.is(ZSSRegistries.getItem(required))) return false;
+        if (bossDoor()) {
+            if (!key.is(ZSSRegistries.getItem("big_key"))) return false;
+        } else if (!key.is(ZSSRegistries.getItem("skeleton_key"))) {
+            return false;
+        }
         if (dungeonType != null && !zeldaswordskills_remastered.item.BigKeyItem.dungeon(key).filter(dungeonType::equals).isPresent()) return false;
-        if (!player.getAbilities().instabuild) key.shrink(1);
+        // Temple big keys are reusable; skeleton keys for secret-room doors are consumed.
+        if (!bossDoor() && !player.getAbilities().instabuild) key.shrink(1);
         return true;
     }
     private void setPair(Level level, BlockPos lower, BlockState state, boolean unlocked, boolean open) {
