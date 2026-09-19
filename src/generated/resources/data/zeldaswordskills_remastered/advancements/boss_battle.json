@@ -1,0 +1,29 @@
+{
+  "parent": "zeldaswordskills_remastered:adventure_begins",
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.zeldaswordskills_remastered.boss_battle.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "zeldaswordskills_remastered:big_key"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.zeldaswordskills_remastered.boss_battle.title"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

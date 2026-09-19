@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:entity",
+  "pools": [{
+    "rolls": 1.0,
+    "entries": [
+      { "type": "minecraft:item", "name": "zeldaswordskills_remastered:small_heart", "conditions": [{ "condition": "minecraft:random_chance", "chance": 0.5 }] }
+    ]
+  }],
+  "random_sequence": "zeldaswordskills_remastered:entities/skulltula"
+}

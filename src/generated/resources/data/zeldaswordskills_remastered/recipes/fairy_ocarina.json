@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "c": {
+      "item": "minecraft:clay_ball"
+    },
+    "r": {
+      "item": "minecraft:sugar_cane"
+    }
+  },
+  "pattern": [
+    " c ",
+    "crc"
+  ],
+  "result": {
+    "item": "zeldaswordskills_remastered:fairy_ocarina"
+  },
+  "show_notification": true
+}

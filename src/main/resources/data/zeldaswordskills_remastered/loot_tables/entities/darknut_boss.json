@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:entity",
+  "pools": [],
+  "random_sequence": "zeldaswordskills_remastered:entities/darknut_boss"
+}

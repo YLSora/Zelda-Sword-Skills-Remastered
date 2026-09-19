@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "frequency": 0.125,
+    "salt": 19385479,
+    "separation": 16,
+    "spacing": 48
+  },
+  "structures": [
+    {
+      "structure": "zeldaswordskills_remastered:fire_dungeon",
+      "weight": 1
+    }
+  ]
+}

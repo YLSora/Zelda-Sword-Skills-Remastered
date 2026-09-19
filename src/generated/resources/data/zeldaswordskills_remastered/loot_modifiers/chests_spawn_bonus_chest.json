@@ -1,0 +1,10 @@
+{
+  "type": "zeldaswordskills_remastered:add_table",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/spawn_bonus_chest"
+    }
+  ],
+  "loot_table": "zeldaswordskills_remastered:chests/inject/bonus_chest"
+}

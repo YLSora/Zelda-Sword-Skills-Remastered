@@ -1,0 +1,10 @@
+{
+  "type": "zeldaswordskills_remastered:add_table",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/village/village_weaponsmith"
+    }
+  ],
+  "loot_table": "zeldaswordskills_remastered:chests/inject/village_blacksmith"
+}

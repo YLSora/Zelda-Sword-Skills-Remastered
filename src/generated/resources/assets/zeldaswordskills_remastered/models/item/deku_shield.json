@@ -1,0 +1,11 @@
+{
+  "parent": "zeldaswordskills_remastered:item/shield_deku",
+  "overrides": [
+    {
+      "model": "zeldaswordskills_remastered:item/shield_deku_using",
+      "predicate": {
+        "minecraft:blocking": 1.0
+      }
+    }
+  ]
+}

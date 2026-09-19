@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "zeldaswordskills_remastered:item/music_disc_tears_of_the_kingdom"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/door_bottom_left_open",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "bottom": "zeldaswordskills_remastered:block/door_temple_earth_lower",
+    "top": "zeldaswordskills_remastered:block/door_temple_earth_upper"
+  }
+}

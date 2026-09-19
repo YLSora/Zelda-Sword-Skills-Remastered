@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:block/cross",
+    "textures": {
+        "cross": "zeldaswordskills_remastered:block/bomb_flower_stage_2"
+    }
+}

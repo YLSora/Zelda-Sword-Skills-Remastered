@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "a": {
+      "item": "minecraft:redstone"
+    },
+    "b": {
+      "item": "minecraft:stone"
+    },
+    "c": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "pattern": [
+    "bcb",
+    "cac",
+    "bcb"
+  ],
+  "result": {
+    "item": "zeldaswordskills_remastered:hook_target_all"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,282 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:sword_basic\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:helm_splitter\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:dodge\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:leaping_blow\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:parry\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:dash\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:spin_attack\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:sword_beam\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:sword_break\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:mortal_draw\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:rising_cut\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:ending_blow\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:flash_assault\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            },
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{skill:\"zeldaswordskills_remastered:double_jump\",zss_chest_skill:1b}"
+            }
+          ],
+          "name": "zeldaswordskills_remastered:skill_orb"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 1.0,
+        "min": 1.0
+      }
+    }
+  ],
+  "random_sequence": "zeldaswordskills_remastered:chests/pools/skills"
+}

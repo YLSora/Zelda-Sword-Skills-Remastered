@@ -1,0 +1,29 @@
+{
+  "parent": "zeldaswordskills_remastered:skill.gain",
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.zeldaswordskills_remastered.skill.all_types.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "zeldaswordskills_remastered:skill_orb"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.zeldaswordskills_remastered.skill.all_types.title"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

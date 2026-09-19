@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "zeldaswordskills_remastered:bomb_arrow",
+    "zeldaswordskills_remastered:fire_bomb_arrow",
+    "zeldaswordskills_remastered:water_bomb_arrow",
+    "zeldaswordskills_remastered:fire_arrow",
+    "zeldaswordskills_remastered:ice_arrow",
+    "zeldaswordskills_remastered:light_arrow"
+  ]
+}

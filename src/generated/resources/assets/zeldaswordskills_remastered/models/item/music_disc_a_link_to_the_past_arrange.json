@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "zeldaswordskills_remastered:item/music_disc_a_link_to_the_past_arrange"
+  }
+}

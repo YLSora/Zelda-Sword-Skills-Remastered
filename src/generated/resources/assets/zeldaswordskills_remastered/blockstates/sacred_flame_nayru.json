@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "extinguished=false": {
+      "model": "zeldaswordskills_remastered:block/sacred_flame_nayru"
+    },
+    "extinguished=true": {
+      "model": "zeldaswordskills_remastered:block/sacred_flame_extinguished"
+    }
+  }
+}

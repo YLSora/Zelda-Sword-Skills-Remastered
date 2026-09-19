@@ -1,0 +1,107 @@
+{
+  "parent": "zeldaswordskills_remastered:item/skillorb_swordbasic",
+  "overrides": [
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_swordbasic",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 1.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_helm_splitter",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 2.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_dodge",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 3.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_leapingblow",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 4.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_parry",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 5.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_dash",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 6.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_spinattack",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 7.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_superspinattack",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 8.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_swordbeam",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 9.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_swordbreak",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 10.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_mortaldraw",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 11.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/heart_container",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 12.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_risingcut",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 13.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_endingblow",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 14.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_flash_assault",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 15.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_doublejump",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 16.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/skillorb_continuous_flash",
+      "predicate": {
+        "zeldaswordskills_remastered:skill": 17.0
+      }
+    }
+  ]
+}

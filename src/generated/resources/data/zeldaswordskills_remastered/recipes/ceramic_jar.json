@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "c": {
+      "item": "minecraft:brick"
+    }
+  },
+  "pattern": [
+    "c c",
+    "c c",
+    " c "
+  ],
+  "result": {
+    "count": 8,
+    "item": "zeldaswordskills_remastered:ceramic_jar"
+  },
+  "show_notification": true
+}

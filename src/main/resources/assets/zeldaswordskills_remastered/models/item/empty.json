@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:item/generated",
+    "textures": {
+        "all": "zeldaswordskills_remastered:block/empty"
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "zeldaswordskills_remastered:block/ancient_tablet",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "zeldaswordskills_remastered:block/ancient_tablet"
+    },
+    "facing=south": {
+      "model": "zeldaswordskills_remastered:block/ancient_tablet",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "zeldaswordskills_remastered:block/ancient_tablet",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,97 @@
+import groovy.json.JsonSlurper
+
+// Validate the merged resource pack, including generated model overrides.
+def verifyClientResources = tasks.register('verifyClientResources') {
+    group = 'verification'
+    description = 'Checks local client asset references and standalone skill book text resources.'
+    def roots = ['src/main/resources', 'src/generated/resources'].collect { file(it) }
+    inputs.files(roots.collect { fileTree(it) { include 'assets/**' } })
+    def report = layout.buildDirectory.file('reports/porting/stage14/client-resources.txt')
+    outputs.file(report)
+    doLast {
+        def assets = new TreeMap<String, File>()
+        roots.each { root ->
+            fileTree(root).matching { include 'assets/**' }.files.each { source ->
+                assets[root.toPath().relativize(source.toPath()).toString().replace('\\', '/')] = source
+            }
+        }
+        def errors = new TreeSet<String>()
+        def parser = new JsonSlurper()
+        int references = 0
+        def languageFiles = ['en_us','zh_cn','fr_fr','pl_pl'].collect { locale -> assets["assets/${project.mod_id}/lang/${locale}.json"] }
+        if (languageFiles.any { it == null }) errors.add('language: missing one of en_us, zh_cn, fr_fr, pl_pl JSON files')
+        def languages = languageFiles.findAll { it != null }.collectEntries { source ->
+            [(source.name.substring(0, source.name.length() - 5)): parser.parse(source, 'UTF-8')]
+        }
+        def skillBookFiles = ['en_us', 'zh_cn'].collect { locale -> assets["assets/${project.mod_id}/skill_book/${locale}.json"] }
+        if (skillBookFiles.any { it == null }) errors.add('skill_book: missing en_us.json or zh_cn.json')
+        def skillBooks = skillBookFiles.findAll { it != null }.collectEntries { source ->
+            [(source.name.substring(0, source.name.length() - 5)): parser.parse(source, 'UTF-8')]
+        }
+        if (skillBooks.size() == 2) {
+            def englishKeys = new TreeSet<String>(skillBooks.en_us.keySet())
+            def chineseKeys = new TreeSet<String>(skillBooks.zh_cn.keySet())
+            if (englishKeys != chineseKeys) errors.add('skill_book: en_us.json and zh_cn.json keys differ')
+            if (englishKeys.size() != 63) errors.add("skill_book: expected 63 fields, found ${englishKeys.size()}")
+            skillBooks.each { locale, entries ->
+                entries.each { key, value ->
+                    if (!(value instanceof String) || value.isBlank()) errors.add("skill_book/${locale}.json: ${key} is blank")
+                }
+            }
+        }
+        def checkReference = { String source, String id, String directory, String extension ->
+            if (id == null || id.startsWith('#')) return
+            def parts = id.contains(':') ? id.split(':', 2) : ['minecraft', id]
+            if (parts[0] != project.mod_id) return
+            references++
+            String target = "assets/${parts[0]}/${directory}/${parts[1]}${extension}"
+            if (!assets.containsKey(target)) errors.add("${source}: missing ${target}")
+        }
+        assets.each { path, source ->
+            if (!path.endsWith('.json')) return
+            def json = parser.parse(source, 'UTF-8')
+            if (path.contains('/models/')) {
+                checkReference(path, json.parent as String, 'models', '.json')
+                json.textures?.values()?.each { checkReference(path, it as String, 'textures', '.png') }
+                json.overrides?.each { checkReference(path, it.model as String, 'models', '.json') }
+            } else if (path.contains('/blockstates/')) {
+                def checkModels = { value ->
+                    (value instanceof List ? value : [value]).each {
+                        checkReference(path, it.model as String, 'models', '.json')
+                    }
+                }
+                json.variants?.values()?.each(checkModels)
+                json.multipart?.each { checkModels(it.apply) }
+            } else if (path.contains('/particles/')) {
+                json.textures?.each { checkReference(path, it as String, 'textures', '.png') }
+            } else if (path.endsWith('/sounds.json')) {
+                json.each { name, event ->
+                    if (event.subtitle) {
+                        languages.each { locale, translations ->
+                            if (!translations.containsKey(event.subtitle)) {
+                                errors.add("${path}: subtitle ${event.subtitle} missing from ${locale}.json")
+                            }
+                        }
+                    }
+                    event.sounds?.each { sound ->
+                        if (sound instanceof Map && sound.type == 'event') {
+                            String id = sound.name
+                            if (id.startsWith(project.mod_id + ':') && !json.containsKey(id.split(':', 2)[1])) {
+                                errors.add("${path}: missing sound event ${id}")
+                            }
+                        } else {
+                            checkReference(path, (sound instanceof Map ? sound.name : sound) as String, 'sounds', '.ogg')
+                        }
+                    }
+                }
+            }
+        }
+        def target = report.get().asFile
+        target.parentFile.mkdirs()
+        target.setText("Local asset references: ${references}\nErrors: ${errors.size()}\n" + errors.join('\n') + '\n', 'UTF-8')
+        if (!errors.isEmpty()) throw new GradleException("Client resource references failed. See ${target}:\n" + errors.take(20).join('\n'))
+        logger.lifecycle("Verified ${references} local client asset references")
+    }
+}
+
+tasks.named('check').configure { dependsOn verifyClientResources }

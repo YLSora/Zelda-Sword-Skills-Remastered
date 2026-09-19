@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:entity",
+  "pools": [{
+    "rolls": 1,
+    "entries": [{ "type": "minecraft:loot_table", "name": "zeldaswordskills_remastered:entities/skulltula_gold" }]
+  }],
+  "random_sequence": "zeldaswordskills_remastered:entities/forest_boss"
+}

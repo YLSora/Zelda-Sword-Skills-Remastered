@@ -1,0 +1,29 @@
+{
+  "parent": "zeldaswordskills_remastered:ocarina.song",
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.zeldaswordskills_remastered.ocarina.maestro.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "zeldaswordskills_remastered:ocarina_of_time"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.zeldaswordskills_remastered.ocarina.maestro.title"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

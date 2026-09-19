@@ -1,0 +1,16 @@
+{
+  "entries": [
+    "zeldaswordskills_remastered:chests_spawn_bonus_chest",
+    "zeldaswordskills_remastered:chests_stronghold_crossing",
+    "zeldaswordskills_remastered:chests_stronghold_corridor",
+    "zeldaswordskills_remastered:blocks_tall_grass",
+    "zeldaswordskills_remastered:chests_simple_dungeon",
+    "zeldaswordskills_remastered:chests_village_village_weaponsmith",
+    "zeldaswordskills_remastered:chests_abandoned_mineshaft",
+    "zeldaswordskills_remastered:chests_jungle_temple",
+    "zeldaswordskills_remastered:chests_desert_pyramid",
+    "zeldaswordskills_remastered:chests_stronghold_library",
+    "zeldaswordskills_remastered:blocks_grass"
+  ],
+  "replace": false
+}

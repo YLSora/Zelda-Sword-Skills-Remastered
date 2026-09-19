@@ -1,0 +1,29 @@
+{
+  "parent": "zeldaswordskills_remastered:fairy.bow",
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.zeldaswordskills_remastered.fairy.bow_max.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "zeldaswordskills_remastered:light_arrow"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.zeldaswordskills_remastered.fairy.bow_max.title"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

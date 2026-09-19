@@ -1,0 +1,47 @@
+{
+  "parent": "zeldaswordskills_remastered:item/key_small",
+  "overrides": [
+    {
+      "model": "zeldaswordskills_remastered:item/key_temple_desert",
+      "predicate": {
+        "zeldaswordskills_remastered:dungeon": 1.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/key_temple_earth",
+      "predicate": {
+        "zeldaswordskills_remastered:dungeon": 2.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/key_temple_fire",
+      "predicate": {
+        "zeldaswordskills_remastered:dungeon": 3.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/key_temple_forest",
+      "predicate": {
+        "zeldaswordskills_remastered:dungeon": 4.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/key_temple_ice",
+      "predicate": {
+        "zeldaswordskills_remastered:dungeon": 5.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/key_temple_water",
+      "predicate": {
+        "zeldaswordskills_remastered:dungeon": 6.0
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/key_temple_end",
+      "predicate": {
+        "zeldaswordskills_remastered:dungeon": 7.0
+      }
+    }
+  ]
+}

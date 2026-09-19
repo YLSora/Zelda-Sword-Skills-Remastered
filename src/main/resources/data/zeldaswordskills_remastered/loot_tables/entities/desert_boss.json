@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "name": "minecraft:entities/husk"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "zeldaswordskills_remastered:entities/desert_boss"
+}

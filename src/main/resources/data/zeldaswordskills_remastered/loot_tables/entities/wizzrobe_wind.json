@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    { "rolls": 1.0, "entries": [{ "type": "minecraft:item", "name": "minecraft:ender_pearl" }] },
+    { "rolls": 1.0, "entries": [{ "type": "minecraft:item", "name": "zeldaswordskills_remastered:evil_crystal", "conditions": [{ "condition": "minecraft:random_chance", "chance": 0.16666667 }] }] },
+    { "rolls": 1.0, "entries": [{ "type": "minecraft:item", "name": "zeldaswordskills_remastered:book_of_mudora", "conditions": [{ "condition": "minecraft:random_chance", "chance": 0.125 }] }] }
+  ],
+  "random_sequence": "zeldaswordskills_remastered:entities/wizzrobe_wind"
+}

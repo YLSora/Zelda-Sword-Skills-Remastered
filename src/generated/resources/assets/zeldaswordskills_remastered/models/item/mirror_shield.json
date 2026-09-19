@@ -1,0 +1,11 @@
+{
+  "parent": "zeldaswordskills_remastered:item/shield_mirror",
+  "overrides": [
+    {
+      "model": "zeldaswordskills_remastered:item/shield_mirror_using",
+      "predicate": {
+        "minecraft:blocking": 1.0
+      }
+    }
+  ]
+}

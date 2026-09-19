@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "hits=0": {
+      "model": "zeldaswordskills_remastered:block/peg_rusty0"
+    },
+    "hits=1": {
+      "model": "zeldaswordskills_remastered:block/peg_rusty1"
+    },
+    "hits=2": {
+      "model": "zeldaswordskills_remastered:block/peg_rusty2"
+    },
+    "hits=3": {
+      "model": "zeldaswordskills_remastered:block/peg_rusty3"
+    }
+  }
+}

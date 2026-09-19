@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "ethereal=false": {
+      "model": "zeldaswordskills_remastered:block/royal_block"
+    },
+    "ethereal=true": {
+      "model": "zeldaswordskills_remastered:block/empty"
+    }
+  }
+}

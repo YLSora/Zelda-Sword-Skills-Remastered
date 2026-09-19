@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:entity",
+  "pools": [{
+    "rolls": 1,
+    "entries": [{ "type": "minecraft:loot_table", "name": "zeldaswordskills_remastered:entities/octorok_bomb" }]
+  }],
+  "random_sequence": "zeldaswordskills_remastered:entities/water_boss"
+}

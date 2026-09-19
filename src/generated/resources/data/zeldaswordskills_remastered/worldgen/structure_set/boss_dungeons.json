@@ -1,0 +1,30 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 19178327,
+    "separation": 8,
+    "spacing": 24
+  },
+  "structures": [
+    {
+      "structure": "zeldaswordskills_remastered:desert_dungeon",
+      "weight": 1
+    },
+    {
+      "structure": "zeldaswordskills_remastered:earth_dungeon",
+      "weight": 1
+    },
+    {
+      "structure": "zeldaswordskills_remastered:forest_dungeon",
+      "weight": 1
+    },
+    {
+      "structure": "zeldaswordskills_remastered:ice_dungeon",
+      "weight": 1
+    },
+    {
+      "structure": "zeldaswordskills_remastered:water_dungeon",
+      "weight": 1
+    }
+  ]
+}

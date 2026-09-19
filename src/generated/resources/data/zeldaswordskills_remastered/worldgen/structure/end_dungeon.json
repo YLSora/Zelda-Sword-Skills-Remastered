@@ -1,0 +1,8 @@
+{
+  "type": "zeldaswordskills_remastered:end_temple",
+  "biomes": "#zeldaswordskills_remastered:dungeons/end",
+  "spawn_overrides": {},
+  "start_pool": "zeldaswordskills_remastered:end_dungeon/start_pool",
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin"
+}

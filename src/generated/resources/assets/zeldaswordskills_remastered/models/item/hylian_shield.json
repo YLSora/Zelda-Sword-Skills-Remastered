@@ -1,0 +1,11 @@
+{
+  "parent": "zeldaswordskills_remastered:item/shield_hylian",
+  "overrides": [
+    {
+      "model": "zeldaswordskills_remastered:item/shield_hylian_using",
+      "predicate": {
+        "minecraft:blocking": 1.0
+      }
+    }
+  ]
+}

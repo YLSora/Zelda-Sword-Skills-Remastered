@@ -1,0 +1,10 @@
+{
+  "values": [
+    "#forge:is_hot/overworld",
+    "#forge:is_dry/overworld"
+  ],
+  "remove": [
+    "#zeldaswordskills_remastered:cold",
+    "#zeldaswordskills_remastered:wet"
+  ]
+}

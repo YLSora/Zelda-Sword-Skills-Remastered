@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_nether",
+  "features": "zeldaswordskills_remastered:nether_jars",
+  "step": "vegetal_decoration"
+}

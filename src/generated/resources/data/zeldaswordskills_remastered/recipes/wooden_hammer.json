@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "l": {
+      "tag": "minecraft:logs"
+    },
+    "s": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "lll",
+    " s ",
+    " s "
+  ],
+  "result": {
+    "item": "zeldaswordskills_remastered:wooden_hammer"
+  },
+  "show_notification": true
+}

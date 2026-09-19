@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#zeldaswordskills_remastered:hookable_wood", "#zeldaswordskills_remastered:hookable_stone",
+    "#minecraft:dirt", "#minecraft:terracotta", "minecraft:clay", "minecraft:farmland",
+    "minecraft:dirt_path", "minecraft:soul_soil"
+  ]
+}

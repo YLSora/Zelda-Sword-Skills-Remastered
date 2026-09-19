@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:entity",
+  "pools": [{ "rolls": 1.0, "entries": [{ "type": "minecraft:item", "name": "zeldaswordskills_remastered:skulltula_token" }] }],
+  "random_sequence": "zeldaswordskills_remastered:entities/skulltula_gold"
+}

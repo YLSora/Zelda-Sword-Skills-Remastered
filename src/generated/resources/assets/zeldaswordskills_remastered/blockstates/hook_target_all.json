@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "zeldaswordskills_remastered:block/hook_target_all",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "zeldaswordskills_remastered:block/hook_target_all",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "zeldaswordskills_remastered:block/hook_target_all",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "zeldaswordskills_remastered:block/hook_target_all",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "zeldaswordskills_remastered:block/hook_target_all"
+    },
+    "facing=west": {
+      "model": "zeldaswordskills_remastered:block/hook_target_all",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

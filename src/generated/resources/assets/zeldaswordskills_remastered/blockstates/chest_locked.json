@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=east,unlocked=false,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 90
+    },
+    "facing=east,unlocked=false,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 90
+    },
+    "facing=east,unlocked=true,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 90
+    },
+    "facing=east,unlocked=true,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 90
+    },
+    "facing=north,unlocked=false,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked"
+    },
+    "facing=north,unlocked=false,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked"
+    },
+    "facing=north,unlocked=true,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked"
+    },
+    "facing=north,unlocked=true,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked"
+    },
+    "facing=south,unlocked=false,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 180
+    },
+    "facing=south,unlocked=false,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 180
+    },
+    "facing=south,unlocked=true,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 180
+    },
+    "facing=south,unlocked=true,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 180
+    },
+    "facing=west,unlocked=false,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 270
+    },
+    "facing=west,unlocked=false,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 270
+    },
+    "facing=west,unlocked=true,visible=false": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 270
+    },
+    "facing=west,unlocked=true,visible=true": {
+      "model": "zeldaswordskills_remastered:block/chest_locked",
+      "y": 270
+    }
+  }
+}

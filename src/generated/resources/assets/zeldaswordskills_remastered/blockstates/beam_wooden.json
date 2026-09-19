@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "zeldaswordskills_remastered:block/beam_wooden",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "zeldaswordskills_remastered:block/beam_wooden"
+    },
+    "axis=z": {
+      "model": "zeldaswordskills_remastered:block/beam_wooden",
+      "x": 90
+    }
+  }
+}

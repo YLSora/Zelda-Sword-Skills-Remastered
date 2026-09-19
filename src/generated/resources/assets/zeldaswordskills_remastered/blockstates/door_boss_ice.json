@@ -1,0 +1,244 @@
+{
+  "variants": {
+    "facing=east,half=lower,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom"
+    },
+    "facing=east,half=lower,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom"
+    },
+    "facing=east,half=lower,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom"
+    },
+    "facing=east,half=lower,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom"
+    },
+    "facing=east,half=lower,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 90
+    },
+    "facing=east,half=lower,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 90
+    },
+    "facing=east,half=lower,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 90
+    },
+    "facing=east,half=lower,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 90
+    },
+    "facing=east,half=upper,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top"
+    },
+    "facing=east,half=upper,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top"
+    },
+    "facing=east,half=upper,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top"
+    },
+    "facing=east,half=upper,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top"
+    },
+    "facing=east,half=upper,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 90
+    },
+    "facing=east,half=upper,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 90
+    },
+    "facing=east,half=upper,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 90
+    },
+    "facing=east,half=upper,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 90
+    },
+    "facing=north,half=lower,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 270
+    },
+    "facing=north,half=lower,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 270
+    },
+    "facing=north,half=lower,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 270
+    },
+    "facing=north,half=lower,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 270
+    },
+    "facing=north,half=lower,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open"
+    },
+    "facing=north,half=lower,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open"
+    },
+    "facing=north,half=lower,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open"
+    },
+    "facing=north,half=lower,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open"
+    },
+    "facing=north,half=upper,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 270
+    },
+    "facing=north,half=upper,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 270
+    },
+    "facing=north,half=upper,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 270
+    },
+    "facing=north,half=upper,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 270
+    },
+    "facing=north,half=upper,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open"
+    },
+    "facing=north,half=upper,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open"
+    },
+    "facing=north,half=upper,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open"
+    },
+    "facing=north,half=upper,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open"
+    },
+    "facing=south,half=lower,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 90
+    },
+    "facing=south,half=lower,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 90
+    },
+    "facing=south,half=lower,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 90
+    },
+    "facing=south,half=lower,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 90
+    },
+    "facing=south,half=lower,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 180
+    },
+    "facing=south,half=lower,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 180
+    },
+    "facing=south,half=lower,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 180
+    },
+    "facing=south,half=lower,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 180
+    },
+    "facing=south,half=upper,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 90
+    },
+    "facing=south,half=upper,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 90
+    },
+    "facing=south,half=upper,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 90
+    },
+    "facing=south,half=upper,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 90
+    },
+    "facing=south,half=upper,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 180
+    },
+    "facing=south,half=upper,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 180
+    },
+    "facing=south,half=upper,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 180
+    },
+    "facing=south,half=upper,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 180
+    },
+    "facing=west,half=lower,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 180
+    },
+    "facing=west,half=lower,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 180
+    },
+    "facing=west,half=lower,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 180
+    },
+    "facing=west,half=lower,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom",
+      "y": 180
+    },
+    "facing=west,half=lower,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 270
+    },
+    "facing=west,half=lower,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 270
+    },
+    "facing=west,half=lower,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 270
+    },
+    "facing=west,half=lower,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_bottom_open",
+      "y": 270
+    },
+    "facing=west,half=upper,open=false,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 180
+    },
+    "facing=west,half=upper,open=false,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 180
+    },
+    "facing=west,half=upper,open=false,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 180
+    },
+    "facing=west,half=upper,open=false,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top",
+      "y": 180
+    },
+    "facing=west,half=upper,open=true,powered=false,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 270
+    },
+    "facing=west,half=upper,open=true,powered=false,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 270
+    },
+    "facing=west,half=upper,open=true,powered=true,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 270
+    },
+    "facing=west,half=upper,open=true,powered=true,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/door_boss_ice_top_open",
+      "y": 270
+    }
+  }
+}

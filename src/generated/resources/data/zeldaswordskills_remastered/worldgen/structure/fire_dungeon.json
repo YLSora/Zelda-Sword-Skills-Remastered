@@ -1,0 +1,14 @@
+{
+  "type": "zeldaswordskills_remastered:temple",
+  "biomes": "#zeldaswordskills_remastered:dungeons/hell",
+  "max_distance_from_center": 32,
+  "size": 1,
+  "spawn_overrides": {},
+  "start_height": {
+    "absolute": 129
+  },
+  "start_pool": "zeldaswordskills_remastered:fire_dungeon/start_pool",
+  "step": "surface_structures",
+  "terrain_adaptation": "none",
+  "use_expansion_hack": false
+}

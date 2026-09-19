@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "minecraft:random_spread",
+    "frequency": 0.125,
+    "salt": 19593761,
+    "separation": 16,
+    "spacing": 48
+  },
+  "structures": [
+    {
+      "structure": "zeldaswordskills_remastered:end_dungeon",
+      "weight": 1
+    }
+  ]
+}

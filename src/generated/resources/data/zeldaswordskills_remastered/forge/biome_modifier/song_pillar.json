@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#zeldaswordskills_remastered:song_pillars",
+  "features": "zeldaswordskills_remastered:song_pillar",
+  "step": "vegetal_decoration"
+}

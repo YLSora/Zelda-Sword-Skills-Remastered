@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "has_sword=false,pendants=0,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_0"
+    },
+    "has_sword=false,pendants=0,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=1,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_1"
+    },
+    "has_sword=false,pendants=1,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=2,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_2"
+    },
+    "has_sword=false,pendants=2,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=3,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_3"
+    },
+    "has_sword=false,pendants=3,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=4,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_4"
+    },
+    "has_sword=false,pendants=4,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=5,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_5"
+    },
+    "has_sword=false,pendants=5,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=6,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_6"
+    },
+    "has_sword=false,pendants=6,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=7,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=false,pendants=7,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=0,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_0"
+    },
+    "has_sword=true,pendants=0,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=1,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_1"
+    },
+    "has_sword=true,pendants=1,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=2,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_2"
+    },
+    "has_sword=true,pendants=2,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=3,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_3"
+    },
+    "has_sword=true,pendants=3,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=4,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_4"
+    },
+    "has_sword=true,pendants=4,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=5,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_5"
+    },
+    "has_sword=true,pendants=5,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=6,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_6"
+    },
+    "has_sword=true,pendants=6,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=7,unlocked=false": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    },
+    "has_sword=true,pendants=7,unlocked=true": {
+      "model": "zeldaswordskills_remastered:block/pedestal_7"
+    }
+  }
+}

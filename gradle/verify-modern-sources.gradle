@@ -1,0 +1,11 @@
+def verifyModernSources = tasks.register('verifyModernSources', JavaExec) {
+    group = 'verification'
+    description = 'Rejects retired source trees, APIs, build dependencies, and resources.'
+    dependsOn tasks.named('testClasses')
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'zeldaswordskills_remastered.porting.ModernSourceCheck'
+    args project.projectDir.absolutePath
+}
+
+tasks.named('check').configure { dependsOn verifyModernSources }

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "zeldaswordskills_remastered:block/pedestal_bottom",
+    "side": "zeldaswordskills_remastered:block/pedestal_side_1",
+    "top": "zeldaswordskills_remastered:block/pedestal_top"
+  }
+}

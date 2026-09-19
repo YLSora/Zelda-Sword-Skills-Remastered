@@ -1,0 +1,29 @@
+{
+  "parent": "zeldaswordskills_remastered:sword.tempered",
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.zeldaswordskills_remastered.sword.evil.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "zeldaswordskills_remastered:tempered_sword"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.zeldaswordskills_remastered.sword.evil.title"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

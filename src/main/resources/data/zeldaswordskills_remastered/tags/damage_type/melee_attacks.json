@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:mob_attack",
+    "minecraft:mob_attack_no_aggro",
+    "minecraft:player_attack",
+    "zeldaswordskills_remastered:helm_splitter",
+    "zeldaswordskills_remastered:sword_break",
+    "zeldaswordskills_remastered:spin_attack",
+    "zeldaswordskills_remastered:leaping_blow",
+    "zeldaswordskills_remastered:fatal_strike",
+    "zeldaswordskills_remastered:flash_assault",
+    "zeldaswordskills_remastered:mortal_draw"
+  ]
+}

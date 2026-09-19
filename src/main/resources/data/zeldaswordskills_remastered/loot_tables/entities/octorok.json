@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    { "rolls": 1.0, "entries": [{ "type": "minecraft:item", "name": "zeldaswordskills_remastered:throwing_rock" }] },
+    {
+      "rolls": 1.0,
+      "entries": [{ "type": "minecraft:item", "name": "zeldaswordskills_remastered:tentacle", "conditions": [{ "condition": "minecraft:random_chance", "chance": 0.125 }] }]
+    }
+  ],
+  "random_sequence": "zeldaswordskills_remastered:entities/octorok"
+}

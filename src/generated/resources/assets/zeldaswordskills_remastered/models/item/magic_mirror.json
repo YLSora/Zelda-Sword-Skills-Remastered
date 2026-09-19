@@ -1,0 +1,23 @@
+{
+  "parent": "zeldaswordskills_remastered:item/magic_mirror_0",
+  "overrides": [
+    {
+      "model": "zeldaswordskills_remastered:item/magic_mirror_1",
+      "predicate": {
+        "zeldaswordskills_remastered:using": 0.25
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/magic_mirror_2",
+      "predicate": {
+        "zeldaswordskills_remastered:using": 0.5
+      }
+    },
+    {
+      "model": "zeldaswordskills_remastered:item/magic_mirror_3",
+      "predicate": {
+        "zeldaswordskills_remastered:using": 0.75
+      }
+    }
+  ]
+}

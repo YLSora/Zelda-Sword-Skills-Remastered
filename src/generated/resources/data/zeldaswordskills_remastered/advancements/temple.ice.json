@@ -1,0 +1,30 @@
+{
+  "parent": "zeldaswordskills_remastered:boss_battle",
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.zeldaswordskills_remastered.temple.ice.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "zeldaswordskills_remastered:big_key",
+      "nbt": "{dungeon:\"zeldaswordskills_remastered:taiga\"}"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.zeldaswordskills_remastered.temple.ice.title"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

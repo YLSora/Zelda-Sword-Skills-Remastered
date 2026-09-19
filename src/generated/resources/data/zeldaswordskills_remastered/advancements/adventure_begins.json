@@ -1,0 +1,29 @@
+{
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "background": "minecraft:textures/block/stone.png",
+    "description": {
+      "translate": "advancements.zeldaswordskills_remastered.adventure_begins.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "zeldaswordskills_remastered:kokiri_sword"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.zeldaswordskills_remastered.adventure_begins.title"
+    }
+  },
+  "requirements": [
+    [
+      "event"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

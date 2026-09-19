@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "o": {
+      "item": "zeldaswordskills_remastered:fairy_ocarina"
+    },
+    "s": {
+      "item": "minecraft:stone"
+    }
+  },
+  "pattern": [
+    " s ",
+    "sos",
+    " s "
+  ],
+  "result": {
+    "item": "zeldaswordskills_remastered:gossip_stone"
+  },
+  "show_notification": true
+}

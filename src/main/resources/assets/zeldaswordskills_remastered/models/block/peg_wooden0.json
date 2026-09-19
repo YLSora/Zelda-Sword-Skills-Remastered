@@ -1,0 +1,8 @@
+{
+    "parent": "zeldaswordskills_remastered:block/peg0",
+	"textures": {
+		"top": "zeldaswordskills_remastered:block/peg_wooden_top",
+		"bottom": "zeldaswordskills_remastered:block/peg_wooden_bottom",
+		"side": "zeldaswordskills_remastered:block/peg_wooden_side"
+	}
+}

@@ -1,0 +1,9 @@
+{
+    "parent": "minecraft:block/orientable",
+    "textures": {
+    	"particle" : "zeldaswordskills_remastered:block/hook_target_side",
+        "top": "zeldaswordskills_remastered:block/hook_target_side",
+        "side": "zeldaswordskills_remastered:block/hook_target_side",
+        "front": "zeldaswordskills_remastered:block/hook_target_face"
+    }
+}

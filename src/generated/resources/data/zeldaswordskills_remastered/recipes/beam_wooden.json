@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "b": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "b",
+    "b",
+    "b"
+  ],
+  "result": {
+    "item": "zeldaswordskills_remastered:beam_wooden"
+  },
+  "show_notification": true
+}

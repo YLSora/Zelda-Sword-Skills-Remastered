@@ -1,0 +1,6 @@
+{
+  "parent": "zeldaswordskills_remastered:item/bow_hero_0",
+  "textures": {
+    "layer0": "zeldaswordskills_remastered:item/bow_hero_2"
+  }
+}

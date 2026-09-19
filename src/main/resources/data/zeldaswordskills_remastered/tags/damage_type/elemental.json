@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "zeldaswordskills_remastered:fire",
+    "zeldaswordskills_remastered:ice",
+    "zeldaswordskills_remastered:lightning",
+    "zeldaswordskills_remastered:wind",
+    "zeldaswordskills_remastered:holy",
+    "zeldaswordskills_remastered:magic",
+    "zeldaswordskills_remastered:quake"
+  ]
+}

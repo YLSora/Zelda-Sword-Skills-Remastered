@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "zeldaswordskills_remastered:item/rod_tornado"
+  }
+}

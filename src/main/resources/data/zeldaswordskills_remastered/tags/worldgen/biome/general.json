@@ -1,0 +1,10 @@
+{
+  "values": [
+    "#minecraft:is_overworld"
+  ],
+  "remove": [
+    "#zeldaswordskills_remastered:hot",
+    "#zeldaswordskills_remastered:cold",
+    "#zeldaswordskills_remastered:wet"
+  ]
+}

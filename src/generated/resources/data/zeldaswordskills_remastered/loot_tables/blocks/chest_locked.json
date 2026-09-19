@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "zeldaswordskills_remastered:chest_locked"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "zeldaswordskills_remastered:blocks/chest_locked"
+}

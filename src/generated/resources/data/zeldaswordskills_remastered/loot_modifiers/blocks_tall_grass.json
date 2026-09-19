@@ -1,0 +1,10 @@
+{
+  "type": "zeldaswordskills_remastered:add_table",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:blocks/tall_grass"
+    }
+  ],
+  "loot_table": "zeldaswordskills_remastered:blocks/inject/tall_grass_heart"
+}

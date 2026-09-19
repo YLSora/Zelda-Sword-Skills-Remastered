@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "zeldaswordskills_remastered:block/inscription",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "zeldaswordskills_remastered:block/inscription",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "zeldaswordskills_remastered:block/inscription",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "zeldaswordskills_remastered:block/inscription",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "zeldaswordskills_remastered:block/inscription"
+    },
+    "facing=west": {
+      "model": "zeldaswordskills_remastered:block/inscription",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

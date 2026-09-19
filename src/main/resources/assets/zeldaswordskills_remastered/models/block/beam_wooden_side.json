@@ -1,0 +1,7 @@
+{
+    "parent": "zeldaswordskills_remastered:block/column_narrow_side",
+    "textures": {
+        "end": "zeldaswordskills_remastered:block/beam_wooden_end",
+        "side": "zeldaswordskills_remastered:block/beam_wooden_horizontal"
+    }
+}

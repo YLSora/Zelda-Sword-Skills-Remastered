@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:entity",
+  "pools": [{
+    "rolls": 1.0,
+    "entries": [
+      { "type": "minecraft:item", "name": "minecraft:stick" },
+      { "type": "minecraft:item", "name": "zeldaswordskills_remastered:deku_nut" }
+    ]
+  }],
+  "random_sequence": "zeldaswordskills_remastered:entities/baba_deku"
+}

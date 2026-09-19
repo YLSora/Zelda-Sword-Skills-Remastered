@@ -1,0 +1,837 @@
+{
+  "get_heart": {
+    "sounds": ["zeldaswordskills_remastered:get_heart"]
+  },
+  "get_item": {
+    "sounds": ["zeldaswordskills_remastered:get_item"]
+  },
+  "music_disc_a_link_to_the_past": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_a_link_to_the_past",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_a_link_to_the_past_arrange": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_a_link_to_the_past_arrange",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_ballad_of_the_goddess": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_ballad_of_the_goddess",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_breath_of_the_wild": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_breath_of_the_wild",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_colgera_battle": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_colgera_battle",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_dark_world": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_dark_world",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_dark_world_arrange": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_dark_world_arrange",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_demon_dragon_battle": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_demon_dragon_battle",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_dragon_island": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_dragon_island",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_gerudo_valley": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_gerudo_valley",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_great_sea": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_great_sea",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_guardian_battle": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_guardian_battle",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_hylian_skies": {
+    "category": "record",
+    "subtitle": "item.zeldaswordskills_remastered.music_disc_hylian_skies",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_hylian_skies",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_hyrule_castle": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_hyrule_castle",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_hyrule_field": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_hyrule_field",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_lost_wood": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_lost_wood",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_majoras_mask": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_majoras_mask",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_midnas_lament": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_midnas_lament",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_molduga_battle": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_molduga_battle",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_ocarina_of_time": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_ocarina_of_time",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_song_of_time": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_song_of_time",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_song_of_storm": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_song_of_storm",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_spirit_tracks": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_spirit_tracks",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_tears_of_the_kingdom": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_tears_of_the_kingdom",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_the_legend_of_zelda": {
+    "category": "record",
+    "subtitle": "item.zeldaswordskills_remastered.music_disc_the_legend_of_zelda",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_the_legend_of_zelda",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_twilight_princess": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_twilight_princess",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc_zelda_princess": {
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:music_disc/music_disc_zelda_princess",
+        "stream": true
+      }
+    ]
+  },
+  "navi_float": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.navi_float",
+    "sounds": [
+      "zeldaswordskills_remastered:navi/navi1",
+      "zeldaswordskills_remastered:navi/navi2"
+    ]
+  },
+  "navi_interact": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.navi_voice",
+    "sounds": [
+      "zeldaswordskills_remastered:navi/navi1",
+      "zeldaswordskills_remastered:navi/navi2",
+      "zeldaswordskills_remastered:navi/hey_listen",
+      "zeldaswordskills_remastered:navi/hello"
+    ]
+  },
+  "navi_voice": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.navi_voice",
+    "sounds": [
+      "zeldaswordskills_remastered:navi/hello",
+      "zeldaswordskills_remastered:navi/hey_listen",
+      "zeldaswordskills_remastered:navi/hey_look",
+      "zeldaswordskills_remastered:navi/watch_out"
+    ]
+  },
+  "parry_success": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.parry_success",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/parry_success"
+    ]
+  },
+  "sword_break": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.sword_break",
+    "sounds": [
+      {
+        "name": "minecraft:entity.iron_golem.hurt",
+        "type": "event"
+      }
+    ]
+  },
+  "break_jar": {
+    "category": "block",
+    "sounds": [
+      "zeldaswordskills_remastered:block/ceramic1",
+      "zeldaswordskills_remastered:block/ceramic2",
+      "zeldaswordskills_remastered:block/ceramic3",
+      "zeldaswordskills_remastered:block/ceramic4"
+    ]
+  },
+  "hit_peg": {
+    "category": "block",
+    "sounds": [
+      "zeldaswordskills_remastered:block/hit_peg1",
+      "zeldaswordskills_remastered:block/hit_peg2",
+      "zeldaswordskills_remastered:block/hit_peg3",
+      "zeldaswordskills_remastered:block/hit_peg4"
+    ]
+  },
+  "hit_rusty": {
+    "category": "block",
+    "sounds": [
+      "zeldaswordskills_remastered:block/hit_rusty1",
+      "zeldaswordskills_remastered:block/hit_rusty2",
+      "zeldaswordskills_remastered:block/hit_rusty3"
+    ]
+  },
+  "lock_chest": {
+    "category": "block",
+    "sounds": [
+      "zeldaswordskills_remastered:block/lock_chest"
+    ]
+  },
+  "lock_door": {
+    "category": "block",
+    "sounds": [
+      "zeldaswordskills_remastered:block/lock_door"
+    ]
+  },
+  "lock_rattle": {
+    "category": "block",
+    "sounds": [
+      "zeldaswordskills_remastered:block/lock_rattle"
+    ]
+  },
+  "rock_fall": {
+    "category": "block",
+    "subtitle": "subtitles.zeldaswordskills_remastered.rock_fall",
+    "sounds": [
+      "zeldaswordskills_remastered:block/rock_fall1",
+      "zeldaswordskills_remastered:block/rock_fall2"
+    ]
+  },
+  "web_splat": {
+    "category": "block",
+    "subtitle": "subtitles.zeldaswordskills_remastered.web_splat",
+    "sounds": [
+      "zeldaswordskills_remastered:block/web_splat"
+    ]
+  },
+  "armor_shatter": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.armor_shatter",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/armorbreak1",
+      "zeldaswordskills_remastered:sword/armorbreak2",
+      "zeldaswordskills_remastered:sword/armorbreak3"
+    ]
+  },
+  "helm_splitter_hit": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.helm_splitter_hit",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/helm_splitter_hit"
+    ]
+  },
+  "fatal_strike_hit": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.fatal_strike_hit",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wither.death",
+        "type": "event"
+      }
+    ]
+  },
+  "leaping_blow": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.leaping_blow",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/ground_slam_hit"
+    ]
+  },
+  "hurt_flesh": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/hurtflesh1",
+      "zeldaswordskills_remastered:sword/hurtflesh2",
+      "zeldaswordskills_remastered:sword/hurtflesh3"
+    ]
+  },
+  "mortal_draw": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.mortal_draw",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/iai_slash_hit"
+    ]
+  },
+  "slam": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/slam1",
+      "zeldaswordskills_remastered:sword/slam2",
+      "zeldaswordskills_remastered:sword/slam3"
+    ]
+  },
+  "spin_attack": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.spin_attack",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/spinattack1",
+      "zeldaswordskills_remastered:sword/spinattack2",
+      "zeldaswordskills_remastered:sword/spinattack3"
+    ]
+  },
+  "sword_cut": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.sword_cut",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/swordcut1",
+      "zeldaswordskills_remastered:sword/swordcut2",
+      "zeldaswordskills_remastered:sword/swordcut3",
+      "zeldaswordskills_remastered:sword/swordcut4"
+    ]
+  },
+  "sword_miss": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.sword_miss",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/swordmiss1",
+      "zeldaswordskills_remastered:sword/swordmiss2",
+      "zeldaswordskills_remastered:sword/swordmiss3",
+      "zeldaswordskills_remastered:sword/swordmiss4"
+    ]
+  },
+  "sword_strike": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.sword_strike",
+    "sounds": [
+      "zeldaswordskills_remastered:sword/swordstrike1",
+      "zeldaswordskills_remastered:sword/swordstrike2",
+      "zeldaswordskills_remastered:sword/swordstrike3",
+      "zeldaswordskills_remastered:sword/swordstrike4"
+    ]
+  },
+  "armor_die": {
+    "category": "hostile",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/armor_die"
+    ]
+  },
+  "armor_hit": {
+    "category": "hostile",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/armor_hit1",
+      "zeldaswordskills_remastered:entity/armor_hit1"
+    ]
+  },
+  "armor_move": {
+    "category": "hostile",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/armor_move1",
+      "zeldaswordskills_remastered:entity/armor_move2"
+    ]
+  },
+  "bomb_fuse": {
+    "category": "neutral",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/bomb_fuse"
+    ]
+  },
+  "bomb_whistle": {
+    "category": "ambient",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/bomb_whistle"
+    ]
+  },
+  "chu_merge": {
+    "category": "hostile",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/chu_merge"
+    ]
+  },
+  "fairy_blessing": {
+    "category": "ambient",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/fairy_blessing"
+    ]
+  },
+  "fairy_laugh": {
+    "category": "neutral",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/fairy_laugh"
+    ]
+  },
+  "fairy_living": {
+    "category": "neutral",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/fairy_living"
+    ]
+  },
+  "fairy_skill": {
+    "category": "ambient",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/fairy_skill"
+    ]
+  },
+  "shock": {
+    "category": "hostile",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/shock1",
+      "zeldaswordskills_remastered:entity/shock2",
+      "zeldaswordskills_remastered:entity/shock3",
+      "zeldaswordskills_remastered:entity/shock4"
+    ]
+  },
+  "spit": {
+    "category": "hostile",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/spit"
+    ]
+  },
+  "whip_crack": {
+    "category": "neutral",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/whip_crack1",
+      "zeldaswordskills_remastered:entity/whip_crack2",
+      "zeldaswordskills_remastered:entity/whip_crack3",
+      "zeldaswordskills_remastered:entity/whip_crack4"
+    ]
+  },
+  "whirlwind": {
+    "category": "neutral",
+    "subtitle": "subtitles.zeldaswordskills_remastered.whirlwind",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/whirlwind1",
+      "zeldaswordskills_remastered:entity/whirlwind2"
+    ]
+  },
+  "cork": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:item/cork"
+    ]
+  },
+  "hammer": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:item/hammer1",
+      "zeldaswordskills_remastered:item/hammer2",
+      "zeldaswordskills_remastered:item/hammer3"
+    ]
+  },
+  "boomerang": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.boomerang",
+    "sounds": ["zeldaswordskills_remastered:item/boomerang"]
+  },
+  "hookshot": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.hookshot",
+    "sounds": [
+      "zeldaswordskills_remastered:item/hookshot"
+    ]
+  },
+  "magic_failure": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.magic_failure",
+    "sounds": [
+      "zeldaswordskills_remastered:item/magic_failure"
+    ]
+  },
+  "magic_fire": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.magic_fire",
+    "sounds": [
+      "zeldaswordskills_remastered:item/magic_fire"
+    ]
+  },
+  "magic_ice": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.magic_ice",
+    "sounds": [
+      "zeldaswordskills_remastered:item/magic_ice"
+    ]
+  },
+  "whip": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.whip",
+    "sounds": ["zeldaswordskills_remastered:item/whip"]
+  },
+  "whoosh": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:item/whoosh"
+    ]
+  },
+  "grunt": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:player/grunt1",
+      "zeldaswordskills_remastered:player/grunt2",
+      "zeldaswordskills_remastered:player/grunt3"
+    ]
+  },
+  "cash_sale": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:special/cash_sale"
+    ]
+  },
+  "flame_absorb": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:special/flame_absorb"
+    ]
+  },
+  "leaf_hit": {
+    "category": "hostile",
+    "sounds": [
+      "zeldaswordskills_remastered:entity/leaf_hit_1"
+    ]
+  },
+  "level_up": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.level_up",
+    "sounds": [
+      "zeldaswordskills_remastered:special/levelup"
+    ]
+  },
+  "master_sword": {
+    "category": "ambient",
+    "sounds": [
+      "zeldaswordskills_remastered:special/master_sword"
+    ]
+  },
+  "secret_medley": {
+    "category": "ambient",
+    "subtitle": "subtitles.zeldaswordskills_remastered.secret_medley",
+    "sounds": [
+      "zeldaswordskills_remastered:special/secret_medley"
+    ]
+  },
+  "special_drop": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:special/special_drop"
+    ]
+  },
+  "success": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.success",
+    "sounds": [
+      "zeldaswordskills_remastered:special/success"
+    ]
+  },
+  "success_magic": {
+    "category": "player",
+    "sounds": [
+      "zeldaswordskills_remastered:special/success_magic"
+    ]
+  },
+  "note.ocarina": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.note_ocarina",
+    "sounds": [
+      "zeldaswordskills_remastered:note/ocarina"
+    ]
+  },
+  "song.bolero": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/bolero",
+        "stream": true
+      }
+    ]
+  },
+  "song.epona": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/epona",
+        "stream": true
+      }
+    ]
+  },
+  "song.healing": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/healing",
+        "stream": true
+      }
+    ]
+  },
+  "song.lullaby": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/lullaby",
+        "stream": true
+      }
+    ]
+  },
+  "song.minuet": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/minuet",
+        "stream": true
+      }
+    ]
+  },
+  "song.nocturne": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/nocturne",
+        "stream": true
+      }
+    ]
+  },
+  "song.oath": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/oath",
+        "stream": true
+      }
+    ]
+  },
+  "song.prelude": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/prelude",
+        "stream": true
+      }
+    ]
+  },
+  "song.requiem": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/requiem",
+        "stream": true
+      }
+    ]
+  },
+  "song.saria": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/saria",
+        "stream": true
+      }
+    ]
+  },
+  "song.serenade": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/serenade",
+        "stream": true
+      }
+    ]
+  },
+  "song.soaring": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/soaring",
+        "stream": true
+      }
+    ]
+  },
+  "song.storms": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/storms",
+        "stream": true
+      }
+    ]
+  },
+  "song.sun": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/sun",
+        "stream": true
+      }
+    ]
+  },
+  "song.time": {
+    "category": "record",
+    "subtitle": "subtitles.zeldaswordskills_remastered.song",
+    "sounds": [
+      {
+        "name": "zeldaswordskills_remastered:song/time",
+        "stream": true
+      }
+    ]
+  },
+  "flash_assault_dodge": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.flash_assault_dodge",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wither.shoot",
+        "type": "event"
+      }
+    ]
+  },
+  "flash_assault_dash": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.flash_assault_dash",
+    "sounds": [
+      {
+        "name": "minecraft:item.firecharge.use",
+        "type": "event"
+      }
+    ]
+  },
+  "flash_assault_attack": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.flash_assault_attack",
+    "sounds": [
+      {
+        "name": "minecraft:entity.zombie.attack_iron_door",
+        "type": "event"
+      }
+    ]
+  },
+  "rising_cut_slash": {
+    "category": "player",
+    "subtitle": "subtitles.zeldaswordskills_remastered.rising_cut_slash",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.sweep",
+        "type": "event"
+      }
+    ]
+  },
+  "fatal_strike_focus": {
+    "subtitle": "subtitles.zeldaswordskills_remastered.fatal_strike_focus",
+    "sounds": [
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event"
+      }
+    ]
+  }
+}

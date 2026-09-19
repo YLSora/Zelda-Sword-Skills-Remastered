@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#forge:sandstone", "minecraft:brown_mushroom_block", "minecraft:red_mushroom_block",
+    "minecraft:mushroom_stem", "#minecraft:fences", "#minecraft:logs", "#minecraft:all_signs",
+    "minecraft:ladder"
+  ]
+}
