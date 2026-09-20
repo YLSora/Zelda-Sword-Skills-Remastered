@@ -13,8 +13,6 @@ Use a Java 17 JDK:
 ./gradlew runClient
 ```
 
-Version: `1.0.0`. The release JAR is `build/libs/ZeldaSwordSkills_Remaster_1.20.1_1.0.0.jar`.
-
 ## Description
 
 This mod is the fully remake of Zelda Sword Skills from 1.8.9. 
