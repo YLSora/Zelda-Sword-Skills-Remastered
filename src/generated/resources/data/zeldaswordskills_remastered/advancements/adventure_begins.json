@@ -13,7 +13,8 @@
     "frame": "task",
     "hidden": false,
     "icon": {
-      "item": "zeldaswordskills_remastered:kokiri_sword"
+      "item": "zeldaswordskills_remastered:kokiri_sword",
+      "nbt": "{Damage:0}"
     },
     "show_toast": true,
     "title": {

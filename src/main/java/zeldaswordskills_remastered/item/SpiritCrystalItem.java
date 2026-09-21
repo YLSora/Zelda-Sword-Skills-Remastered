@@ -25,7 +25,7 @@ public final class SpiritCrystalItem extends Item implements ZSSBlockInteraction
     private static final String RECALL_DIMENSION = "recall_dimension";
     private static final String RECALL_POSITION = "recall_position";
     private final Kind kind;
-    public SpiritCrystalItem(Kind kind, Properties properties) { super(kind == Kind.EMPTY ? properties : properties.durability(256)); this.kind = kind; }
+    public SpiritCrystalItem(Kind kind, Properties properties) { super(kind == Kind.EMPTY ? properties : properties.durability(64)); this.kind = kind; }
 
     public Kind kind() { return kind; }
     @Override public boolean isFoil(ItemStack stack) { return kind != Kind.EMPTY; }

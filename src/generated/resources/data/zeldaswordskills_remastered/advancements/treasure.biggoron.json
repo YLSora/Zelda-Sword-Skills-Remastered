@@ -13,7 +13,8 @@
     "frame": "challenge",
     "hidden": false,
     "icon": {
-      "item": "zeldaswordskills_remastered:biggoron_sword"
+      "item": "zeldaswordskills_remastered:biggoron_sword",
+      "nbt": "{Damage:0}"
     },
     "show_toast": true,
     "title": {

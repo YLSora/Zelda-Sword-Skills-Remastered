@@ -13,7 +13,8 @@
     "frame": "task",
     "hidden": false,
     "icon": {
-      "item": "zeldaswordskills_remastered:silver_gauntlets"
+      "item": "zeldaswordskills_remastered:silver_gauntlets",
+      "nbt": "{Damage:0}"
     },
     "show_toast": true,
     "title": {

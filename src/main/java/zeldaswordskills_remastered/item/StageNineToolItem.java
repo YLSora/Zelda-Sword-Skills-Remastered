@@ -41,7 +41,12 @@ public final class StageNineToolItem extends Item {
     private final int level;
 
     public StageNineToolItem(Kind kind, int level, Properties properties) {
-        super(kind == Kind.DEKU_NUT || kind == Kind.HOOKSHOT_UPGRADE ? properties : properties.durability(256));
+        super(switch (kind) {
+            case DEKU_NUT, HOOKSHOT_UPGRADE -> properties;
+            case MEDALLION -> properties.durability(128);
+            case HOOKSHOT, BOOMERANG, ROD, WHIP -> properties.durability(384);
+            default -> properties.durability(256);
+        });
         this.kind = kind;
         this.level = level;
     }

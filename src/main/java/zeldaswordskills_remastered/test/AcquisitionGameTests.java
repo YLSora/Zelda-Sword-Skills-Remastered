@@ -373,6 +373,17 @@ public final class AcquisitionGameTests {
                 == net.minecraft.world.InteractionResult.FAIL && component.getCount() == 1,
                 "Redundant handheld component was consumed");
 
+        player.getAbilities().instabuild = true;
+        player.setItemInHand(InteractionHand.OFF_HAND, hook.copy());
+        component = new ItemStack(ZSSRegistries.getItem("claw_upgrade"));
+        player.setItemInHand(InteractionHand.MAIN_HAND, component);
+        player.getCooldowns().removeCooldown(component.getItem());
+        component.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+        helper.assertTrue(component.getCount() == 1 && player.getOffhandItem().is(ZSSRegistries.getItem("stoneshot")),
+                "Creative handheld component was consumed or failed to upgrade");
+        player.getAbilities().instabuild = false;
+        player.getCooldowns().removeCooldown(component.getItem());
+
         player.setItemInHand(InteractionHand.OFF_HAND, hook.copy());
         component = new ItemStack(ZSSRegistries.getItem("claw_upgrade"));
         player.setItemInHand(InteractionHand.MAIN_HAND, component);
