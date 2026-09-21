@@ -118,12 +118,12 @@ public final class DoorAndDekuGameTests {
             door.use(level.getBlockState(pos.above()), level, pos.above(), player, InteractionHand.MAIN_HAND, hit);
             helper.assertTrue(!level.getBlockState(pos).getValue(LockedDoorBlock.UNLOCKED) && wrong.getCount() == 1,
                     "Wrong key unlocked door or was consumed");
-            for (String id : new String[]{"small_key", "skeleton_key"}) {
+            for (String id : new String[]{"small_key", "big_key"}) {
                 var other = new ItemStack(ZSSRegistries.getItem(id));
                 player.setItemInHand(InteractionHand.MAIN_HAND, other);
                 door.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
                 helper.assertTrue(!level.getBlockState(pos).getValue(LockedDoorBlock.UNLOCKED)
-                        && other.getCount() == 1, "Non-temple key unlocked temple door or was consumed");
+                        && other.getCount() == 1, "Small or unbound big key unlocked temple door or was consumed");
             }
             var key = BigKeyItem.forDungeon(ZSSRegistries.getItem("big_key"), door.dungeonType().id());
             var tooltip = new ArrayList<Component>();
@@ -148,6 +148,24 @@ public final class DoorAndDekuGameTests {
             level.removeBlock(pos.east(), false);
             helper.assertTrue(!level.getBlockState(pos).getValue(LockedDoorBlock.OPEN), "Unpowered door did not close");
             level.removeBlock(pos, false);
+            for (var hand : InteractionHand.values()) {
+                level.setBlockAndUpdate(pos, door.defaultBlockState());
+                level.setBlockAndUpdate(pos.above(), door.defaultBlockState().setValue(LockedDoorBlock.HALF, DoubleBlockHalf.UPPER));
+                player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+                var skeleton = new ItemStack(ZSSRegistries.getItem("skeleton_key"), 2);
+                player.setItemInHand(hand, skeleton);
+                door.use(level.getBlockState(pos.above()), level, pos.above(), player, InteractionHand.MAIN_HAND, hit);
+                for (BlockPos half : java.util.List.of(pos, pos.above())) {
+                    var state = level.getBlockState(half);
+                    helper.assertTrue(state.getValue(LockedDoorBlock.OPEN) && state.getValue(LockedDoorBlock.UNLOCKED),
+                            "Skeleton key did not unlock both temple door halves: " + door.dungeonType());
+                }
+                helper.assertTrue(skeleton.getCount() == 1, "Temple door must consume one skeleton key from " + hand);
+                door.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
+                helper.assertTrue(skeleton.getCount() == 1, "Unlocked temple door consumed another skeleton key");
+                level.removeBlock(pos, false);
+            }
         }
         var empty = new ItemStack(ZSSRegistries.getItem("big_key"));
         var tooltip = new ArrayList<Component>();

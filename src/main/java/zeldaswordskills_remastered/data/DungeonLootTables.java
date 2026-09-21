@@ -29,10 +29,9 @@ public final class DungeonLootTables implements LootTableSubProvider {
     public static ResourceLocation temple(DungeonType type, boolean reward) {
         return id("chests/temples/" + type.getSerializedName() + (reward ? "_reward" : "_extra"));
     }
-    public static ResourceLocation secret(String environment, boolean locked) {
-        return id("chests/secret/" + environment + (locked ? "_locked" : ""));
-    }
     public static final ResourceLocation JAR = id("chests/ceramic_jar");
+    public static final ResourceLocation FAIRY_POOL = id("chests/fairy_pool");
+    public static final ResourceLocation FAIRY_ROOT = id("chests/fairy_root");
 
     @Override public void generate(BiConsumer<ResourceLocation, LootTable.Builder> out) {
         LootPool.Builder musicDiscs = pool(1, 1);
@@ -91,23 +90,28 @@ public final class DungeonLootTables implements LootTableSubProvider {
             out.accept(temple(type,false), base(environment,true).withPool(skeletonKey(keyChance)));
         }
         for (String environment : new String[]{"land","mountain","ocean","nether","lava"}) {
-            for (boolean locked : new boolean[]{false,true}) {
-                LootTable.Builder loot = base(environment,locked)
+                boolean nether = environment.equals("nether") || environment.equals("lava");
+                LootTable.Builder loot = base(environment,true)
                         .withPool(skeletonKey(.30F))
                         .withPool(pool(1,1,item("heart_piece")));
-                if (locked) loot.withPool(reference("boss").when(LootItemRandomChanceCondition.randomChance(.25F)))
+                loot.withPool(reference("boss").when(LootItemRandomChanceCondition.randomChance(.25F)))
                         .withPool(reference("big_keys").when(LootItemRandomChanceCondition.randomChance(.2F)));
-                out.accept(secret(environment,locked),loot);
-            }
+                out.accept(id("chests/" + (nether ? "fairy_root/" : "fairy_pool/") + environment), loot);
         }
         String[] gates = {"peg_wooden","light_block","peg_rusty","heavy_block","time_block","quake_stone","door_locked"};
         String[] rewards = {"silver_gauntlets","skull_hammer","golden_gauntlets","megaton_hammer","zeldas_letter","ocarina_of_time", "magic_container"};
-        for (int i=0;i<gates.length;i++) out.accept(id("chests/secret/gates/"+gates[i]), table(pool(1,1,
+        for (int i=0;i<gates.length;i++) out.accept(id("chests/pools/fairy_rewards/"+gates[i]), table(pool(1,1,
                 item(rewards[i]).setWeight(1), LootTableReference.lootTableReference(id("chests/pools/boss")).setWeight(3))));
-        for(String environment:SecretRoomDataProvider.ENVIRONMENTS) for(String gate:gates) for(boolean locked:new boolean[]{false,true})
-            out.accept(id("chests/secret/"+environment+"/"+gate+(locked?"_locked":"")),
-                    table(pool(1,1,LootTableReference.lootTableReference(secret(environment,locked))))
-                            .withPool(pool(1,1,LootTableReference.lootTableReference(id("chests/secret/gates/"+gate)))));
+        LootPool.Builder poolRewards = pool(1, 1);
+        for (String environment : new String[]{"land", "mountain", "ocean"}) {
+            poolRewards.add(LootTableReference.lootTableReference(id("chests/fairy_pool/" + environment)));
+        }
+        LootPool.Builder gateRewards = pool(1, 1).when(LootItemRandomChanceCondition.randomChance(.25F));
+        for (String gate : gates) gateRewards.add(LootTableReference.lootTableReference(id("chests/pools/fairy_rewards/" + gate)));
+        out.accept(FAIRY_POOL, table(poolRewards).withPool(gateRewards));
+        out.accept(FAIRY_ROOT, table(pool(1, 1,
+                LootTableReference.lootTableReference(id("chests/fairy_root/nether")),
+                LootTableReference.lootTableReference(id("chests/fairy_root/lava")))).withPool(gateRewards));
     }
     private static void vanillaChestInjections(BiConsumer<ResourceLocation,LootTable.Builder> out) {
         LootPool.Builder common = pool(1,1,item("standard_bomb",1,3,1))

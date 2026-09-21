@@ -33,7 +33,16 @@ public final class ZeldaCombatItems {
         }
         public boolean twoHanded() { return twoHanded; }
         public boolean masterSword() { return masterSword; }
-        @Override public boolean canBeDepleted() { return false; }
+        @Override public void appendHoverText(ItemStack stack, Level level, java.util.List<net.minecraft.network.chat.Component> tooltip, TooltipFlag flag) {
+            super.appendHoverText(stack, level, tooltip, flag);
+            if (stack.is(ZSSRegistries.TEMPERED_SWORD.get())) {
+                int kills = stack.hasTag() ? stack.getTag().getInt("zss_kills") : 0;
+                tooltip.add(net.minecraft.network.chat.Component.translatable(
+                        "tooltip.zeldaswordskills_remastered.tempered_sword_kills", kills,
+                        zeldaswordskills_remastered.progression.AcquisitionService.GOLDEN_SWORD_REQUIRED_KILLS));
+            }
+        }
+        @Override public boolean canBeDepleted() { return !masterSword && super.canBeDepleted(); }
         @Override public boolean isEnchantable(ItemStack stack) { return true; }
         @Override public boolean receiveFlame(ItemStack stack, ServerLevel level, ServerPlayer player, ZSSBlockInteractions.SacredFlame flame) {
             if (!sacredFlameSword) return false;
@@ -69,15 +78,16 @@ public final class ZeldaCombatItems {
         private final ZSSBlockInteractions.Weight strength;
         private final boolean charged;
         public Hammer(Tier tier, int damage, float speed, ZSSBlockInteractions.Weight strength, boolean charged, Properties properties) {
-            super(tier, damage, speed, properties); this.strength = strength; this.charged = charged;
+            super(tier, damage, speed, properties.durability(512)); this.strength = strength; this.charged = charged;
         }
         @Override public InteractionResult useOn(UseOnContext context) {
             if (!(context.getPlayer() instanceof ServerPlayer player) || !(context.getLevel() instanceof ServerLevel level))
                 return InteractionResult.sidedSuccess(context.getLevel().isClientSide);
-            return ZSSBlockInteractions.smash(level, context.getClickedPos(), player, context.getItemInHand(), strength, context.getClickedFace());
+            InteractionResult result = ZSSBlockInteractions.smash(level, context.getClickedPos(), player, context.getItemInHand(), strength, context.getClickedFace());
+            if (result.consumesAction()) context.getItemInHand().hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(context.getHand()));
+            return result;
         }
         @Override public UseAnim getUseAnimation(ItemStack stack) { return UseAnim.NONE; }
-        @Override public boolean canBeDepleted() { return false; }
         @Override public boolean isEnchantable(ItemStack stack) { return true; }
         @Override public int getUseDuration(ItemStack stack) { return charged ? 72000 : 0; }
         @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -91,11 +101,12 @@ public final class ZeldaCombatItems {
             server.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(4), entity -> entity != player && entity.isAlive())
                     .forEach(entity -> entity.hurt(player.damageSources().playerAttack(player), 8.0F));
             player.getCooldowns().addCooldown(this, 30);
+            stack.hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(player.getUsedItemHand()));
         }
     }
 
     public static final class HeroBow extends BowItem {
-        public HeroBow(Properties properties) { super(properties); }
+        public HeroBow(Properties properties) { super(properties.durability(512)); }
         @Override public boolean isEnchantable(ItemStack stack) { return true; }
         public static int upgradeLevel(ItemStack stack) {
             return stack.hasTag() ? net.minecraft.util.Mth.clamp(stack.getTag().getInt("fairy_level"), 1, 3) : 1;

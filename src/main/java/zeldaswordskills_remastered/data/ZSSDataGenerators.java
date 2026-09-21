@@ -70,7 +70,7 @@ public final class ZSSDataGenerators {
             Map.entry("zora_mask", "mask_zora"), Map.entry("fierce_deity_mask", "mask_fierce"), Map.entry("majora_mask", "mask_majora"),
             Map.entry("chu_jelly_green", "jelly_chu_green"), Map.entry("chu_jelly_red", "jelly_chu_red"),
             Map.entry("chu_jelly_blue", "jelly_chu_blue"), Map.entry("chu_jelly_yellow", "jelly_chu_yellow"),
-            Map.entry("fairy_ocarina", "ocarina_fairy"), Map.entry("ocarina_of_time", "ocarina_time"), Map.entry("goddess_harp", "ocarina_time"),
+            Map.entry("fairy_ocarina", "ocarina_fairy"), Map.entry("ocarina_of_time", "ocarina_time"),
             Map.entry("bomb_flower_seed", "seed_bomb_flower"), Map.entry("book_of_mudora", "book_mudora"), Map.entry("small_heart", "heart_small")
     );
 
@@ -91,7 +91,6 @@ public final class ZSSDataGenerators {
                 new LootTableProvider.SubProviderEntry(BlockLootTables::new, LootContextParamSets.BLOCK),
                 new LootTableProvider.SubProviderEntry(DungeonLootTables::new, LootContextParamSets.CHEST))));
         generator.addProvider(event.includeServer(), new DungeonStructureDataProvider(output));
-        generator.addProvider(event.includeServer(), new SecretRoomDataProvider(output));
         generator.addProvider(event.includeServer(), new SmallWorldFeatureDataProvider(output));
         generator.addProvider(event.includeServer(), new ZSSRecipeProvider(output));
         generator.addProvider(event.includeServer(), new ZSSAdvancementProvider(output, event.getLookupProvider()));
@@ -111,6 +110,7 @@ public final class ZSSDataGenerators {
             basicItem(ZSSRegistries.PENDANT_WISDOM.get());
             basicItem(ZSSRegistries.PENDANT_COURAGE.get());
             basicItem(ZSSRegistries.THROWING_ROCK.get());
+            basicItem(ZSSRegistries.getItem("goddess_harp"));
             ITEM_MODEL_ALIASES.forEach((item, model) -> withExistingParent(item, modLoc("item/" + model)));
             skillOrb();
             getBuilder("big_key").parent(existing("key_small"))
@@ -166,7 +166,8 @@ public final class ZSSDataGenerators {
 
         @Override
         protected void registerStatesAndModels() {
-            simpleBlock(ZSSRegistries.SECRET_ROOM_CORE.get(), models().cubeAll("secret_room_core", mcLoc("block/stone")));
+            simpleBlock(ZSSRegistries.FAIRY_ROOT_CORE.get(), models().cubeAll("fairy_root_core", mcLoc("block/blackstone")));
+            simpleBlock(ZSSRegistries.FAIRY_POOL_CORE.get(), models().cubeAll("fairy_pool_core", mcLoc("block/stone")));
             simpleBlock(ZSSRegistries.NAVI_LIGHT.get(), models().getBuilder("navi_light").texture("particle", mcLoc("block/glass")));
             ModelFile[] models = new ModelFile[8];
             for (int pendants = 0; pendants < models.length; pendants++) {
@@ -354,6 +355,7 @@ public final class ZSSDataGenerators {
             addElementalDamageTranslations(this, false);
             addGossipHints(this, false);
             add("container.zeldaswordskills_remastered.pedestal", "Master Sword Pedestal");
+            add("message.zeldaswordskills_remastered.forest_sword_call", "An ancient sword spirit is calling to you...");
             add("container.zeldaswordskills_remastered.locked_chest", "Locked Chest");
             add("tooltip.zeldaswordskills_remastered.hero_bow_level", "Fairy upgrade: %s/3");
             add("message.zeldaswordskills_remastered.hero_bow_upgrade_required", "This arrow requires a level %s Hero's Bow. Visit a Great Fairy to upgrade it.");
@@ -388,6 +390,8 @@ public final class ZSSDataGenerators {
             add("message.zeldaswordskills_remastered.fairy_upgrade_cost", "The fairy requires %s emeralds for this upgrade");
             add("message.zeldaswordskills_remastered.fairy_revive", "The fairy you carried restored your strength");
             add("message.zeldaswordskills_remastered.fairy_upgrade_complete", "The fairy transformed your item into %s");
+            add("message.zeldaswordskills_remastered.tempered_sword_ready", "The ancient sword spirit is awakening to a new power...");
+            add("tooltip.zeldaswordskills_remastered.tempered_sword_kills", "Monsters defeated: %s / %s");
             add("message.zeldaswordskills_remastered.giant_sword_unworthy", "Biggoron will repair this blade after you gain ten Bonus Hearts");
             add("message.zeldaswordskills_remastered.giant_sword_cost", "Biggoron requires five emeralds to repair this blade");
             addStageNineMessages(this, false);
@@ -433,6 +437,9 @@ public final class ZSSDataGenerators {
             add("command.zeldaswordskills_remastered.navi.call", "Your Navi has returned to your side.");
             add("command.zeldaswordskills_remastered.hearts.maximum", "The configured maximum is %s Heart Containers.");
             add("command.zeldaswordskills_remastered.hearts.set", "Set active Heart Containers to %s.");
+            add("command.zeldaswordskills_remastered.skills.unknown", "Unknown Zelda skill: %s");
+            add("command.zeldaswordskills_remastered.skills.range", "Level for %s must be between 0 and %s (received %s).");
+            add("command.zeldaswordskills_remastered.skills.set", "Set %s to level %s.");
             add("command.zeldaswordskills_remastered.quest.unknown", "Unknown quest: %s");
             add("command.zeldaswordskills_remastered.quest.unavailable", "Quest data is unavailable for %s.");
             add("command.zeldaswordskills_remastered.quest.achieve", "Completed quest %s for %s.");
@@ -462,7 +469,8 @@ public final class ZSSDataGenerators {
                     .forEach(item -> add(item.get(), chineseName(item.getId().getPath())));
             addMusicDiscTranslations(this, true, "音乐唱片");
             add(ZSSRegistries.PEDESTAL.get(), "大师之剑基座");
-            add(ZSSRegistries.SECRET_ROOM_CORE.get(), "秘密房间核心");
+            add(ZSSRegistries.FAIRY_ROOT_CORE.get(), "精灵树根核心");
+            add(ZSSRegistries.FAIRY_POOL_CORE.get(), "妖精池核心");
             addGossipHints(this, true);
             addAdvancementTranslations(this, true);
             addBlockTranslations(this, Map.ofEntries(
@@ -499,6 +507,7 @@ public final class ZSSDataGenerators {
             add("attribute.name.zeldaswordskills_remastered.max_magic", "魔力上限");
             addElementalDamageTranslations(this, true);
             add("container.zeldaswordskills_remastered.pedestal", "大师之剑基座");
+            add("message.zeldaswordskills_remastered.forest_sword_call", "古老的剑魂在呼唤着你……");
             add("container.zeldaswordskills_remastered.locked_chest", "上锁宝箱");
             add("tooltip.zeldaswordskills_remastered.hero_bow_level", "大妖精升级：%s/3");
             add("message.zeldaswordskills_remastered.hero_bow_upgrade_required", "此箭需要%s级勇者之弓，请找大妖精升级。");
@@ -533,6 +542,8 @@ public final class ZSSDataGenerators {
             add("message.zeldaswordskills_remastered.fairy_upgrade_cost", "妖精需要 %s 枚绿宝石才能完成这次升级");
             add("message.zeldaswordskills_remastered.fairy_revive", "身上的妖精使你恢复了力量");
             add("message.zeldaswordskills_remastered.fairy_upgrade_complete", "妖精将物品转化为了%s");
+            add("message.zeldaswordskills_remastered.tempered_sword_ready", "古老的剑魂正在觉醒全新的力量……");
+            add("tooltip.zeldaswordskills_remastered.tempered_sword_kills", "怪物击杀数：%s / %s");
             add("message.zeldaswordskills_remastered.giant_sword_unworthy", "获得十颗额外心后，大哥隆才会修复这把剑");
             add("message.zeldaswordskills_remastered.giant_sword_cost", "大哥隆需要五枚绿宝石来修复这把剑");
             addStageNineMessages(this, true);
@@ -578,6 +589,9 @@ public final class ZSSDataGenerators {
             add("command.zeldaswordskills_remastered.navi.call", "娜薇已回到你身边。");
             add("command.zeldaswordskills_remastered.hearts.maximum", "心之容器数量不能超过配置上限：%s。");
             add("command.zeldaswordskills_remastered.hearts.set", "已将生效的心之容器数量设为%s。");
+            add("command.zeldaswordskills_remastered.skills.unknown", "未知塞尔达技能：%s");
+            add("command.zeldaswordskills_remastered.skills.range", "%s 的等级必须在 0 至 %s 之间（输入了 %s）。");
+            add("command.zeldaswordskills_remastered.skills.set", "已将 %s 设为 %s 级。");
             add("command.zeldaswordskills_remastered.quest.unknown", "未知任务：%s");
             add("command.zeldaswordskills_remastered.quest.unavailable", "无法读取 %s 的任务数据。");
             add("command.zeldaswordskills_remastered.quest.achieve", "已完成任务 %s，玩家：%s。");
@@ -609,8 +623,8 @@ public final class ZSSDataGenerators {
     private static String[] advancementText(String id) {
         return switch (id) {
             case "adventure_begins" -> new String[]{"冒险伊始", "转生成为勇者然后天下无敌", "Reborn as a hero, then invincible across the world"};
-            case "bombs_away" -> new String[]{"发现一间秘密房间", "发现一间秘密房间", "Discover a secret room"};
-            case "bomb_junkie" -> new String[]{"秘密探索者", "发现五十间秘密房间", "Discover 50 secret rooms"};
+            case "bombs_away" -> new String[]{"发现秘密", "发现一处妖精池或精灵树根", "Discover a fairy pool or fairy root"};
+            case "bomb_junkie" -> new String[]{"秘密探索者", "发现五十处妖精池或精灵树根", "Discover 50 fairy pools or fairy roots"};
             case "boss_battle" -> new String[]{"神殿首胜", "完成一座神殿", "Complete a temple"};
             case "temple.water" -> new String[]{"战胜水之神殿", "完成水之神殿", "Complete the Water Temple"};
             case "temple.desert" -> new String[]{"战胜沙之神殿", "完成沙之神殿", "Complete the Desert Temple"};
@@ -674,7 +688,7 @@ public final class ZSSDataGenerators {
         String key = path.replace('.', '_');
         return switch (key) {
             case "adventure_begins" -> "Adventure Begins";
-            case "bombs_away" -> "Discover a Secret Room";
+            case "bombs_away" -> "Discover a Fairy Habitat";
             case "temple_water" -> "Conquer the Water Temple";
             case "temple_desert" -> "Conquer the Desert Temple";
             case "temple_ice" -> "Conquer the Ice Temple";
@@ -1071,7 +1085,8 @@ public final class ZSSDataGenerators {
             ZSSRegistries.BLOCKS.getEntries().stream().map(RegistryObject::get)
                     .filter(block -> block != ZSSRegistries.NAVI_LIGHT.get()).forEach(this::dropSelf);
             add(ZSSRegistries.CERAMIC_JAR.get(), noDrop());
-            add(ZSSRegistries.SECRET_ROOM_CORE.get(), noDrop());
+            add(ZSSRegistries.FAIRY_ROOT_CORE.get(), noDrop());
+            add(ZSSRegistries.FAIRY_POOL_CORE.get(), noDrop());
             ZSSRegistries.WARP_STONES.forEach(block -> add(block.get(), noDrop()));
             ZSSRegistries.SACRED_FLAMES.forEach(block -> add(block.get(), noDrop()));
             add(ZSSRegistries.ANCIENT_TABLET_BOMBOS.get(), noDrop());

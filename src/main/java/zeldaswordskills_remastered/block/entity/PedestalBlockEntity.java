@@ -60,7 +60,7 @@ public final class PedestalBlockEntity extends BlockEntity implements MenuProvid
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return stack.is(expectedPendant(slot));
+            return stack.is(expectedPendant(slot)) && canInsertPendants();
         }
 
         @Override
@@ -91,6 +91,14 @@ public final class PedestalBlockEntity extends BlockEntity implements MenuProvid
 
     public boolean hasSword() {
         return !sword.isEmpty();
+    }
+
+    private boolean canInsertPendants() {
+        // Generated Forest pedestals stand two blocks above their encounter core.
+        return level == null
+                || !(level.getBlockEntity(worldPosition.below(2)) instanceof StageNineBlockEntities.DungeonCore core)
+                || core.dungeonType().orElse(null) != zeldaswordskills_remastered.worldgen.DungeonType.FOREST
+                || core.completed();
     }
 
     public ItemStack sword() {

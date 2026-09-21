@@ -24,13 +24,23 @@ public final class EquipmentItem extends ArmorItem {
     private final Gear gear;
 
     public EquipmentItem(ArmorMaterial material, Type type, Gear gear, Properties properties) {
-        super(new BalancedMaterial(material), type, properties);
+        super(new BalancedMaterial(material), type, properties.durability(switch (gear) {
+            case HERO, GORON, ZORA, HEAVY_BOOTS, HOVER_BOOTS, PEGASUS_BOOTS, RUBBER_BOOTS ->
+                    net.minecraft.world.item.ArmorMaterials.DIAMOND.getDurabilityForType(type);
+            default -> 0;
+        }));
         this.gear = gear;
     }
 
     public Gear gear() { return gear; }
 
-    @Override public boolean canBeDepleted() { return false; }
+    @Override public boolean canBeDepleted() {
+        return switch (gear) {
+            case HERO, GORON, ZORA, HEAVY_BOOTS, HOVER_BOOTS, PEGASUS_BOOTS, RUBBER_BOOTS -> true;
+            default -> false;
+        };
+    }
+
     @Override public boolean isEnchantable(ItemStack stack) { return true; }
 
     @Override

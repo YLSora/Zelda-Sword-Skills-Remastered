@@ -18,6 +18,17 @@ public final class ZSSSpawnEvents {
     }
 
     @SubscribeEvent
+    public static void preventPeacefulForestTempleMonsters(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (event.loadedFromDisk() || !(event.getLevel() instanceof ServerLevel level)
+                || !(event.getEntity() instanceof Mob mob) || mob.getType().getCategory() != MobCategory.MONSTER) return;
+        String namespace = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()).getNamespace();
+        if ((namespace.equals("minecraft") || namespace.equals(ZeldaSwordSkills_Remastered.MOD_ID))
+                && zeldaswordskills_remastered.world.ZSSWorldData.get(level).insidePeacefulForestTemple(level, mob.blockPosition())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
     public static void preventVanillaForestTempleMonsters(MobSpawnEvent.FinalizeSpawn event) {
         Mob mob = event.getEntity();
         if (!isNaturalSpawn(event.getSpawnType()) || mob.getType().getCategory() != MobCategory.MONSTER

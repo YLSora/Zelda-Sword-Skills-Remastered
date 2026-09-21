@@ -20,12 +20,13 @@ public final class PresentationGameTests {
     }
 
     @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft")
-    public static void monstersTakeFallDamageExceptDarknuts(GameTestHelper helper) {
+    public static void monstersTakeFallDamageExceptDarknutsAndKeese(GameTestHelper helper) {
         for (var type : ZSSRegistries.LEGACY_CREATURE_TYPES) {
             var creature = type.get().create(helper.getLevel());
             if (creature.kind().family() == zeldaswordskills_remastered.entity.LegacyCreature.Family.FAIRY) continue;
             float before = creature.getHealth();
-            boolean immune = creature instanceof zeldaswordskills_remastered.entity.DarknutCreature;
+            boolean immune = creature instanceof zeldaswordskills_remastered.entity.DarknutCreature
+                    || creature instanceof zeldaswordskills_remastered.entity.KeeseCreature;
             creature.causeFallDamage(5, 1, creature.damageSources().fall());
             helper.assertTrue(immune ? creature.getHealth() == before : creature.getHealth() < before,
                     "Incorrect fall damage rule: " + type.getId());
@@ -57,10 +58,21 @@ public final class PresentationGameTests {
     }
 
     @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft")
-    public static void allZssItemsIgnoreDurabilityDamage(GameTestHelper helper) {
+    public static void zssItemsRespectTheirDurability(GameTestHelper helper) {
         var owner = EntityType.ZOMBIE.create(helper.getLevel());
         for (var entry : ZSSRegistries.ITEMS.getEntries()) {
             var stack = new net.minecraft.world.item.ItemStack(entry.get());
+            if (stack.isDamageableItem()) {
+                int maximum = stack.getMaxDamage();
+                stack.hurtAndBreak(1, owner, entity -> {});
+                helper.assertTrue(stack.getDamageValue() == 1, "Equipment did not lose durability: " + entry.getId());
+                stack = net.minecraft.world.item.ItemStack.of(stack.save(new CompoundTag()));
+                helper.assertTrue(stack.getDamageValue() == 1 && stack.getMaxDamage() == maximum,
+                        "Equipment durability did not survive reload: " + entry.getId());
+                stack.hurtAndBreak(maximum, owner, entity -> {});
+                helper.assertTrue(stack.isEmpty(), "Equipment did not break: " + entry.getId());
+                continue;
+            }
             // Damage may already be present on a saved stack or supplied by a command.
             stack.getOrCreateTag().putInt("Damage", 10000);
             stack = net.minecraft.world.item.ItemStack.of(stack.save(new CompoundTag()));
@@ -85,21 +97,20 @@ public final class PresentationGameTests {
     }
 
     @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft")
-    public static void spiritCrystalUseHasNoDurabilityBudget(GameTestHelper helper) {
+    public static void spiritCrystalUseConsumesDurability(GameTestHelper helper) {
         var owner = net.minecraftforge.common.util.FakePlayerFactory.get(helper.getLevel(),
                 new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "CrystalTest"));
         owner.getAbilities().instabuild = false;
         for (String id : new String[]{"din_crystal", "farore_crystal", "nayru_crystal"}) {
             var stack = new net.minecraft.world.item.ItemStack(ZSSRegistries.getItem(id));
-            stack.getOrCreateTag().putInt("Damage", 127);
+            stack.setDamageValue(255);
             owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, stack);
             owner.setShiftKeyDown(id.equals("farore_crystal"));
-            for (int use = 0; use < 70; use++) {
-                owner.getCooldowns().removeCooldown(stack.getItem());
-                var result = stack.getItem().use(helper.getLevel(), owner, net.minecraft.world.InteractionHand.MAIN_HAND);
-                helper.assertTrue(result.getResult().consumesAction() && stack.getCount() == 1,
-                        "Spirit Crystal still exhausted its durability budget: " + id);
-            }
+            owner.getCooldowns().removeCooldown(stack.getItem());
+            var result = stack.getItem().use(helper.getLevel(), owner, net.minecraft.world.InteractionHand.MAIN_HAND);
+            helper.assertTrue(result.getResult().consumesAction()
+                            && (id.equals("farore_crystal") ? stack.getCount() == 1 && stack.getDamageValue() == 255 : stack.isEmpty()),
+                    "Crystal use must consume durability, but setting a recall point must not: " + id);
         }
         owner.setShiftKeyDown(false);
         helper.succeed();

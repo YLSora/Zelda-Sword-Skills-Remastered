@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -24,6 +25,7 @@ import zeldaswordskills_remastered.combat.TargetingService;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,27 +34,34 @@ import java.util.UUID;
 public final class NaviCreature extends LegacyCreature {
     public static final String OWNER_NAVI_KEY = "zss_navi_uuid";
     private static final double TELEPORT_DISTANCE_SQR = 32.0D * 32.0D;
+    private static final double OWNER_TETHER = 3.5D;
+    private static final double OWNER_TETHER_SQR = OWNER_TETHER * OWNER_TETHER;
+    private static final double OWNER_ORBIT_RADIUS = 1.5D;
     private UUID ownerUuid;
     private final NaviFlight.Motion ownerMotion = new NaviFlight.Motion();
+    private final NaviFlight.SphereOrbit ownerOrbit = new NaviFlight.SphereOrbit();
+    private final RandomSource ownerOrbitSpeedRandom;
     private final NaviFlight.LockVoice lockVoice = new NaviFlight.LockVoice();
     private final Vec3 phases;
-    private double flightTime;
     private double orbitAngle;
     private double activity;
+    private double ownerOrbitAngularSpeed;
+    private int ownerOrbitSpeedTicks;
     private Vec3 orbitRight;
     private UUID orbitTarget;
+    private Vec3 stationaryAnchor;
     private Vec3 previousTarget;
     private Vec3 moveTarget;
     private Vec3 feedForward = Vec3.ZERO;
     private double moveSpeed;
     private int blockedTicks;
     private int ambientVoiceTicks;
-    private boolean targetObstructed;
 
     public NaviCreature(EntityType<? extends LegacyCreature> type, Level level, Kind kind) {
         super(type, level, kind);
         setPersistenceRequired();
         setNoGravity(true);
+        ownerOrbitSpeedRandom = RandomSource.create(random.nextLong());
         phases = new Vec3(random.nextDouble() * Mth.TWO_PI, random.nextDouble() * Mth.TWO_PI,
                 random.nextDouble() * Mth.TWO_PI);
         ambientVoiceTicks = 540 + random.nextInt(121);
@@ -141,19 +150,37 @@ public final class NaviCreature extends LegacyCreature {
         if (owner == null || owner.level() != level() || !owner.isAlive()) return;
         Vec3 ownerVelocity = ownerMotion.sample(owner.position(), level().getGameTime());
         activity = Mth.lerp(0.12D, activity, Mth.clamp(ownerVelocity.length() / 0.28D, 0, 1));
-        flightTime += 1.0D + activity * 1.5D;
         LivingEntity enemy = lockedEnemy().orElse(null);
         UUID targetId = enemy == null ? null : enemy.getUUID();
+        boolean stationary = owner.isShiftKeyDown();
+        boolean stationaryChanged = stationary != (stationaryAnchor != null);
         tickVoice(owner, targetId);
-        if (distanceToSqr(owner) > TELEPORT_DISTANCE_SQR || blockedTicks >= 20) {
+        if (!stationary && (distanceToSqr(owner) > (enemy == null ? OWNER_TETHER_SQR : TELEPORT_DISTANCE_SQR)
+                || blockedTicks >= 20)) {
             if (relocateNear(owner)) return;
         }
         Vec3 desired;
-        boolean changed = !java.util.Objects.equals(orbitTarget, targetId);
-        if (enemy == null) {
-            desired = owner.getEyePosition().add(NaviFlight.hover(flightTime, phases));
-            moveSpeed = NaviFlight.followSpeed(ownerVelocity.length(), position().distanceTo(desired));
+        boolean changed = stationaryChanged || !java.util.Objects.equals(orbitTarget, targetId);
+        if (stationary) {
+            Vec3 drift = NaviFlight.smallHover(tickCount, phases);
+            if (stationaryAnchor == null) stationaryAnchor = position().subtract(drift);
+            desired = stationaryAnchor.add(drift);
+            moveSpeed = 0.08D;
+        } else if (enemy == null) {
+            stationaryAnchor = null;
+            Vec3 center = new Vec3(owner.getX(), owner.getBoundingBox().maxY + 0.15D, owner.getZ());
+            if (changed || !ownerOrbit.isInitialized()) ownerOrbit.reset(random, position().subtract(center));
+            if (--ownerOrbitSpeedTicks <= 0) {
+                ownerOrbitSpeedTicks = 60 + ownerOrbitSpeedRandom.nextInt(141);
+                double blocksPerTick = (1.0D + ownerOrbitSpeedRandom.nextDouble() * 0.25D) / 20.0D;
+                ownerOrbitAngularSpeed = blocksPerTick / OWNER_ORBIT_RADIUS;
+            }
+            double angularStep = ownerOrbitAngularSpeed + activity * 0.0275D;
+            desired = center.add(ownerOrbit.tick(random, angularStep, OWNER_ORBIT_RADIUS));
+            double anchorSpeed = previousTarget == null || changed ? 0 : desired.distanceTo(previousTarget);
+            moveSpeed = Math.min(1.5D, Math.max(0.3D, Math.max(ownerVelocity.length(), anchorSpeed) * 0.6D + 0.2D));
         } else {
+            stationaryAnchor = null;
             Vec3 center = enemy.getBoundingBox().getCenter().add(0, 0.45D, 0);
             Vec3 normal = NaviFlight.facingNormal(owner.getEyePosition(), center);
             orbitRight = NaviFlight.planeRight(normal, orbitRight);
@@ -163,9 +190,8 @@ public final class NaviCreature extends LegacyCreature {
             moveSpeed = Math.min(3.0D, Math.max(0.6D, Math.max(ownerVelocity.length(), anchorSpeed) * 1.2D + 0.4D));
         }
         orbitTarget = targetId;
-        Vec3 clearTarget = clearPoint(desired);
-        targetObstructed = clearTarget == null;
-        moveTarget = clearTarget == null ? position() : clearTarget;
+        Vec3 clearTarget = stationary ? (hasRoom(desired) ? desired : null) : clearPoint(desired);
+        moveTarget = clearTarget == null ? (stationary ? position() : desired) : clearTarget;
         boolean displaced = clearTarget == null || clearTarget.distanceToSqr(desired) > 1.0E-6D;
         feedForward = previousTarget == null || changed || displaced
                 ? Vec3.ZERO : NaviFlight.limit(desired.subtract(previousTarget), moveSpeed);
@@ -193,11 +219,33 @@ public final class NaviCreature extends LegacyCreature {
         }
         Vec3 velocity = moveTarget == null ? getDeltaMovement().scale(0.6D)
                 : NaviFlight.steer(getDeltaMovement(), moveTarget.subtract(position()), feedForward, moveSpeed);
+        ServerPlayer owner = onlineOwner().orElse(null);
+        if (owner != null && orbitTarget == null && stationaryAnchor == null) {
+            Vec3 nextOffset = position().add(velocity).subtract(owner.position());
+            velocity = owner.position().add(NaviFlight.limit(nextOffset, OWNER_TETHER)).subtract(position());
+        }
+        Vec3 requestedVelocity = velocity;
+        var obstacles = new ArrayList<AABB>();
+        AABB search = getBoundingBox().inflate(NaviObstacleAvoidance.lookAhead(velocity) + NaviObstacleAvoidance.CLEARANCE);
+        for (var shape : level().getBlockCollisions(this, search)) obstacles.addAll(shape.toAabbs());
+        velocity = stationaryAnchor != null
+                ? NaviObstacleAvoidance.limitHover(getBoundingBox(), velocity, obstacles)
+                : NaviObstacleAvoidance.steer(getBoundingBox(), velocity, obstacles, candidate -> {
+                    Vec3 next = position().add(candidate);
+                    AABB nextBox = getBoundingBox().move(candidate);
+                    return (owner == null || orbitTarget != null || next.distanceToSqr(owner.position()) <= OWNER_TETHER_SQR)
+                            && nextBox.minY >= level().getMinBuildHeight() && nextBox.maxY < level().getMaxBuildHeight()
+                            && level().getWorldBorder().isWithinBounds(nextBox);
+                });
         Vec3 before = position();
         setDeltaMovement(velocity);
         move(MoverType.SELF, velocity);
-        boolean blocked = targetObstructed || velocity.lengthSqr() > 0.0004D
-                && (horizontalCollision || verticalCollision || position().distanceToSqr(before) < velocity.lengthSqr() * 0.25D);
+        if (owner != null && orbitTarget == null && stationaryAnchor == null && distanceToSqr(owner) > OWNER_TETHER_SQR) {
+            relocateNear(owner);
+        }
+        boolean blocked = stationaryAnchor == null && requestedVelocity.lengthSqr() > 0.0004D
+                && (horizontalCollision || verticalCollision
+                || position().distanceToSqr(before) < 0.0001D);
         blockedTicks = blocked ? blockedTicks + 1 : 0;
         calculateEntityAnimation(false);
     }
@@ -238,8 +286,8 @@ public final class NaviCreature extends LegacyCreature {
         moveTarget = null;
         previousTarget = null;
         feedForward = Vec3.ZERO;
+        stationaryAnchor = null;
         blockedTicks = 0;
-        targetObstructed = false;
         ownerMotion.reset();
     }
 

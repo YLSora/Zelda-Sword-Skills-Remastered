@@ -96,40 +96,49 @@ public final class ZSSRegistries {
     private static final Map<String, RegistryObject<Item>> ITEM_BY_ID = new LinkedHashMap<>();
     public static final DeferredRegister<net.minecraft.world.level.levelgen.structure.StructureType<?>> STRUCTURE_TYPES = DeferredRegister.create(Registries.STRUCTURE_TYPE, ZeldaSwordSkills_Remastered.MOD_ID);
     public static final DeferredRegister<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> STRUCTURE_PIECES = DeferredRegister.create(Registries.STRUCTURE_PIECE, ZeldaSwordSkills_Remastered.MOD_ID);
+    public static final DeferredRegister<net.minecraft.world.level.levelgen.structure.placement.StructurePlacementType<?>> STRUCTURE_PLACEMENTS = DeferredRegister.create(Registries.STRUCTURE_PLACEMENT, ZeldaSwordSkills_Remastered.MOD_ID);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<zeldaswordskills_remastered.worldgen.RoyalCastleStructure>> ROYAL_CASTLE_STRUCTURE = STRUCTURE_TYPES.register("royal_castle", () -> () -> zeldaswordskills_remastered.worldgen.RoyalCastleStructure.CODEC);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> ROYAL_CASTLE_PIECE = STRUCTURE_PIECES.register("royal_castle", () -> zeldaswordskills_remastered.worldgen.RoyalCastlePiece::new);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.placement.StructurePlacementType<zeldaswordskills_remastered.worldgen.RoyalCastlePlacement>> ROYAL_CASTLE_PLACEMENT = STRUCTURE_PLACEMENTS.register("royal_castle", () -> () -> zeldaswordskills_remastered.worldgen.RoyalCastlePlacement.CODEC);
     public static final DeferredRegister<net.minecraft.world.level.levelgen.feature.Feature<?>> FEATURES = DeferredRegister.create(Registries.FEATURE, ZeldaSwordSkills_Remastered.MOD_ID);
     public static final RegistryObject<zeldaswordskills_remastered.worldgen.SmallWorldFeature> JAR_FEATURE = FEATURES.register("jars", () -> new zeldaswordskills_remastered.worldgen.SmallWorldFeature(zeldaswordskills_remastered.worldgen.SmallWorldFeature.Kind.JARS));
     public static final RegistryObject<zeldaswordskills_remastered.worldgen.SmallWorldFeature> BOMB_FLOWER_FEATURE = FEATURES.register("bomb_flowers", () -> new zeldaswordskills_remastered.worldgen.SmallWorldFeature(zeldaswordskills_remastered.worldgen.SmallWorldFeature.Kind.BOMB_FLOWERS));
     public static final RegistryObject<zeldaswordskills_remastered.worldgen.SmallWorldFeature> GOSSIP_FEATURE = FEATURES.register("gossip_stone", () -> new zeldaswordskills_remastered.worldgen.SmallWorldFeature(zeldaswordskills_remastered.worldgen.SmallWorldFeature.Kind.GOSSIP_STONE));
     public static final RegistryObject<zeldaswordskills_remastered.worldgen.SmallWorldFeature> PILLAR_FEATURE = FEATURES.register("song_pillar", () -> new zeldaswordskills_remastered.worldgen.SmallWorldFeature(zeldaswordskills_remastered.worldgen.SmallWorldFeature.Kind.SONG_PILLAR));
-    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<zeldaswordskills_remastered.worldgen.SecretRoomStructure>> SECRET_ROOM_STRUCTURE = STRUCTURE_TYPES.register("secret_room", () -> () -> zeldaswordskills_remastered.worldgen.SecretRoomStructure.CODEC);
     public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<zeldaswordskills_remastered.worldgen.TempleStructure>> TEMPLE_STRUCTURE = STRUCTURE_TYPES.register("temple", () -> () -> zeldaswordskills_remastered.worldgen.TempleStructure.CODEC);
     public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<zeldaswordskills_remastered.worldgen.EndTempleStructure>> END_TEMPLE_STRUCTURE = STRUCTURE_TYPES.register("end_temple", () -> () -> zeldaswordskills_remastered.worldgen.EndTempleStructure.CODEC);
-    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> SECRET_ROOM_PIECE = STRUCTURE_PIECES.register("secret_room", () -> zeldaswordskills_remastered.worldgen.SecretRoomPiece::new);
-    public static final RegistryObject<SecretRoomCoreBlock> SECRET_ROOM_CORE = BLOCKS.register("secret_room_core", () -> new SecretRoomCoreBlock(BlockBehaviour.Properties.of().strength(-1,3600000)));
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<zeldaswordskills_remastered.worldgen.FairyPoolStructure>> FAIRY_POOL_STRUCTURE = STRUCTURE_TYPES.register("fairy_pool", () -> () -> zeldaswordskills_remastered.worldgen.FairyPoolStructure.CODEC);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> FAIRY_POOL_PIECE = STRUCTURE_PIECES.register("fairy_pool", () -> zeldaswordskills_remastered.worldgen.FairyPoolPiece::new);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<zeldaswordskills_remastered.worldgen.FairyRootStructure>> FAIRY_ROOT_STRUCTURE = STRUCTURE_TYPES.register("fairy_root", () -> () -> zeldaswordskills_remastered.worldgen.FairyRootStructure.CODEC);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> FAIRY_ROOT_PIECE = STRUCTURE_PIECES.register("fairy_root", () -> zeldaswordskills_remastered.worldgen.FairyRootPiece::new);
+    public static final RegistryObject<zeldaswordskills_remastered.block.FairyCoreBlock> FAIRY_POOL_CORE = BLOCKS.register("fairy_pool_core",
+            () -> new zeldaswordskills_remastered.block.FairyCoreBlock(BlockBehaviour.Properties.of().strength(-1,3600000)));
+    public static final RegistryObject<zeldaswordskills_remastered.block.FairyCoreBlock> FAIRY_ROOT_CORE = BLOCKS.register("fairy_root_core",
+            () -> new zeldaswordskills_remastered.block.FairyCoreBlock(BlockBehaviour.Properties.of().strength(-1,3600000)));
+    public static final RegistryObject<BlockEntityType<zeldaswordskills_remastered.block.entity.FairyCore>> FAIRY_CORE_ENTITY = BLOCK_ENTITY_TYPES.register("fairy_pool_core",
+            () -> BlockEntityType.Builder.of(zeldaswordskills_remastered.block.entity.FairyCore::new, FAIRY_POOL_CORE.get(), FAIRY_ROOT_CORE.get()).build(null));
     public static final RegistryObject<NaviLightBlock> NAVI_LIGHT = BLOCKS.register("navi_light", NaviLightBlock::new);
-    public static final RegistryObject<BlockEntityType<zeldaswordskills_remastered.block.entity.SecretRoomCore>> SECRET_ROOM_CORE_ENTITY = BLOCK_ENTITY_TYPES.register("secret_room_core",
-            () -> BlockEntityType.Builder.of(zeldaswordskills_remastered.block.entity.SecretRoomCore::new,SECRET_ROOM_CORE.get()).build(null));
 
     public static final RegistryObject<Item> MASTER_ORE = item("master_ore", () -> new MasterOreItem(new Item.Properties()));
     public static final RegistryObject<Item> PENDANT_POWER = item("pendant_power", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> PENDANT_WISDOM = item("pendant_wisdom", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> PENDANT_COURAGE = item("pendant_courage", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> THROWING_ROCK = item("throwing_rock", () -> new ThrowingRockItem(new Item.Properties().stacksTo(18)));
-    public static final RegistryObject<Item> DEKU_SHIELD = item("deku_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> HYLIAN_SHIELD = item("hylian_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().stacksTo(1)));
-    public static final RegistryObject<Item> MIRROR_SHIELD = item("mirror_shield", () -> new ZeldaCombatItems.Shield(true, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> DEKU_SHIELD = item("deku_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().durability(64)));
+    public static final RegistryObject<Item> HYLIAN_SHIELD = item("hylian_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().durability(64)));
+    public static final RegistryObject<Item> MIRROR_SHIELD = item("mirror_shield", () -> new ZeldaCombatItems.Shield(true, new Item.Properties().durability(64)));
     public static final RegistryObject<Item> BROKEN_SWORD = sword("broken_sword", Tiers.WOOD, 0, -2.4F, false, false);
     public static final RegistryObject<Item> KOKIRI_SWORD = sword("kokiri_sword", Tiers.WOOD, 3, -2.4F, false, false);
     // Vanilla totals are "1 + tier bonus + modifier" for attack damage
     // and "4.0 + modifier" for attack speed, with tier bonuses WOOD 0 / STONE 1 / IRON 2 /
     // DIAMOND 3 / NETHERITE 4. Every modifier below is chosen to land on the published totals;
     // weapons the task did not name keep their previous values, including attack speed.
-    // Ordon 7, Giant 10, Biggoron 16 @ 0.9, Master 8, Tempered 10, Golden 12, True Master 15,
+    // Ordon 7, Giant 10, Biggoron 16 @ 0.9, Master 9, Tempered 10, Golden 12, True Master 15,
     // Darknut 10.
     public static final RegistryObject<Item> ORDON_SWORD = sword("ordon_sword", Tiers.STONE, 5, -2.4F, false, false);
     public static final RegistryObject<Item> GIANT_SWORD = sword("giant_sword", Tiers.IRON, 7, -3.0F, true, false);
     public static final RegistryObject<Item> BIGGORON_SWORD = sword("biggoron_sword", Tiers.DIAMOND, 12, -3.1F, true, false);
-    public static final RegistryObject<Item> MASTER_SWORD = sword("master_sword", Tiers.DIAMOND, 4, -2.4F, false, true);
+    public static final RegistryObject<Item> MASTER_SWORD = sword("master_sword", Tiers.DIAMOND, 5, -2.4F, false, true);
     public static final RegistryObject<Item> TEMPERED_SWORD = sword("tempered_sword", Tiers.DIAMOND, 6, -2.4F, false, true);
     public static final RegistryObject<Item> GOLDEN_SWORD = sword("golden_sword", Tiers.NETHERITE, 7, -2.4F, false, true);
     public static final RegistryObject<Item> TRUE_MASTER_SWORD = sword("true_master_sword", Tiers.NETHERITE, 10, -2.4F, false, true);
@@ -336,11 +345,11 @@ public final class ZSSRegistries {
     public static final RegistryObject<EntityType<LegacyCreature>> BABA_DEKU = creature("baba_deku", LegacyCreature.Kind.BABA_DEKU, MobCategory.MONSTER, 0.8F, 1.8F);
     public static final RegistryObject<EntityType<LegacyCreature>> BABA_FIRE = creature("baba_fire", LegacyCreature.Kind.BABA_FIRE, MobCategory.MONSTER, 0.8F, 1.8F);
     public static final RegistryObject<EntityType<LegacyCreature>> BABA_WITHERED = creature("baba_withered", LegacyCreature.Kind.BABA_WITHERED, MobCategory.MONSTER, 0.8F, 1.4F);
-    public static final RegistryObject<EntityType<LegacyCreature>> KEESE = creature("keese", LegacyCreature.Kind.KEESE_NORMAL, MobCategory.MONSTER, 0.5F, 0.9F);
-    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_FIRE = creature("keese_fire", LegacyCreature.Kind.KEESE_FIRE, MobCategory.MONSTER, 0.5F, 0.9F);
-    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_ICE = creature("keese_ice", LegacyCreature.Kind.KEESE_ICE, MobCategory.MONSTER, 0.5F, 0.9F);
-    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_THUNDER = creature("keese_thunder", LegacyCreature.Kind.KEESE_THUNDER, MobCategory.MONSTER, 0.5F, 0.9F);
-    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_CURSED = creature("keese_cursed", LegacyCreature.Kind.KEESE_CURSED, MobCategory.MONSTER, 0.5F, 0.9F);
+    public static final RegistryObject<EntityType<LegacyCreature>> KEESE = creature("keese", LegacyCreature.Kind.KEESE_NORMAL, MobCategory.MONSTER, 0.25F, 0.25F);
+    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_FIRE = creature("keese_fire", LegacyCreature.Kind.KEESE_FIRE, MobCategory.MONSTER, 0.25F, 0.25F);
+    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_ICE = creature("keese_ice", LegacyCreature.Kind.KEESE_ICE, MobCategory.MONSTER, 0.25F, 0.25F);
+    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_THUNDER = creature("keese_thunder", LegacyCreature.Kind.KEESE_THUNDER, MobCategory.MONSTER, 0.25F, 0.25F);
+    public static final RegistryObject<EntityType<LegacyCreature>> KEESE_CURSED = creature("keese_cursed", LegacyCreature.Kind.KEESE_CURSED, MobCategory.MONSTER, 0.25F, 0.25F);
     public static final RegistryObject<EntityType<LegacyCreature>> OCTOROK = creature("octorok", LegacyCreature.Kind.OCTOROK_NORMAL, MobCategory.MONSTER, 0.9F, 1.2F);
     public static final RegistryObject<EntityType<LegacyCreature>> OCTOROK_BOMB = creature("octorok_bomb", LegacyCreature.Kind.OCTOROK_BOMB, MobCategory.MONSTER, 0.9F, 1.2F);
     public static final RegistryObject<EntityType<LegacyCreature>> SKULLTULA = creature("skulltula", LegacyCreature.Kind.SKULLTULA_NORMAL, MobCategory.MONSTER, 1.4F, 0.9F);
@@ -544,6 +553,7 @@ public final class ZSSRegistries {
         CREATIVE_MODE_TABS.register(modBus);
         STRUCTURE_TYPES.register(modBus);
         STRUCTURE_PIECES.register(modBus);
+        STRUCTURE_PLACEMENTS.register(modBus);
         FEATURES.register(modBus);
     }
 
@@ -595,7 +605,15 @@ public final class ZSSRegistries {
     private static RegistryObject<Item> sword(String path, net.minecraft.world.item.Tier tier, int damage, float speed,
                                                boolean twoHanded, boolean masterSword) {
         return item(path, () -> new ZeldaCombatItems.Sword(tier, damage, speed, twoHanded, masterSword,
-                path.equals("golden_sword"), new Item.Properties()));
+                path.equals("golden_sword"), new Item.Properties().durability(switch (path) {
+                    case "kokiri_sword" -> 256;
+                    case "ordon_sword" -> 512;
+                    case "giant_sword" -> 1200;
+                    case "biggoron_sword" -> 2000;
+                    case "broken_sword" -> 256;
+                    case "darknut_sword" -> 768;
+                    default -> 0;
+                })));
     }
 
     private static boolean registerStageNineItems() {

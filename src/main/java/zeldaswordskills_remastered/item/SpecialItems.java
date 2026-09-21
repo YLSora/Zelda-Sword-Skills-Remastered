@@ -53,7 +53,7 @@ public final class SpecialItems {
     private SpecialItems() {}
 
     public static final class MagicMirror extends Item {
-        public MagicMirror(Properties properties) { super(properties); }
+        public MagicMirror(Properties properties) { super(properties.durability(256)); }
         @Override public UseAnim getUseAnimation(ItemStack stack) { return UseAnim.BOW; }
         @Override public int getUseDuration(ItemStack stack) { return MagicMirrorService.CHARGE_TICKS; }
         @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -61,7 +61,10 @@ public final class SpecialItems {
             player.startUsingItem(hand); return InteractionResultHolder.consume(player.getItemInHand(hand));
         }
         @Override public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity living) {
-            if (living instanceof ServerPlayer player) MagicMirrorService.start(player);
+            if (living instanceof ServerPlayer player && MagicMirrorService.canUse(player)) {
+                MagicMirrorService.start(player);
+                stack.hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(player.getUsedItemHand()));
+            }
             return stack;
         }
     }

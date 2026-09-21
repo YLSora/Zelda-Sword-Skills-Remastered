@@ -40,6 +40,8 @@ public final class FlashAssault {
     public static final int READY_TICKS = 60;
     public static final int FOLLOW_UP_TICKS = 20;
     public static final int IMMUNITY_TICKS = 20;
+    /** Time after a successful Dodge in which Flash Assault may confirm a perfect dodge. */
+    public static final int PERFECT_DODGE_WINDOW_TICKS = 12;
     public static final int COOLDOWN_TICKS = 60;
     public static final int DOUBLE_TAP_TICKS = 6;
     private static final ResourceKey<DamageType> DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, ZSSContentIds.FLASH_ASSAULT);
@@ -66,6 +68,8 @@ public final class FlashAssault {
         private long cooldownUntil;
         private boolean dashing;
         private boolean attacking;
+        private boolean attackQueued;
+        private boolean attackHit;
         private Vec3 dashStart;
         private Vec3 dashDestination;
         private int slot = -1;
@@ -83,7 +87,7 @@ public final class FlashAssault {
             dodgeTarget = targetId;
             dodgeConfirmed = false;
             dodgeStartedAt = now;
-            dodgeUntil = now + PlayerCombatState.DODGE_IMMUNITY_TICKS;
+            dodgeUntil = now + PERFECT_DODGE_WINDOW_TICKS;
         }
         public boolean dodgeConfirmable(long now) {
             return dodgeTarget >= 0 && !dodgeConfirmed && dodgeStartedAt != Long.MIN_VALUE
@@ -108,6 +112,7 @@ public final class FlashAssault {
             dodgeUntil = 0L;
         }
         public boolean busy() { return dashing || attacking; }
+        public boolean dashing(long now) { return dashing && now < dashUntil; }
         public boolean immune(long now) { return now < immuneUntil; }
         public boolean coolingDown(long now) { return now < cooldownUntil; }
         public boolean acceptForwardTap(long now) {
@@ -126,14 +131,15 @@ public final class FlashAssault {
             targetInvalidated = false;
             readyUntil = followUpUntil = dashUntil = attackUntil = 0L;
             firstTap = Long.MIN_VALUE;
-            dashing = attacking = false;
+            dashing = attacking = attackQueued = false;
             dashStart = dashDestination = null;
             slot = -1;
             weapon = null;
         }
         private void finishAttack(long now) {
-            immuneUntil = now + IMMUNITY_TICKS;
+            immuneUntil = now + IMMUNITY_TICKS + (attackHit ? 30L : 0L);
             stopAction();
+            attackHit = false;
         }
         public void reset() {
             // Lifecycle resets must not report an unfinished attack as a new miss.
@@ -170,6 +176,10 @@ public final class FlashAssault {
                 && source.is(MELEE_ATTACKS);
     }
 
+    public static boolean isDamage(DamageSource source) {
+        return source.is(DAMAGE);
+    }
+
     public static void handle(ServerPlayer player, ZSSPlayerData data, SkillIntentMessage.Action action) {
         State state = data.combat().flashAssault();
         long now = player.level().getGameTime();
@@ -186,13 +196,15 @@ public final class FlashAssault {
             state.followUpUntil = now + FOLLOW_UP_TICKS;
             state.dashUntil = now + FOLLOW_UP_TICKS;
             state.dashing = true;
+            state.attackQueued = false;
+            state.attackHit = false;
             state.slot = player.getInventory().selected;
             state.weapon = player.getMainHandItem().copy();
             state.immuneUntil = state.dashUntil + IMMUNITY_TICKS;
             data.combat().clearCharge();
             AdvancedSwordSkills.endParryGuard(player, data);
             state.dashStart = player.position();
-            state.dashDestination = FlashAssaultMovement.rearPosition(target.position(), target.getYRot());
+            state.dashDestination = rearPosition(target, player);
             var ground = player.getOnPos();
             double drag = player.isInWater() ? 0.8D : player.isInLava() ? 0.5D : player.onGround()
                     ? player.level().getBlockState(ground).getFriction(player.level(), ground, player) * 0.91F : 0.91F;
@@ -203,11 +215,15 @@ public final class FlashAssault {
             player.hurtMarked = false;
             player.level().playSound(null, player.blockPosition(), ZSSRegistries.FLASH_ASSAULT_DASH.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             sync(player, state, Optional.of(impulse));
+        } else if (action == SkillIntentMessage.Action.ATTACK && state.dashing) {
+            state.attackQueued = true;
+            sync(player, state);
         } else if (action == SkillIntentMessage.Action.ATTACK && state.followUp(now)) {
             // A press is sufficient, including one aimed at air while still approaching.
             enforceSlot(player, state);
             state.followUpUntil = 0L;
             state.attacking = true;
+            state.attackQueued = false;
             state.slot = player.getInventory().selected;
             state.weapon = player.getMainHandItem().copy();
             state.level = data.activeSkillLevel(ZSSContentIds.FLASH_ASSAULT);
@@ -223,7 +239,6 @@ public final class FlashAssault {
             state.attackUntil = now + (state.hits - 1L) * state.interval + 1L;
             state.immuneUntil = state.attackUntil - 1L + IMMUNITY_TICKS;
             state.attempt = FatalStrike.watchAttack(player, data);
-            player.resetAttackStrengthTicker();
             data.combat().clearCharge();
             AdvancedSwordSkills.endParryGuard(player, data);
             strike(player, data, state, target, now);
@@ -242,7 +257,15 @@ public final class FlashAssault {
             return;
         }
         long now = player.level().getGameTime();
-        if (state.busy() && now >= (state.attacking ? state.attackUntil : state.dashUntil)) {
+        // A normal finishing blow between burst hits still completes a successful assault.
+        if (state.attacking && state.attackHit
+                && player.level().getEntity(state.target) instanceof LivingEntity defeated && defeated.isDeadOrDying()
+                && defeated.getLastDamageSource() != null && defeated.getLastDamageSource().getEntity() == player) {
+            state.finishAttack(now);
+            sync(player, state);
+            return;
+        }
+        if (state.attacking && now >= state.attackUntil) {
             stop(player, state);
             return;
         }
@@ -260,12 +283,24 @@ public final class FlashAssault {
         if (state.dashing) {
             Vec3 remaining = state.dashDestination.subtract(player.position()).multiply(1.0D, 0.0D, 1.0D);
             Vec3 path = state.dashDestination.subtract(state.dashStart).multiply(1.0D, 0.0D, 1.0D);
-            if (remaining.horizontalDistanceSqr() <= 0.01D || remaining.dot(path) <= 0.0D
-                    || player.horizontalCollision) {
+            // Recompute the target's rear point every tick so moving targets are approached using
+            // the current collision-box separation. noPhysics lets the approach pass through mobs
+            // and blocks without being truncated by vanilla collision resolution.
+            state.dashDestination = rearPosition(target, player);
+            player.noPhysics = true;
+            remaining = state.dashDestination.subtract(player.position()).multiply(1.0D, 0.0D, 1.0D);
+            long ticksLeft = Math.max(1L, state.dashUntil - now);
+            player.noPhysics = true;
+            Vec3 impulse = remaining.scale(1.0D / ticksLeft);
+            player.setDeltaMovement(impulse.x, player.getDeltaMovement().y, impulse.z);
+            if (remaining.horizontalDistanceSqr() <= 0.04D || now + 1L >= state.dashUntil) {
+                player.setPos(state.dashDestination.x, state.dashDestination.y, state.dashDestination.z);
                 state.dashing = false;
                 stopMotion(player);
-                if (!state.attacking) state.immuneUntil = now + IMMUNITY_TICKS;
-                if (!state.attacking) { state.slot = -1; state.weapon = null; }
+                player.noPhysics = false;
+                state.immuneUntil = now + IMMUNITY_TICKS;
+                state.followUpUntil = now + IMMUNITY_TICKS;
+                if (state.attackQueued) beginAttack(player, data, state, target, now);
                 sync(player, state);
             }
         }
@@ -278,6 +313,7 @@ public final class FlashAssault {
         DamageSource source = new DamageSource(player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                 .getHolderOrThrow(DAMAGE), player);
         boolean hit = state.attempt.hit(target.hurt(source, state.damage));
+        state.attackHit |= hit;
         target.setDeltaMovement(motion);
         player.swing(InteractionHand.MAIN_HAND, true);
         player.level().playSound(null, target.blockPosition(), ZSSRegistries.FLASH_ASSAULT_ATTACK.get(),
@@ -311,6 +347,28 @@ public final class FlashAssault {
         }
     }
 
+    private static void beginAttack(ServerPlayer player, ZSSPlayerData data, State state, LivingEntity target, long now) {
+        enforceSlot(player, state);
+        state.followUpUntil = 0L;
+        state.attacking = true;
+        state.attackQueued = false;
+        state.slot = player.getInventory().selected;
+        state.weapon = player.getMainHandItem().copy();
+        state.level = data.activeSkillLevel(ZSSContentIds.FLASH_ASSAULT);
+        state.hits = hitCount(weaponAttackSpeed(state.weapon));
+        state.interval = hitInterval(state.hits);
+        state.nextHit = 0;
+        state.armorChecked = false;
+        state.damage = damage(player.getAttributeValue(Attributes.ATTACK_DAMAGE), state.weapon, state.level);
+        state.hitAt = now;
+        state.attackUntil = now + (state.hits - 1L) * state.interval + 1L;
+        state.immuneUntil = state.attackUntil - 1L + IMMUNITY_TICKS;
+        state.attempt = FatalStrike.watchAttack(player, data);
+        data.combat().clearCharge();
+        AdvancedSwordSkills.endParryGuard(player, data);
+        strike(player, data, state, target, now);
+    }
+
     private static void tryRemoveArmor(ServerPlayer player, LivingEntity target, State state) {
         if (target instanceof Slime || target instanceof Blaze || target instanceof SnowGolem) return;
         ItemStack chest = target.getItemBySlot(EquipmentSlot.CHEST);
@@ -323,7 +381,15 @@ public final class FlashAssault {
 
     private static LivingEntity target(ServerPlayer player, ZSSPlayerData data, State state) {
         if (state.targetInvalidated) return null;
-        return TargetingService.getLockedTarget(player, data).filter(target -> target.getId() == state.target).orElse(null);
+        LivingEntity locked = TargetingService.getLockedTarget(player, data).orElse(null);
+        if (locked != null && locked.getId() == state.target) return locked;
+        return player.level().getEntity(state.target) instanceof LivingEntity entity && entity.isAlive() ? entity : null;
+    }
+
+    private static Vec3 rearPosition(LivingEntity target, ServerPlayer player) {
+        Vec3 forward = Vec3.directionFromRotation(0.0F, target.getYRot());
+        double gap = target.getBbWidth() * 0.5D + player.getBbWidth() * 0.5D + 0.1D;
+        return target.getBoundingBox().getCenter().subtract(forward.scale(gap));
     }
 
     public static void enforceSlot(ServerPlayer player, State state) {
@@ -338,12 +404,14 @@ public final class FlashAssault {
         else if (state.dashing) state.immuneUntil =
                 Math.min(player.level().getGameTime(), state.dashUntil) + IMMUNITY_TICKS;
         if (state.dashing) stopMotion(player);
+        player.noPhysics = false;
         state.stopAction();
         sync(player, state);
     }
 
     public static void disable(ServerPlayer player, State state) {
         if (state.dashing) stopMotion(player);
+        player.noPhysics = false;
         state.stopAction();
         state.immuneUntil = 0L;
         state.targetChanged();

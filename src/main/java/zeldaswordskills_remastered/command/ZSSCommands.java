@@ -2,6 +2,7 @@ package zeldaswordskills_remastered.command;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -37,13 +38,14 @@ public final class ZSSCommands {
                                 .then(Commands.argument("count", IntegerArgumentType.integer(0))
                                         .executes(context -> setHearts(context.getSource().getPlayerOrException(),
                                                 IntegerArgumentType.getInteger(context, "count"))))))
-                .then(Commands.literal("skill")
+                .then(Commands.literal("skills")
                         .requires(source -> source.hasPermission(2))
                         .then(Commands.literal("set")
                                 .then(Commands.argument("skill", ResourceLocationArgument.id())
-                                        .then(Commands.argument("level", IntegerArgumentType.integer(0, 100))
+                                        .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(ZSSContentIds.SKILLS, builder))
+                                        .then(Commands.argument("level", IntegerArgumentType.integer(0))
                                                 .executes(context -> setSkill(
-                                                        context.getSource().getPlayerOrException(),
+                                                        context.getSource(),
                                                         ResourceLocationArgument.getId(context, "skill"),
                                                         IntegerArgumentType.getInteger(context, "level")))))))
                 .then(Commands.literal("song")
@@ -127,22 +129,28 @@ public final class ZSSCommands {
         return 1;
     }
 
-    private static int setSkill(ServerPlayer player, ResourceLocation skill, int level) {
+    private static int setSkill(CommandSourceStack source, ResourceLocation skill, int level) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
         if (!ZSSContentIds.SKILLS.contains(skill)) {
-            player.sendSystemMessage(Component.literal("Unknown Zelda skill: " + skill));
+            source.sendFailure(Component.translatable("command.zeldaswordskills_remastered.skills.unknown", skill));
             return 0;
         }
-        ZSSCapabilities.get(player).ifPresent(data -> {
-            data.setSkillLevel(skill, level);
-            AdvancedSwordSkills.tick(player, data);
-            if (level == 0 && skill.equals(ZSSContentIds.SWORD_BASIC)) {
-                data.combat().clearTarget();
-                data.combat().finishCombo();
-                ZSSNetwork.syncCombatState(player, data.combat());
-            }
-            ZSSNetwork.syncPlayerData(player);
-        });
-        player.sendSystemMessage(Component.literal("Set " + skill + " to level " + level));
+        var data = ZSSCapabilities.get(player).orElse(null);
+        if (data == null) return 0;
+        int maximum = data.skillMaximum(skill);
+        if (level < 0 || level > maximum) {
+            source.sendFailure(Component.translatable("command.zeldaswordskills_remastered.skills.range", skill, maximum, level));
+            return 0;
+        }
+        data.setSkillLevel(skill, level);
+        AdvancedSwordSkills.tick(player, data);
+        if (level == 0 && skill.equals(ZSSContentIds.SWORD_BASIC)) {
+            data.combat().clearTarget();
+            data.combat().finishCombo();
+            ZSSNetwork.syncCombatState(player, data.combat());
+        }
+        ZSSNetwork.syncPlayerData(player);
+        source.sendSuccess(() -> Component.translatable("command.zeldaswordskills_remastered.skills.set", skill, level), false);
         return 1;
     }
 

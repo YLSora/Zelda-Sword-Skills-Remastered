@@ -36,7 +36,6 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.gametest.GameTestHolder;
 import net.minecraftforge.gametest.PrefixGameTestTemplate;
 import zeldaswordskills_remastered.ZeldaSwordSkills_Remastered;
-import zeldaswordskills_remastered.block.entity.SecretRoomCore;
 import zeldaswordskills_remastered.capability.ZSSCapabilities;
 import zeldaswordskills_remastered.capability.ZSSPlayerData;
 import zeldaswordskills_remastered.entity.FairyCreature;
@@ -161,66 +160,66 @@ public final class AcquisitionGameTests {
                         && fairy.isRemoved() && count(player, ZSSRegistries.getItem("fairy_bottle")) == 1,
                 "Glass Bottle did not capture a fairy");
 
-        FairyCreature poolFairy = (FairyCreature) ZSSRegistries.FAIRY.get().create(helper.getLevel());
-        helper.assertTrue(poolFairy != null, "Pool fairy factory failed");
         BlockPos corePos = helper.absolutePos(new BlockPos(2, 1, 2));
-        helper.getLevel().setBlockAndUpdate(corePos, ZSSRegistries.SECRET_ROOM_CORE.get().defaultBlockState());
-        SecretRoomCore core = (SecretRoomCore) helper.getLevel().getBlockEntity(corePos);
-        CompoundTag settings = new CompoundTag();
-        settings.putBoolean("fairy_pool", true);
-        settings.putInt("room_radius", 2);
-        core.load(settings);
         player.setPos(corePos.getX() + 1.5D, corePos.getY(), corePos.getZ() + 1.5D);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.getItem("slingshot")));
         player.getInventory().add(new ItemStack(Items.EMERALD, 64));
         player.getInventory().add(new ItemStack(Items.EMERALD, 64));
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && player.getMainHandItem().is(ZSSRegistries.getItem("scattershot"))
                         && count(player, Items.EMERALD) == 0,
                 "Fairy pool did not consume 128 emeralds and upgrade the Slingshot");
         add(player, Items.EMERALD, 320);
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && player.getMainHandItem().is(ZSSRegistries.getItem("supershot"))
                         && count(player, Items.EMERALD) == 0,
                 "Fairy pool did not consume 320 emeralds and upgrade the Scattershot");
 
         player.getInventory().add(new ItemStack(ZSSRegistries.TRUE_MASTER_SWORD.get()));
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.HYLIAN_SHIELD.get()));
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && player.getMainHandItem().is(ZSSRegistries.MIRROR_SHIELD.get()),
                 "True Master Sword did not qualify the Hylian Shield for its fairy upgrade");
         ZSSPlayerData data = ZSSCapabilities.get(player).orElseThrow(() -> new AssertionError("Fairy test capability missing"));
         data.setSkillLevel(ZSSContentIds.BONUS_HEART, 10);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.getItem("boomerang")));
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && player.getMainHandItem().is(ZSSRegistries.getItem("magic_boomerang")),
                 "Ten Bonus Hearts did not qualify the Boomerang for its fairy upgrade");
 
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.TEMPERED_SWORD.get()));
         WitherSkeleton victim = EntityType.WITHER_SKELETON.create(helper.getLevel());
         helper.assertTrue(victim != null, "Hostile test entity factory failed");
-        for (int kill = 0; kill <= 300; kill++) AcquisitionService.recordTemperedSwordKill(player, victim);
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        for (int kill = 0; kill < 300; kill++) AcquisitionService.recordTemperedSwordKill(player, victim);
+        helper.assertTrue(!AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND),
+                "Tempered Sword upgraded before exceeding 300 kills");
+        AcquisitionService.recordTemperedSwordKill(player, victim);
+        var tooltip = new java.util.ArrayList<net.minecraft.network.chat.Component>();
+        player.getMainHandItem().getItem().appendHoverText(player.getMainHandItem(), helper.getLevel(), tooltip,
+                net.minecraft.world.item.TooltipFlag.NORMAL);
+        helper.assertTrue(tooltip.stream().anyMatch(line -> line.getString().contains("301")),
+                "Tempered Sword tooltip omitted the kill count");
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && player.getMainHandItem().is(ZSSRegistries.GOLDEN_SWORD.get()),
                 "Qualified Tempered Sword did not upgrade to the Golden Sword");
 
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.getItem("hero_bow")));
         add(player, Items.EMERALD, 384);
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && zeldaswordskills_remastered.item.ZeldaCombatItems.HeroBow.upgradeLevel(player.getMainHandItem()) == 2
                         && count(player, Items.EMERALD) == 0, "First bow upgrade must consume 384 emeralds");
         add(player, Items.EMERALD, 576);
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && zeldaswordskills_remastered.item.ZeldaCombatItems.HeroBow.upgradeLevel(player.getMainHandItem()) == 3
                         && count(player, Items.EMERALD) == 0, "Final bow upgrade must consume 576 emeralds");
-        helper.assertTrue(!AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND), "Max bow upgraded twice");
+        helper.assertTrue(!AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND), "Max bow upgraded twice");
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ZSSRegistries.getItem("slingshot")));
         player.setShiftKeyDown(true);
         add(player, Items.EMERALD, 20);
-        helper.assertTrue(AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND)
+        helper.assertTrue(AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND)
                         && player.getMainHandItem().getEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.POWER_ARROWS) == 2
                         && count(player, Items.EMERALD) == 0, "Fairy enchantment must use Bonus Hearts and emeralds");
-        helper.assertTrue(!AcquisitionService.interact(player, poolFairy, InteractionHand.MAIN_HAND), "Unchanged enchantment consumed more resources");
+        helper.assertTrue(!AcquisitionService.interact(player, poolFairy(helper), InteractionHand.MAIN_HAND), "Unchanged enchantment consumed more resources");
         player.setShiftKeyDown(false);
         helper.succeed();
     }
@@ -313,6 +312,13 @@ public final class AcquisitionGameTests {
         helper.succeed();
     }
 
+    private static FairyCreature poolFairy(GameTestHelper helper) {
+        var fairy = (FairyCreature) ZSSRegistries.FAIRY.get().create(helper.getLevel());
+        helper.assertTrue(fairy != null, "Pool fairy factory failed");
+        fairy.bindToHabitat(helper.absolutePos(new BlockPos(2, 1, 2)));
+        return fairy;
+    }
+
     private static int legalSkills(List<ItemStack> drops) {
         int result = 0;
         for (ItemStack stack : drops) {
@@ -334,7 +340,7 @@ public final class AcquisitionGameTests {
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void fairyAndComponentToolUpgradesShareResults(GameTestHelper helper) {
         FakePlayer player = player(helper, "d151ce1d-e82f-4d12-a24d-0ec224986c22", "ToolUpgradeTest");
-        var fairy = ZSSRegistries.FAIRY.get().create(helper.getLevel());
+        var fairy = (FairyCreature) ZSSRegistries.FAIRY.get().create(helper.getLevel());
         var hook = zeldaswordskills_remastered.item.StageNineToolItem.upgradeHook(
                 new ItemStack(ZSSRegistries.getItem("hookshot")), "hookshot_extender");
         hook.setHoverName(net.minecraft.network.chat.Component.literal("Named hook"));
@@ -344,17 +350,13 @@ public final class AcquisitionGameTests {
         add(player, Items.EMERALD, 127);
         helper.assertTrue(!AcquisitionService.interact(player, fairy, InteractionHand.OFF_HAND)
                 && count(player, Items.EMERALD) == 127, "Wild fairy upgraded outside a pool");
-        BlockPos pos = helper.absolutePos(new BlockPos(2, 1, 2));
-        helper.getLevel().setBlockAndUpdate(pos, ZSSRegistries.SECRET_ROOM_CORE.get().defaultBlockState());
-        var core = (SecretRoomCore) helper.getLevel().getBlockEntity(pos);
-        CompoundTag settings = new CompoundTag();
-        settings.putBoolean("fairy_pool", true);
-        core.load(settings);
+        fairy.bindToHabitat(helper.absolutePos(new BlockPos(2, 1, 2)));
         helper.assertTrue(AcquisitionService.interact(player, fairy, InteractionHand.OFF_HAND)
-                && player.getOffhandItem() == hook && count(player, Items.EMERALD) == 127,
+                && player.getOffhandItem() == hook && count(player, Items.EMERALD) == 127 && fairy.isAlive(),
                 "Insufficient funds changed the hook or consumed emeralds");
         add(player, Items.EMERALD, 1);
         AcquisitionService.interact(player, fairy, InteractionHand.OFF_HAND);
+        helper.assertTrue(fairy.isRemoved(), "Successful upgrade did not consume the fairy");
         helper.assertTrue(player.getOffhandItem().is(ZSSRegistries.getItem("stoneshot"))
                 && originalTag.equals(player.getOffhandItem().getTag()) && count(player, Items.EMERALD) == 0,
                 "Fairy stone upgrade lost extension/name/enchantments or charged the wrong amount");
@@ -376,6 +378,7 @@ public final class AcquisitionGameTests {
         player.setItemInHand(InteractionHand.MAIN_HAND, component);
         component.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
         add(player, Items.EMERALD, 320);
+        fairy = poolFairy(helper);
         AcquisitionService.interact(player, fairy, InteractionHand.OFF_HAND);
         helper.assertTrue(player.getOffhandItem().is(ZSSRegistries.getItem("multishot"))
                 && count(player, Items.EMERALD) == 0 && originalTag.equals(player.getOffhandItem().getTag()),
@@ -386,6 +389,7 @@ public final class AcquisitionGameTests {
 
         player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(ZSSRegistries.getItem("whip")));
         add(player, Items.EMERALD, 320);
+        fairy = poolFairy(helper);
         AcquisitionService.interact(player, fairy, InteractionHand.OFF_HAND);
         helper.assertTrue(player.getOffhandItem().is(ZSSRegistries.getItem("magic_whip"))
                 && count(player, Items.EMERALD) == 0
@@ -393,6 +397,7 @@ public final class AcquisitionGameTests {
                 "Magic whip cost or terminal state is incorrect");
         player.getAbilities().instabuild = true;
         player.setItemInHand(InteractionHand.MAIN_HAND, hook.copy());
+        fairy = poolFairy(helper);
         AcquisitionService.interact(player, fairy, InteractionHand.MAIN_HAND);
         helper.assertTrue(player.getMainHandItem().is(ZSSRegistries.getItem("stoneshot")),
                 "Creative fairy upgrade incorrectly requires emeralds");

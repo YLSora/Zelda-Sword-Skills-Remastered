@@ -85,14 +85,15 @@ public final class LockedDoorBlock extends HorizontalDirectionalBlock {
     }
     private boolean useKey(Player player, InteractionHand hand) {
         ItemStack key = player.getItemInHand(hand);
-        if (bossDoor()) {
-            if (!key.is(ZSSRegistries.getItem("big_key"))) return false;
-        } else if (!key.is(ZSSRegistries.getItem("skeleton_key"))) {
+        boolean skeletonKey = key.is(ZSSRegistries.getItem("skeleton_key"));
+        if (bossDoor() && !skeletonKey && !key.is(ZSSRegistries.getItem("big_key"))) {
+            return false;
+        } else if (!bossDoor() && !skeletonKey) {
             return false;
         }
-        if (dungeonType != null && !zeldaswordskills_remastered.item.BigKeyItem.dungeon(key).filter(dungeonType::equals).isPresent()) return false;
+        if (!skeletonKey && dungeonType != null && !zeldaswordskills_remastered.item.BigKeyItem.dungeon(key).filter(dungeonType::equals).isPresent()) return false;
         // Temple big keys are reusable; skeleton keys for secret-room doors are consumed.
-        if (!bossDoor() && !player.getAbilities().instabuild) key.shrink(1);
+        if (skeletonKey && !player.getAbilities().instabuild) key.shrink(1);
         return true;
     }
     private void setPair(Level level, BlockPos lower, BlockState state, boolean unlocked, boolean open) {

@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.block.Blocks;
 import zeldaswordskills_remastered.capability.ZSSPlayerData;
+import zeldaswordskills_remastered.effect.StunEffect;
 import zeldaswordskills_remastered.registry.ZSSContentIds;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
 import zeldaswordskills_remastered.network.ZSSNetwork;
@@ -29,6 +30,7 @@ public final class GroundSlam {
     private static final ResourceKey<DamageType> DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE,
             ZSSContentIds.LEAPING_BLOW);
     private static final long IMMOBILIZE_TICKS = 30L;
+    private static final int RECENT_STUN_TICKS = 100;
     private static final Map<UUID, HeldEntity> IMMOBILIZED = new HashMap<>();
 
     private GroundSlam() { }
@@ -58,8 +60,9 @@ public final class GroundSlam {
     }
 
     private static void immobilize(LivingEntity target, long now) {
+        if (StunEffect.wasStunnedWithin(target, RECENT_STUN_TICKS)
+                || !target.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), (int) IMMOBILIZE_TICKS, 0))) return;
         IMMOBILIZED.put(target.getUUID(), new HeldEntity(target, now + IMMOBILIZE_TICKS, target.getX(), target.getZ()));
-        target.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), (int) IMMOBILIZE_TICKS, 0));
     }
 
     public static boolean canStrike(ServerPlayer player, ZSSPlayerData data) {

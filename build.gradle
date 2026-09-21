@@ -47,8 +47,8 @@ minecraft {
         }
 
         gameTestServer {
-            workingDirectory project.file('run/gametest')
-            property 'forge.enabledGameTestNamespaces', 'minecraft'
+            workingDirectory project.file(project.hasProperty('royalCastleTests') ? 'run/royal-castle-gametest' : 'run/gametest')
+            property 'forge.enabledGameTestNamespaces', project.hasProperty('royalCastleTests') ? 'zss_royal_castle_tests' : 'minecraft'
         }
 
         data {
@@ -65,9 +65,23 @@ sourceSets.main.resources {
 apply from: 'gradle/verify-client-resources.gradle'
 apply from: 'gradle/verify-modern-sources.gradle'
 
+def verifyNaviFlight = tasks.register('verifyNaviFlight', JavaExec) {
+    group = 'verification'
+    description = 'Checks fairy wandering, following, and lock-on flight numerically.'
+    dependsOn tasks.named('testClasses')
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'zeldaswordskills_remastered.entity.NaviFlightCheck'
+}
+tasks.named('test').configure { dependsOn verifyNaviFlight }
+
 def prepareGameTestRun = tasks.register('prepareGameTestRun', Copy) {
-    from 'src/gametest/resources'
-    into 'run/gametest'
+    doNotTrackState('The destination contains a live Minecraft world and session lock.')
+    from('src/gametest/resources') {
+        if (project.hasProperty('royalCastleTests')) exclude 'server.properties'
+    }
+    if (project.hasProperty('royalCastleTests')) from 'src/royaltest/resources'
+    into project.hasProperty('royalCastleTests') ? 'run/royal-castle-gametest' : 'run/gametest'
 }
 
 tasks.configureEach {

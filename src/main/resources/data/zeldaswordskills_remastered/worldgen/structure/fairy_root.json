@@ -1,0 +1,7 @@
+{
+  "type": "zeldaswordskills_remastered:fairy_root",
+  "biomes": "#zeldaswordskills_remastered:has_structure/fairy_root",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

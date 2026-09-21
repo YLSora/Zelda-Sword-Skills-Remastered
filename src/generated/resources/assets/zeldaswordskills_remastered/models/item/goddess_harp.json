@@ -1,3 +1,6 @@
 {
-  "parent": "zeldaswordskills_remastered:item/ocarina_time"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "zeldaswordskills_remastered:item/goddess_harp"
+  }
 }

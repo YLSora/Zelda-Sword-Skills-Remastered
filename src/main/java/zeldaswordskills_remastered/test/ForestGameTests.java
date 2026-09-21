@@ -58,6 +58,12 @@ public final class ForestGameTests {
                 level.getServer().setDifficulty(difficulty, true);
                 DungeonCore core = place(helper, origin, 0);
                 BlockPos center = core.getBlockPos();
+                var pedestal = (zeldaswordskills_remastered.block.entity.PedestalBlockEntity) level.getBlockEntity(center.above(2));
+                var pendant = new net.minecraft.world.item.ItemStack(ZSSRegistries.PENDANT_POWER.get());
+                helper.assertTrue(!pedestal.inventory().isItemValid(0, pendant)
+                                && !pedestal.inventory().insertItem(0, pendant, false).isEmpty()
+                                && pedestal.inventory().getStackInSlot(0).isEmpty(),
+                        "Forest pedestal accepted a pendant before victory");
                 var neighborId = DungeonController.instanceId(level, center.offset(20, 0, 0));
                 var neighborBefore = ZSSWorldData.get(level).dungeons().get(neighborId);
                 var first = (ForestBossCreature) DungeonController.spawnBoss(level, core).orElseThrow();
@@ -119,6 +125,20 @@ public final class ForestGameTests {
                                 && ZSSWorldData.get(level).dungeons().get(DungeonController.instanceId(level, center)).completed()
                                 && level.getBlockState(door(core)).getValue(LockedDoorBlock.OPEN)
                                 && rewards(level, center) == 1, "Forest victory did not unseal, persist and reward once");
+                helper.assertTrue(pedestal.inventory().insertItem(0, pendant, false).isEmpty(),
+                        "Forest pedestal rejected a pendant after victory");
+                var loadedWorld = ZSSWorldData.load(ZSSWorldData.get(level).save(new CompoundTag()));
+                helper.assertTrue(loadedWorld.insidePeacefulForestTemple(level, center.above(3))
+                                && !loadedWorld.insidePeacefulForestTemple(level, center.offset(100, 3, 0)),
+                        "Forest spawn protection lost its persisted bounds");
+                for (EntityType<?> type : List.of(EntityType.ZOMBIE, ZSSRegistries.KEESE.get(), EntityType.COW)) {
+                    Entity entity = type.create(level);
+                    entity.moveTo(Vec3.atCenterOf(center.above(3)));
+                    var event = new net.minecraftforge.event.entity.EntityJoinLevelEvent(entity, level);
+                    zeldaswordskills_remastered.event.ZSSSpawnEvents.preventPeacefulForestTempleMonsters(event);
+                    helper.assertTrue(event.isCanceled() == (type != EntityType.COW),
+                            "Forest protection did not distinguish monsters from passive mobs");
+                }
                 helper.assertTrue(BlockPos.betweenClosedStream(center.offset(-core.arenaRadius(), core.arenaHeight(), -core.arenaRadius()),
                                 center.offset(core.arenaRadius(), core.arenaHeight(), core.arenaRadius()))
                                 .anyMatch(pos -> level.getBlockState(pos).getBlock() instanceof zeldaswordskills_remastered.block.MechanismBlocks.AncientTablet),

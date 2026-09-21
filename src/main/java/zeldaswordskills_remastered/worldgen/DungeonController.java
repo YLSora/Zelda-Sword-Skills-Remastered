@@ -194,11 +194,20 @@ public final class DungeonController {
         if (dungeon == DungeonType.WATER) WaterEncounter.finish(level, core);
         core.complete();
         ZSSWorldData.get(level).setDungeonState(instanceId(level, core.getBlockPos()), true, 0L);
+        boolean swordTemple = dungeon == DungeonType.FOREST
+                && level.getBlockEntity(core.getBlockPos().above(2)) instanceof zeldaswordskills_remastered.block.entity.PedestalBlockEntity;
+        if (swordTemple) {
+            BlockPos min = DungeonArena.minimum(core);
+            ZSSWorldData.get(level).protectForestTemple(instanceId(level, core.getBlockPos()), level, new net.minecraft.world.phys.AABB(min,
+                    min.offset(core.arenaWidth(), core.arenaHeight(), core.arenaWidth())));
+        }
         DungeonBlocks.setSealed(level, core.getBlockPos(), false);
         placeWarpStone(level, core, dungeon);
         Vec3 center = core.getBlockPos().getCenter();
         level.players().stream().filter(player -> player.distanceToSqr(center) <= 32 * 32)
                 .forEach(player -> {
+                    if (swordTemple) player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(
+                            "message.zeldaswordskills_remastered.forest_sword_call"));
                     ZSSCapabilities.get(player).ifPresent(data -> {
                         data.recordBossRoom(dungeon.id());
                         ZSSAdvancementService.bossCompleted(player, data);

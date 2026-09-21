@@ -359,11 +359,16 @@ public final class ConfigQuestGameTests {
         QuestService.interactVillager(player, villager, InteractionHand.OFF_HAND);
         helper.assertTrue(data.skulltulaTrades() == 0, "Offhand interaction claimed an extra reward");
         for (int rewardIndex = 0; rewardIndex < 5; rewardIndex++) {
+            int itemsBefore = player.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
             helper.assertTrue(QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND),
                     "Cursed Man did not offer reward " + rewardIndex);
+            if (rewardIndex <= 1) {
+                helper.assertTrue(player.getInventory().items.stream().mapToInt(ItemStack::getCount).sum() == itemsBefore + 1
+                                && (rewardIndex == 0 ? countCursedWeapons(player) == 1 : countCursedArmor(player) == 1),
+                        "Equipment milestone did not award exactly one allowed item: " + rewardIndex);
+                continue;
+            }
             String reward = switch (rewardIndex) {
-                case 0 -> "whip";
-                case 1 -> "zora_tunic_chestplate";
                 case 2 -> "bomb_bag";
                 case 3 -> "big_key";
                 default -> "skill_orb";
@@ -382,7 +387,7 @@ public final class ConfigQuestGameTests {
         data.addSkulltulaTokens(50);
         player.getInventory().clearContent();
         QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
-        helper.assertTrue(count(player, "whip") == 1, "The reward list did not cycle after fifty badges");
+        helper.assertTrue(countCursedWeapons(player) == 1, "The reward list did not cycle after fifty badges");
         for (int i = 0; i < 4; i++) QuestService.interactVillager(player, villager, InteractionHand.MAIN_HAND);
         helper.assertTrue(player.getInventory().countItem(Items.EMERALD) == 64,
                 "The hundred-badge bonus was not granted");
@@ -403,12 +408,13 @@ public final class ConfigQuestGameTests {
         player.getInventory().clearContent();
         for (int i = 0; i < 10; i++) QuestService.interactVillager(player, another, InteractionHand.MAIN_HAND);
         helper.assertTrue(data.skulltulaTokens() == 200 && data.skulltulaTrades() == 20
-                        && player.getInventory().countItem(Items.EMERALD) == 64 && count(player, "whip") == 2,
+                        && player.getInventory().countItem(Items.EMERALD) == 64 && countCursedWeapons(player) == 2
+                        && countCursedArmor(player) == 2,
                 "Rewards did not continue to cycle through two hundred tokens");
         FakePlayer otherPlayer = player(helper);
         data(otherPlayer).addSkulltulaTokens(10);
         QuestService.interactVillager(otherPlayer, another, InteractionHand.MAIN_HAND);
-        helper.assertTrue(count(otherPlayer, "whip") == 1 && data(otherPlayer).skulltulaTrades() == 1,
+        helper.assertTrue(countCursedWeapons(otherPlayer) == 1 && data(otherPlayer).skulltulaTrades() == 1,
                 "One player's rewards changed another player's trade list");
         helper.assertTrue(!another.getPersistentData().contains("zss_next_skulltula_reward"),
                 "Cursed Man retained player reward state");
@@ -549,6 +555,19 @@ public final class ConfigQuestGameTests {
 
     private static ZSSPlayerData data(FakePlayer player) {
         return ZSSCapabilities.get(player).orElseThrow(() -> new AssertionError("Missing player data"));
+    }
+
+    private static int countCursedWeapons(FakePlayer player) {
+        return java.util.stream.Stream.of("whip", "kokiri_sword", "ordon_sword", "boomerang",
+                "hero_bow", "slingshot", "wooden_hammer", "deku_shield").mapToInt(item -> count(player, item)).sum();
+    }
+
+    private static int countCursedArmor(FakePlayer player) {
+        return java.util.stream.Stream.of(
+                "hero_tunic_helmet", "hero_tunic_chestplate", "hero_tunic_leggings", "hero_tunic_boots",
+                "goron_tunic_helmet", "goron_tunic_chestplate", "goron_tunic_leggings",
+                "zora_tunic_helmet", "zora_tunic_chestplate", "zora_tunic_leggings", "zora_tunic_boots")
+                .mapToInt(item -> count(player, item)).sum();
     }
 
     private static int count(FakePlayer player, String item) {

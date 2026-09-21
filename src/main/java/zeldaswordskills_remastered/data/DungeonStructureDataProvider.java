@@ -306,8 +306,6 @@ public final class DungeonStructureDataProvider implements DataProvider {
             }
             if (ocean) {
                 fill(2, 1, 2, max - 1, roomHeight - 2, max - 1, Blocks.WATER.defaultBlockState());
-            } else if (submerged) {
-                fill(2, 1, 2, max - 1, 1, max - 1, Blocks.WATER.defaultBlockState());
             }
         }
 

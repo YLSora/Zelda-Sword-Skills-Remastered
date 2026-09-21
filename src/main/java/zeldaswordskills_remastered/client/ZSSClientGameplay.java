@@ -246,6 +246,14 @@ public final class ZSSClientGameplay {
             event.setSwingHand(false);
             return;
         }
+        if (ZSSClientFlashAssault.busy()) {
+            if (ZSSClientCombatState.hasTarget()) {
+                sendPlainLockedAttack(minecraft.player);
+                event.setCanceled(true);
+                event.setSwingHand(false);
+            }
+            return;
+        }
         if (minecraft.player.getMainHandItem().getItem() instanceof BombBagItem) {
             ZSSNetwork.sendBombBagCycleIntent();
             event.setCanceled(true);
@@ -677,7 +685,10 @@ public final class ZSSClientGameplay {
             spinCooldownUntil = tick + 20;
             return true;
         }
-        if (!ZSSClientCombatState.hasTarget()) return false;
+        if (!ZSSClientCombatState.hasTarget()) {
+            beginSpinCharge(tick);
+            return false;
+        }
         // Outside a confirmed Flash Assault window, the forward gesture belongs to Dash.
         if (player.onGround() && dashReadyUntil >= tick && tick >= dashCooldownUntil && learned(ZSSContentIds.DASH)) {
             int dashLevel = skillLevel(ZSSContentIds.DASH);
@@ -711,12 +722,16 @@ public final class ZSSClientGameplay {
         // The press attacks immediately; holding it may also charge a later Spin Attack.
         // Send ATTACK before BEGIN because the basic attack clears the server's prior charge.
         sendPlainLockedAttack(player);
-        if (learned(ZSSContentIds.SPIN_ATTACK) && tick >= spinCooldownUntil) {
+        beginSpinCharge(tick);
+        return true;
+    }
+
+    private static void beginSpinCharge(int tick) {
+        if (spinChargeStarted < 0 && learned(ZSSContentIds.SPIN_ATTACK) && tick >= spinCooldownUntil) {
             spinChargeStarted = tick;
             spinChargeToneTick = -1;
             send(ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.BEGIN, Optional.empty());
         }
-        return true;
     }
 
     /**

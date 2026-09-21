@@ -6,8 +6,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -26,6 +28,7 @@ import zeldaswordskills_remastered.combat.PlayerCombatState;
 import zeldaswordskills_remastered.event.ZSSCombatEvents;
 import zeldaswordskills_remastered.network.SkillIntentMessage;
 import zeldaswordskills_remastered.registry.ZSSContentIds;
+import zeldaswordskills_remastered.registry.ZSSRegistries;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +37,131 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public final class GroundSlamGameTests {
     private GroundSlamGameTests() { }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssGroundSlamStun")
+    public static void groundSlamCannotExtendOrReplaceAnotherStun(GameTestHelper helper) {
+        var player = stunTestPlayer(helper);
+        var target = stunTestTarget(helper, player);
+        target.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), 20));
+        for (boolean area : new boolean[]{false, true}) {
+            slamAndAssertDamage(helper, player, target, area);
+            helper.assertTrue(target.getEffect(ZSSRegistries.STUN.get()).getDuration() == 20
+                            && !GroundSlam.isImmobilized(target),
+                    "Ground Slam extended another stun or applied its own movement lock");
+        }
+        target.removeEffect(ZSSRegistries.STUN.get());
+        for (boolean area : new boolean[]{false, true}) {
+            slamAndAssertDamage(helper, player, target, area);
+            helper.assertTrue(!target.hasEffect(ZSSRegistries.STUN.get()) && !GroundSlam.isImmobilized(target),
+                    "Ground Slam ignored a stun applied and removed during the same tick");
+        }
+        target.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssGroundSlamStun", timeoutTicks = 130)
+    public static void groundSlamRecentStunExpiresAtOneHundredTicks(GameTestHelper helper) {
+        var player = stunTestPlayer(helper);
+        var direct = stunTestTarget(helper, player);
+        var area = stunTestTarget(helper, player);
+        for (var target : new IronGolem[]{direct, area}) {
+            target.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), 500));
+            target.removeEffect(ZSSRegistries.STUN.get());
+        }
+        helper.runAfterDelay(99, () -> {
+            slamAndAssertDamage(helper, player, direct, false);
+            slamAndAssertDamage(helper, player, area, true);
+            helper.assertTrue(!direct.hasEffect(ZSSRegistries.STUN.get()) && !area.hasEffect(ZSSRegistries.STUN.get())
+                            && !GroundSlam.isImmobilized(direct) && !GroundSlam.isImmobilized(area),
+                    "Ground Slam reapplied stun before one hundred ticks elapsed");
+        });
+        helper.runAfterDelay(100, () -> {
+            // Keep the two targets apart so the area attack does not hit the direct target too.
+            slamAndAssertDamage(helper, player, direct, false);
+            direct.setPos(player.position().add(10, 0, 0));
+            slamAndAssertDamage(helper, player, area, true);
+            helper.assertTrue(direct.hasEffect(ZSSRegistries.STUN.get()) && area.hasEffect(ZSSRegistries.STUN.get())
+                            && GroundSlam.isImmobilized(direct) && GroundSlam.isImmobilized(area),
+                    "Ground Slam did not reapply stun at the one-hundred-tick boundary");
+            helper.assertTrue(direct.getEffect(ZSSRegistries.STUN.get()).getDuration() == 30
+                            && area.getEffect(ZSSRegistries.STUN.get()).getDuration() == 30,
+                    "Eligible Ground Slam targets did not receive thirty ticks of stun");
+            direct.discard();
+            area.discard();
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssGroundSlamStun", timeoutTicks = 160)
+    public static void repeatedGroundSlamsKeepOriginalStunDeadline(GameTestHelper helper) {
+        var player = stunTestPlayer(helper);
+        var target = stunTestTarget(helper, player);
+        slamAndAssertDamage(helper, player, target, false);
+        helper.assertTrue(GroundSlam.isImmobilized(target), "First Ground Slam did not immobilize its target");
+        helper.runAfterDelay(10, () -> {
+            int remaining = target.getEffect(ZSSRegistries.STUN.get()).getDuration();
+            slamAndAssertDamage(helper, player, target, false);
+            slamAndAssertDamage(helper, player, target, true);
+            helper.assertTrue(target.getEffect(ZSSRegistries.STUN.get()).getDuration() == remaining,
+                    "Repeated direct or area damage refreshed Ground Slam's own stun");
+        });
+        helper.runAfterDelay(30, () -> helper.assertTrue(!GroundSlam.isImmobilized(target),
+                "Repeated hits extended the original thirty-tick movement lock"));
+        helper.runAfterDelay(31, () -> {
+            slamAndAssertDamage(helper, player, target, false);
+            slamAndAssertDamage(helper, player, target, true);
+            helper.assertTrue(!target.hasEffect(ZSSRegistries.STUN.get()) && !GroundSlam.isImmobilized(target),
+                    "Natural stun expiry failed to start the five-second protection");
+        });
+        helper.runAfterDelay(131, () -> {
+            slamAndAssertDamage(helper, player, target, false);
+            helper.assertTrue(target.hasEffect(ZSSRegistries.STUN.get()) && GroundSlam.isImmobilized(target),
+                    "Ground Slam stayed unable to stun after the recent-stun window expired");
+            target.discard();
+            helper.succeed();
+        });
+    }
+
+    private static FakePlayer stunTestPlayer(GameTestHelper helper) {
+        var player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "[Slam_Stun]")) {
+            @Override public float getAttackStrengthScale(float partialTick) { return 1.0F; }
+        };
+        player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new net.minecraft.core.BlockPos(1, 20, 1))));
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.IRON_SWORD));
+        ZSSCapabilities.get(player).orElseThrow(AssertionError::new).setSkillLevel(ZSSContentIds.LEAPING_BLOW, 5);
+        return player;
+    }
+
+    private static IronGolem stunTestTarget(GameTestHelper helper, FakePlayer player) {
+        var target = EntityType.IRON_GOLEM.create(helper.getLevel());
+        target.setPos(player.position().add(0.5D, 0, 0));
+        target.setNoAi(true);
+        target.setNoGravity(true);
+        target.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);
+        target.setHealth(1000);
+        helper.getLevel().addFreshEntity(target);
+        return target;
+    }
+
+    private static void slamAndAssertDamage(GameTestHelper helper, FakePlayer player, IronGolem target, boolean area) {
+        var data = ZSSCapabilities.get(player).orElseThrow(AssertionError::new);
+        data.combat().clearGroundSlam();
+        data.combat().armGroundSlam();
+        target.setPos(player.position().add(0.5D, 0, 0));
+        target.setDeltaMovement(Vec3.ZERO);
+        player.setOnGround(false);
+        player.fallDistance = 1.0F;
+        float health = target.getHealth();
+        if (area) {
+            data.combat().groundSlamHit(-1, helper.getLevel().getGameTime());
+            GroundSlam.land(player, data);
+        } else {
+            helper.assertTrue(GroundSlam.tryStrike(player, data, target), "Ground Slam rejected the descending hit");
+        }
+        float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) + (area ? 0.75F : 2.0F) * 5;
+        helper.assertTrue(Math.abs(health - target.getHealth() - damage) < 0.001F,
+                "Recent stun changed Ground Slam damage: area=" + area);
+    }
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void landingAndFallBoundaries(GameTestHelper helper) {

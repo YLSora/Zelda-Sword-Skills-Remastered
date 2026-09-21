@@ -386,9 +386,7 @@ public final class ZSSPlayerData {
 
     public void setSkillLevel(ResourceLocation id, int level) {
         if (!ZSSContentIds.SKILLS.contains(id)) throw new IllegalArgumentException("Unknown skill ID: " + id);
-        int maximum = id.equals(ZSSContentIds.SWORD_BASIC) ? 10
-                : id.equals(ZSSContentIds.CONTINUOUS_FLASH) ? 5
-                : id.equals(ZSSContentIds.BONUS_HEART) ? ZSSConfig.SERVER.maximumHeartContainers.get() : 5;
+        int maximum = skillMaximum(id);
         if (level <= 0 || maximum == 0) skills.remove(id);
         else if (skills.size() < MAX_SKILLS || skills.containsKey(id)) skills.put(id, Mth.clamp(level, 1, maximum));
     }

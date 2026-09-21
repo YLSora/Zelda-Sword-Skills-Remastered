@@ -41,7 +41,7 @@ public final class StageNineToolItem extends Item {
     private final int level;
 
     public StageNineToolItem(Kind kind, int level, Properties properties) {
-        super(properties);
+        super(kind == Kind.DEKU_NUT || kind == Kind.HOOKSHOT_UPGRADE ? properties : properties.durability(256));
         this.kind = kind;
         this.level = level;
     }
@@ -69,6 +69,7 @@ public final class StageNineToolItem extends Item {
             case SLINGSHOT -> slingshot(serverPlayer, stack);
         };
         if (!success) return InteractionResultHolder.fail(stack);
+        stack.hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(hand));
         if (kind == Kind.WHIP && this.level == 2) player.startUsingItem(hand);
         player.getCooldowns().addCooldown(this, cooldown());
         return InteractionResultHolder.consume(stack);

@@ -1,6 +1,7 @@
 package zeldaswordskills_remastered.test;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.UUID;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -24,6 +25,60 @@ import zeldaswordskills_remastered.registry.ZSSContentIds;
 @PrefixGameTestTemplate(false)
 public final class SkillAvailabilityGameTests {
     private SkillAvailabilityGameTests() {}
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssSkillCommands")
+    public static void skillCommandRejectsOutOfRangeLevelsWithoutChangingData(GameTestHelper helper) throws CommandSyntaxException {
+        var player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "skill_command_test"));
+        var data = ZSSCapabilities.get(player).orElseThrow(AssertionError::new);
+        var dispatcher = helper.getLevel().getServer().getCommands().getDispatcher();
+        var source = player.createCommandSourceStack().withPermission(2).withSuppressedOutput();
+        for (var skill : ZSSContentIds.SKILLS) {
+            int maximum = skill.equals(ZSSContentIds.BONUS_HEART) ? ZSSConfig.SERVER.maximumHeartContainers.get()
+                    : skill.equals(ZSSContentIds.SWORD_BASIC) ? 10 : 5;
+            String command = "zss skills set " + skill + " ";
+            helper.assertTrue(dispatcher.execute(command + maximum, source) == 1 && data.skillLevel(skill) == maximum,
+                    "Command rejected the maximum valid skill level: " + skill);
+            helper.assertTrue(dispatcher.execute(command + "0", source) == 1 && data.skillLevel(skill) == 0,
+                    "Level zero did not clear the skill: " + skill);
+            data.setSkillLevel(skill, Math.min(1, maximum));
+            var before = data.skills();
+            for (int invalid : new int[]{maximum + 1, Integer.MAX_VALUE}) {
+                helper.assertTrue(dispatcher.execute(command + invalid, source) == 0 && data.skills().equals(before),
+                        "Out-of-range command changed skills instead of rejecting the level: " + skill);
+            }
+            try {
+                dispatcher.execute(command + "-1", source);
+                throw new AssertionError("Negative skill level was accepted");
+            } catch (CommandSyntaxException expected) {
+                helper.assertTrue(data.skills().equals(before), "Negative level changed skill data");
+            }
+        }
+        var before = data.skills();
+        helper.assertTrue(dispatcher.execute("zss skills set zeldaswordskills_remastered:unknown 1", source) == 0
+                        && data.skills().equals(before), "Unknown skill changed player data");
+        try {
+            dispatcher.execute("zss skills set " + ZSSContentIds.SWORD_BASIC + " 1", source.withPermission(0));
+            throw new AssertionError("Skill command bypassed operator permissions");
+        } catch (CommandSyntaxException expected) {
+            helper.assertTrue(data.skills().equals(before), "Rejected unauthorized command changed skills");
+        }
+        int previousMaximum = ZSSConfig.SERVER.maximumHeartContainers.get();
+        try {
+            for (int maximum : new int[]{3, 0}) {
+                ZSSConfig.SERVER.maximumHeartContainers.set(maximum);
+                String command = "zss skills set " + ZSSContentIds.BONUS_HEART + " ";
+                helper.assertTrue(dispatcher.execute(command + maximum, source) == 1
+                                && data.skillLevel(ZSSContentIds.BONUS_HEART) == maximum,
+                        "Skill command did not use the current heart-container limit");
+                helper.assertTrue(dispatcher.execute(command + (maximum + 1), source) == 0
+                                && data.skillLevel(ZSSContentIds.BONUS_HEART) == maximum,
+                        "Skill command ignored a changed heart-container limit");
+            }
+        } finally {
+            ZSSConfig.SERVER.maximumHeartContainers.set(previousMaximum);
+        }
+        helper.succeed();
+    }
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void preferencesPreserveLearningAndSurvivePlayerCopies(GameTestHelper helper) {

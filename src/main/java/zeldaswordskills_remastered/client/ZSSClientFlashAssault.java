@@ -35,7 +35,8 @@ public final class ZSSClientFlashAssault {
         level = Minecraft.getInstance().level;
         if (owner == null || level == null) { clear(); return; }
         state = message;
-        attackSent = false;
+        // A queued dash attack stays queued across ACKs; later presses are ordinary attacks.
+        if (!message.dashing()) attackSent = false;
         if (message.dashing() || message.attacking()) {
             ZSSClientDodge.clear();
             ZSSClientGameplay.clearFlashConflictingInputs();
@@ -91,8 +92,7 @@ public final class ZSSClientFlashAssault {
             consumePressedAttack = false;
             return true;
         }
-        return state.attacking() || attackSent || state.dashing()
-                || state.followUpUntil() > owner.level().getGameTime();
+        return false;
     }
 
     public static void lockHotbar() {

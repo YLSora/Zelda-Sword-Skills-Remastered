@@ -21,7 +21,6 @@ import zeldaswordskills_remastered.ZeldaSwordSkills_Remastered;
 import zeldaswordskills_remastered.block.entity.StageNineBlockEntities.Storage;
 import zeldaswordskills_remastered.data.DungeonLootTables;
 import zeldaswordskills_remastered.data.DungeonStructureDataProvider;
-import zeldaswordskills_remastered.data.SecretRoomDataProvider;
 import zeldaswordskills_remastered.registry.ZSSContentIds;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
 import zeldaswordskills_remastered.worldgen.DungeonType;
@@ -64,14 +63,30 @@ public final class DungeonLootGameTests {
             }
             helper.assertTrue(themed,"Missing themed reward branch: "+type);
         }
-        for(String environment:SecretRoomDataProvider.ENVIRONMENTS) for(String gate:SecretRoomDataProvider.GATES)
-            for(int variant=0;variant<20;variant++) checkTemplate(helper,SecretRoomDataProvider.templateId(environment,gate,variant));
         var secretParams=new LootParams.Builder(level).withParameter(LootContextParams.ORIGIN,Vec3.ZERO).create(LootContextParamSets.CHEST);
-        for(String environment:SecretRoomDataProvider.ENVIRONMENTS) for(boolean locked:new boolean[]{false,true}) {
-            assertOneHeartPiece(helper,level.getServer().getLootData().getLootTable(DungeonLootTables.secret(environment,locked)),secretParams);
-            for(String gate:SecretRoomDataProvider.GATES) if(!gate.equals("none"))
-                assertOneHeartPiece(helper,level.getServer().getLootData().getLootTable(DungeonLootTables.id(
-                        "chests/secret/"+environment+"/"+gate+(locked?"_locked":""))),secretParams);
+        assertOneHeartPiece(helper,level.getServer().getLootData().getLootTable(DungeonLootTables.FAIRY_POOL),secretParams);
+        for (String environment : new String[]{"land", "mountain", "ocean"}) {
+            assertOneHeartPiece(helper,level.getServer().getLootData().getLootTable(DungeonLootTables.id("chests/fairy_pool/"+environment)),secretParams);
+        }
+        assertOneHeartPiece(helper,level.getServer().getLootData().getLootTable(DungeonLootTables.FAIRY_ROOT),secretParams);
+        for (String gate : new String[]{"peg_wooden", "light_block", "peg_rusty", "heavy_block", "time_block", "quake_stone", "door_locked"}) {
+            helper.assertTrue(level.getServer().getLootData().getLootTable(DungeonLootTables.id("chests/pools/fairy_rewards/"+gate)) != LootTable.EMPTY,
+                    "Migrated fairy reward table is missing: " + gate);
+        }
+        boolean netherReward = false, lavaReward = false;
+        for (long seed = 1; seed <= 1000; seed++) {
+            var loot = level.getServer().getLootData().getLootTable(DungeonLootTables.FAIRY_ROOT).getRandomItems(secretParams, seed);
+            netherReward |= loot.stream().anyMatch(stack -> stack.is(ZSSRegistries.getItem("fire_bomb")));
+            lavaReward |= loot.stream().anyMatch(stack -> stack.is(ZSSRegistries.getItem("goron_tunic_helmet")));
+        }
+        helper.assertTrue(netherReward && lavaReward, "Fairy root lost a Nether or lava reward branch");
+        for(String environment:new String[]{"nether", "lava"}) {
+            assertOneHeartPiece(helper,level.getServer().getLootData().getLootTable(DungeonLootTables.id("chests/fairy_root/"+environment)),secretParams);
+        }
+        for(String environment:new String[]{"land", "mountain", "ocean", "nether", "lava"}) {
+            for(boolean locked:new boolean[]{false,true}) helper.assertTrue(level.getServer().getLootData().getLootTable(
+                    DungeonLootTables.id("chests/secret/"+environment+(locked?"_locked":"")))==LootTable.EMPTY,
+                    "Retired secret-room loot remains loaded");
         }
         var keys=level.getServer().getLootData().getLootTable(DungeonLootTables.id("chests/pools/big_keys"));
         var seen=new java.util.HashSet<String>();

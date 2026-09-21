@@ -1,0 +1,12 @@
+{
+  "type": "zeldaswordskills_remastered:royal_castle",
+  "biomes": "minecraft:plains",
+  "step": "top_layer_modification",
+  "terrain_adaptation": "none",
+  "spawn_overrides": {
+    "monster": {
+      "bounding_box": "full",
+      "spawns": []
+    }
+  }
+}

@@ -1,11 +1,13 @@
 package zeldaswordskills_remastered.world;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.phys.AABB;
 import zeldaswordskills_remastered.ZeldaSwordSkills_Remastered;
 
 import java.util.LinkedHashMap;
@@ -16,6 +18,7 @@ public final class ZSSWorldData extends SavedData {
     private long weatherSongCooldownUntil;
     private long timeSongCooldownUntil;
     private final Map<ResourceLocation, DungeonState> dungeons = new LinkedHashMap<>();
+    private final Map<ResourceLocation, ProtectedTemple> peacefulForestTemples = new LinkedHashMap<>();
 
     public static ZSSWorldData get(ServerLevel level) {
         ServerLevel overworld = level.getServer().overworld();
@@ -36,6 +39,16 @@ public final class ZSSWorldData extends SavedData {
             }
             data.dungeons.put(id, new DungeonState(entry.getBoolean("completed"), Math.max(0L, entry.getLong("cooldown_until"))));
         }
+        ListTag forests = tag.getList("peaceful_forest_temples", Tag.TAG_COMPOUND);
+        for (int i = 0; i < forests.size(); i++) {
+            CompoundTag entry = forests.getCompound(i);
+            ResourceLocation id = ResourceLocation.tryParse(entry.getString("id"));
+            ResourceLocation dimension = ResourceLocation.tryParse(entry.getString("dimension"));
+            if (id == null || dimension == null || !data.dungeonState(id).completed()) continue;
+            data.peacefulForestTemples.put(id, new ProtectedTemple(dimension,
+                    new AABB(entry.getDouble("min_x"), entry.getDouble("min_y"), entry.getDouble("min_z"),
+                            entry.getDouble("max_x"), entry.getDouble("max_y"), entry.getDouble("max_z"))));
+        }
         return data;
     }
 
@@ -53,7 +66,32 @@ public final class ZSSWorldData extends SavedData {
             entries.add(entry);
         });
         tag.put("dungeons", entries);
+        ListTag forests = new ListTag();
+        peacefulForestTemples.forEach((id, temple) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.putString("id", id.toString());
+            entry.putString("dimension", temple.dimension().toString());
+            AABB room = temple.room();
+            entry.putDouble("min_x", room.minX);
+            entry.putDouble("min_y", room.minY);
+            entry.putDouble("min_z", room.minZ);
+            entry.putDouble("max_x", room.maxX);
+            entry.putDouble("max_y", room.maxY);
+            entry.putDouble("max_z", room.maxZ);
+            forests.add(entry);
+        });
+        tag.put("peaceful_forest_temples", forests);
         return tag;
+    }
+
+    public void protectForestTemple(ResourceLocation id, ServerLevel level, AABB room) {
+        peacefulForestTemples.put(id, new ProtectedTemple(level.dimension().location(), room));
+        setDirty();
+    }
+
+    public boolean insidePeacefulForestTemple(ServerLevel level, BlockPos pos) {
+        return peacefulForestTemples.values().stream().anyMatch(temple ->
+                temple.dimension().equals(level.dimension().location()) && temple.room().contains(pos.getCenter()));
     }
 
     public long weatherSongCooldownUntil() { return weatherSongCooldownUntil; }
@@ -73,8 +111,10 @@ public final class ZSSWorldData extends SavedData {
 
     public void setDungeonState(ResourceLocation id, boolean completed, long cooldownUntil) {
         dungeons.put(id, new DungeonState(completed, Math.max(0L, cooldownUntil)));
+        if (!completed) peacefulForestTemples.remove(id);
         setDirty();
     }
 
     public record DungeonState(boolean completed, long cooldownUntil) {}
+    private record ProtectedTemple(ResourceLocation dimension, AABB room) {}
 }

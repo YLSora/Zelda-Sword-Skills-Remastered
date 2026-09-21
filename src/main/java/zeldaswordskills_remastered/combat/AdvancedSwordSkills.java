@@ -66,11 +66,8 @@ public final class AdvancedSwordSkills {
     private static final double DOUBLE_JUMP_HEIGHT_PER_LEVEL = 0.25D;
     /** Ticks a parried attacker can neither attack nor move. */
     private static final long PARRY_STUN_TICKS = 20L;
-    /**
-     * A landed Sword Break holds the enemy it struck for longer than the parry itself did, so the
-     * follow-up leaves the target unable to attack or move for 40 ticks in total.
-     */
-    private static final long SWORD_BREAK_STUN_TICKS = 40L;
+    /** A landed Sword Break starts a fresh twenty-tick attack and movement lock. */
+    private static final long SWORD_BREAK_STUN_TICKS = 20L;
     /** Ticks a Sword Break knockback is allowed to carry before the enemy is pinned again. */
     private static final long SWORD_BREAK_HOLD_GRACE_TICKS = 8L;
     private static final double SWORD_BREAK_KNOCKBACK_DISTANCE = 4.0D;
@@ -906,8 +903,7 @@ public final class AdvancedSwordSkills {
     /**
      * Re-arms a landed Sword Break's target: the enemy stays unable to move or attack for the full
      * {@link #SWORD_BREAK_STUN_TICKS} window, and is pinned again at wherever the knockback carries
-     * it once the grace runs out. The stun effect is refreshed to match, because the original parry
-     * one is shorter.
+     * it once the grace runs out. The stun effect is refreshed to match the new deadline.
      */
     private static void restunSwordBreakTarget(LivingEntity target, long now) {
         long until = now + SWORD_BREAK_STUN_TICKS;

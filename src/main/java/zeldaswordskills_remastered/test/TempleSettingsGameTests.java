@@ -42,31 +42,30 @@ public final class TempleSettingsGameTests {
     }
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
-    public static void smallKeyIsConsumedOnlyOnFirstChestUnlock(GameTestHelper helper) {
+    public static void chestKeysAreConsumedOnlyOnFirstUnlock(GameTestHelper helper) {
         var level = helper.getLevel();
         var player = new FakePlayer(level, new GameProfile(java.util.UUID.randomUUID(), "[Key_Test]"));
         player.getAbilities().instabuild = false;
-        var key = new ItemStack(ZSSRegistries.getItem("small_key"));
-        player.setItemInHand(InteractionHand.MAIN_HAND, key);
         var pos = helper.absolutePos(new BlockPos(2, 1, 2));
         var chest = ZSSRegistries.CHEST_LOCKED.get();
-        level.setBlockAndUpdate(pos, chest.defaultBlockState());
         var hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
-        for (String wrongId : new String[]{"skeleton_key", "big_key"}) {
-            var wrong = new ItemStack(ZSSRegistries.getItem(wrongId));
+        for (String keyId : new String[]{"small_key", "skeleton_key"}) for (var hand : InteractionHand.values()) {
+            level.setBlockAndUpdate(pos, chest.defaultBlockState());
+            player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            var wrong = new ItemStack(ZSSRegistries.getItem("big_key"));
             player.setItemInHand(InteractionHand.MAIN_HAND, wrong);
             chest.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
             helper.assertTrue(!level.getBlockState(pos).getValue(LockedChestBlock.UNLOCKED)
                     && wrong.getCount() == 1, "Wrong key unlocked chest or was consumed");
+            var key = new ItemStack(ZSSRegistries.getItem(keyId), 2);
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            player.setItemInHand(hand, key);
+            chest.use(level.getBlockState(pos), level, pos, player, hand, hit);
+            helper.assertTrue(key.getCount() == 1 && level.getBlockState(pos).getValue(LockedChestBlock.UNLOCKED),
+                    "Chest must consume exactly one " + keyId + " from " + hand);
+            chest.use(level.getBlockState(pos), level, pos, player, hand, hit);
+            helper.assertTrue(key.getCount() == 1, "Already unlocked chest consumed a second " + keyId);
         }
-        player.setItemInHand(InteractionHand.MAIN_HAND, key);
-        chest.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
-        helper.assertTrue(key.isEmpty() && level.getBlockState(pos).getValue(LockedChestBlock.UNLOCKED),
-                "Small key was not consumed when unlocking chest");
-        var spare = new ItemStack(ZSSRegistries.getItem("small_key"));
-        player.setItemInHand(InteractionHand.MAIN_HAND, spare);
-        chest.use(level.getBlockState(pos), level, pos, player, InteractionHand.MAIN_HAND, hit);
-        helper.assertTrue(spare.getCount() == 1, "Already unlocked chest consumed a second key");
         helper.succeed();
     }
 

@@ -133,9 +133,77 @@ public final class WeaponSkillsGameTests {
         AdvancedSwordSkills.handleIntent(player, data, new SkillIntentMessage(skill, action, Optional.empty()));
     }
 
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void spinChargeWorksWithoutLockOrBasicSkill(GameTestHelper helper) {
+        var player = player(helper);
+        var data = ZSSCapabilities.get(player).orElseThrow(AssertionError::new);
+        data.setSkillLevel(ZSSContentIds.SWORD_BASIC, 0);
+        data.setSkillLevel(ZSSContentIds.SPIN_ATTACK, 1);
+        // The GameTest world can be peaceful; a hostile target despawns during the charge.
+        var target = EntityType.IRON_GOLEM.create(helper.getLevel());
+        target.setPos(player.position().add(0, 0, 2));
+        target.setNoAi(true);
+        target.setNoGravity(true);
+        helper.getLevel().addFreshEntity(target);
+        float health = target.getHealth();
+        intent(player, data, ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.BEGIN);
+        helper.assertTrue(data.combat().charging(ZSSContentIds.SPIN_ATTACK) && data.combat().targetId() < 0,
+                "An unlocked weapon could not begin charging Spin Attack");
+        intent(player, data, ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.RELEASE);
+        helper.assertTrue(!data.combat().spinPending() && target.getHealth() == health,
+                "An early release incorrectly performed Spin Attack");
+        intent(player, data, ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.BEGIN);
+        long started = helper.getLevel().getGameTime();
+        helper.runAfterDelay(25, () -> {
+            helper.assertTrue(data.combat().charged(ZSSContentIds.SPIN_ATTACK, helper.getLevel().getGameTime(), 25),
+                    "Spin charge was lost or released early: elapsed=" + (helper.getLevel().getGameTime() - started));
+            intent(player, data, ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.RELEASE);
+            helper.assertTrue(data.combat().spinActive(helper.getLevel().getGameTime())
+                            && !data.combat().charging(ZSSContentIds.SPIN_ATTACK),
+                    "A fully charged unlocked Spin Attack did not release");
+            helper.assertTrue(target.getHealth() < health,
+                    "Spin missed its nearby target: alive=" + target.isAlive() + ", removed=" + target.isRemoved()
+                            + ", distance=" + player.distanceTo(target) + ", health=" + target.getHealth());
+            target.discard();
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void lockedJumpCriticalUsesVanillaConditionsAndKeepsComboBonus(GameTestHelper helper) {
+        for (String condition : new String[] {"falling", "rising", "grounded", "sprinting", "blind", "boundary", "unready"}) {
+            float recovery = condition.equals("boundary") ? 0.9F : condition.equals("unready") ? 0.8F : 1.0F;
+            var player = player(helper, recovery);
+            var data = ZSSCapabilities.get(player).orElseThrow(AssertionError::new);
+            player.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(8.0D);
+            player.setOnGround(condition.equals("grounded"));
+            player.fallDistance = condition.equals("rising") ? 0.0F : 1.0F;
+            player.setSprinting(condition.equals("sprinting"));
+            if (condition.equals("blind")) player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.BLINDNESS, 100));
+            var target = target(helper, player);
+            target.getAttribute(Attributes.ARMOR).setBaseValue(0.0D);
+            data.combat().setTarget(target.getId());
+            data.combat().recordHit(target.getId(), 3.0F, 5, helper.getLevel().getGameTime() + 24);
+            float health = target.getHealth();
+            boolean hit = BasicSwordSkill.attack(player, data);
+            float expected = condition.equals("unready") ? 0.0F : condition.equals("falling") ? 13.0F : 9.0F;
+            helper.assertTrue(hit == !condition.equals("unready")
+                            && Math.abs(health - target.getHealth() - expected) < 0.01F
+                            && Math.abs(data.combat().comboDamage() - 3.0F - expected) < 0.01F,
+                    "Locked critical damage, attack recovery or fixed combo bonus differs: " + condition);
+            target.discard();
+        }
+        helper.succeed();
+    }
+
     private static FakePlayer player(GameTestHelper helper) {
+        return player(helper, 1.0F);
+    }
+
+    private static FakePlayer player(GameTestHelper helper, float recovery) {
         var player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "weapon_test")) {
-            @Override public float getAttackStrengthScale(float partialTick) { return 1; }
+            @Override public float getAttackStrengthScale(float partialTick) { return recovery; }
         };
         player.setPos(helper.absoluteVec(new Vec3(4, 12, 4)));
         player.setYRot(0);

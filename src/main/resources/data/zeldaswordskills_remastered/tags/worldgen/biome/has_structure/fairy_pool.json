@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "#forge:is_plains",
+    "#forge:is_plateau",
+    "#forge:is_coniferous",
+    "minecraft:ice_spikes",
+    "#minecraft:is_forest",
+    "#minecraft:is_taiga",
+    "#minecraft:is_jungle",
+    "minecraft:windswept_savanna",
+    "minecraft:windswept_forest",
+    "minecraft:cherry_grove",
+    "minecraft:grove"
+  ]
+}

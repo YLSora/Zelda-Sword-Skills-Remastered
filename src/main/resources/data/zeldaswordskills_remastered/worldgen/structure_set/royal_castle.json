@@ -1,0 +1,6 @@
+{
+  "structures": [
+    { "structure": "zeldaswordskills_remastered:royal_castle", "weight": 1 }
+  ],
+  "placement": { "type": "zeldaswordskills_remastered:royal_castle" }
+}

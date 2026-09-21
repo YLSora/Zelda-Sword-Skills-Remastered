@@ -77,7 +77,7 @@ public final class ZSSConfig {
             builder.pop();
 
             builder.push("worldgen");
-            generateStructures = builder.comment("Generate Zelda temples and secret rooms in newly generated chunks.")
+            generateStructures = builder.comment("Generate Zelda temples, fairy pools, fairy roots and the unique royal castle in newly generated chunks.")
                     .define("generateStructures", true);
             builder.pop();
 

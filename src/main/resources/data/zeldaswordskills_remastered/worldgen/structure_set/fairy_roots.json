@@ -1,0 +1,10 @@
+{
+  "structures": [{"structure": "zeldaswordskills_remastered:fairy_root", "weight": 1}],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 30,
+    "separation": 18,
+    "salt": 624913807,
+    "spread_type": "linear"
+  }
+}

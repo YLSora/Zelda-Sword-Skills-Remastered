@@ -25,7 +25,7 @@ public final class SpiritCrystalItem extends Item implements ZSSBlockInteraction
     private static final String RECALL_DIMENSION = "recall_dimension";
     private static final String RECALL_POSITION = "recall_position";
     private final Kind kind;
-    public SpiritCrystalItem(Kind kind, Properties properties) { super(properties); this.kind = kind; }
+    public SpiritCrystalItem(Kind kind, Properties properties) { super(kind == Kind.EMPTY ? properties : properties.durability(256)); this.kind = kind; }
 
     public Kind kind() { return kind; }
     @Override public boolean isFoil(ItemStack stack) { return kind != Kind.EMPTY; }
@@ -49,6 +49,7 @@ public final class SpiritCrystalItem extends Item implements ZSSBlockInteraction
         }
         if (kind == Kind.DIN) useDin(serverPlayer);
         else useNayru(serverPlayer);
+        stack.hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(hand));
         return InteractionResultHolder.consume(stack);
     }
 
@@ -62,6 +63,7 @@ public final class SpiritCrystalItem extends Item implements ZSSBlockInteraction
         if (!safe(destination, pos)) return stack;
         player.teleportTo(destination, pos.getX() + 0.5D, pos.getY() + 0.1D, pos.getZ() + 0.5D, player.getYRot(), player.getXRot());
         player.getCooldowns().addCooldown(this, 40);
+        stack.hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(player.getUsedItemHand()));
         return stack;
     }
 

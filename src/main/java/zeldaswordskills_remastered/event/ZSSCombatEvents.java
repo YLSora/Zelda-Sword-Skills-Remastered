@@ -10,6 +10,7 @@ import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -36,9 +37,8 @@ public final class ZSSCombatEvents {
     public static void jumpAttack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         ZSSCapabilities.get(player).ifPresent(data -> {
-            if (data.combat().flashAssault().busy()) {
-                event.setCanceled(true);
-            } else if (IaiSlash.tryStrike(player, data, event.getTarget() instanceof LivingEntity living ? living : null)) {
+            if (data.combat().flashAssault().busy()) return;
+            if (IaiSlash.tryStrike(player, data, event.getTarget() instanceof LivingEntity living ? living : null)) {
                 event.setCanceled(true);
             } else if (zeldaswordskills_remastered.combat.HelmSplitter.tryStrike(player, data)) {
                 event.setCanceled(true);
@@ -186,5 +186,18 @@ public final class ZSSCombatEvents {
                 if (AdvancedSwordSkills.onAttacked(player, data, event.getSource())) event.setCanceled(true);
             });
         }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void protectSkillUserFromNegativeEffects(MobEffectEvent.Applicable event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)
+                || event.getEffectInstance().getEffect().isBeneficial()) return;
+        ZSSCapabilities.get(player).ifPresent(data -> {
+            long now = player.level().getGameTime();
+            if (data.combat().dodgeActive(now) || data.combat().dashImmune(now)
+                    || data.combat().flashAssault().dashing(now)
+                    || data.combat().risingCutImmune(now)
+                    || data.combat().helmSplitter().airborne()) event.setCanceled(true);
+        });
     }
 }

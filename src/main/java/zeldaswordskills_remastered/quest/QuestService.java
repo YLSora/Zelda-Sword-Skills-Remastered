@@ -615,6 +615,13 @@ public final class QuestService {
         sync(player);
     }
 
+    private static final List<String> CURSED_MAN_WEAPONS = List.of(
+            "whip", "kokiri_sword", "ordon_sword", "boomerang", "hero_bow", "slingshot", "wooden_hammer", "deku_shield");
+    private static final List<String> CURSED_MAN_ARMOR = List.of(
+            "hero_tunic_helmet", "hero_tunic_chestplate", "hero_tunic_leggings", "hero_tunic_boots",
+            "goron_tunic_helmet", "goron_tunic_chestplate", "goron_tunic_leggings",
+            "zora_tunic_helmet", "zora_tunic_chestplate", "zora_tunic_leggings", "zora_tunic_boots");
+
     private static boolean interactCursedMan(ServerPlayer player, ZSSPlayerData data, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return true;
         int nextTrade = data.skulltulaTrades() + 1;
@@ -625,8 +632,8 @@ public final class QuestService {
             return true;
         }
         ItemStack reward = switch ((nextTrade - 1) % 5) {
-            case 0 -> stack("whip", 1);
-            case 1 -> stack("zora_tunic_chestplate", 1);
+            case 0 -> stack(CURSED_MAN_WEAPONS.get(player.getRandom().nextInt(CURSED_MAN_WEAPONS.size())), 1);
+            case 1 -> stack(CURSED_MAN_ARMOR.get(player.getRandom().nextInt(CURSED_MAN_ARMOR.size())), 1);
             case 2 -> cursedBombBag();
             case 3 -> zeldaswordskills_remastered.item.BigKeyItem.forDungeon(ZSSRegistries.getItem("big_key"),
                     zeldaswordskills_remastered.worldgen.DungeonType.values()[player.getRandom().nextInt(zeldaswordskills_remastered.worldgen.DungeonType.values().length)].id());

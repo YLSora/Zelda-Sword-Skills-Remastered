@@ -1,0 +1,72 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/fairy_pool/land"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/fairy_pool/mountain"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/fairy_pool/ocean"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 1.0,
+        "min": 1.0
+      }
+    },
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "chance": 0.25,
+          "condition": "minecraft:random_chance"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/pools/fairy_rewards/peg_wooden"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/pools/fairy_rewards/light_block"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/pools/fairy_rewards/peg_rusty"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/pools/fairy_rewards/heavy_block"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/pools/fairy_rewards/time_block"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/pools/fairy_rewards/quake_stone"
+        },
+        {
+          "type": "minecraft:loot_table",
+          "name": "zeldaswordskills_remastered:chests/pools/fairy_rewards/door_locked"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 1.0,
+        "min": 1.0
+      }
+    }
+  ],
+  "random_sequence": "zeldaswordskills_remastered:chests/fairy_pool"
+}

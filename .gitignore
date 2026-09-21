@@ -223,3 +223,5 @@ pip-log.txt
 /src/generated/resources/.cache/
 
 /docs/
+/.obsidian/
+/artifacts/

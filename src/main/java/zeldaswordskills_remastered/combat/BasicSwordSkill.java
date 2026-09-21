@@ -4,6 +4,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
@@ -52,8 +53,8 @@ public final class BasicSwordSkill {
     }
 
     public static boolean attack(ServerPlayer player, ZSSPlayerData data) {
-        if (data.combat().flashAssault().busy()) return false;
-        if (TargetingService.isHoldingSword(player) && HelmSplitter.tryStrike(player, data)) return true;
+        boolean flashAssault = data.combat().flashAssault().busy();
+        if (!flashAssault && TargetingService.isHoldingSword(player) && HelmSplitter.tryStrike(player, data)) return true;
         int level = TargetingService.basicSkillLevel(data);
         // A plain locked attack is paced by the main-hand weapon: this scale comes straight from
         // the held item's ATTACK_SPEED attribute, so a heavy weapon cannot be spammed and a fast
@@ -61,8 +62,8 @@ public final class BasicSwordSkill {
         if (level <= 0 || player.getAttackStrengthScale(0.5F) < LOCKED_ATTACK_RECOVERY) return false;
         LivingEntity target = TargetingService.getLockedTarget(player, data).orElse(null);
         boolean holdingWeapon = TargetingService.isHoldingWeapon(player);
-        if (holdingWeapon && GroundSlam.tryStrike(player, data, target)) return true;
-        if (holdingWeapon && FatalStrike.tryStrike(player, data, target)) {
+        if (!flashAssault && holdingWeapon && GroundSlam.tryStrike(player, data, target)) return true;
+        if (!flashAssault && holdingWeapon && FatalStrike.tryStrike(player, data, target)) {
             player.resetAttackStrengthTicker();
             player.swing(InteractionHand.MAIN_HAND, false);
             return true;
@@ -72,7 +73,12 @@ public final class BasicSwordSkill {
             return false;
         }
         int bonus = data.combat().nextDamageBonus();
-        float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) + bonus;
+        float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        boolean vanillaCritical = FatalStrike.isJumpCritical(player);
+        var critical = net.minecraftforge.common.ForgeHooks.getCriticalHit(player, target, vanillaCritical,
+                vanillaCritical ? 1.5F : 1.0F);
+        if (critical != null) damage *= critical.getDamageModifier();
+        damage += bonus;
         player.resetAttackStrengthTicker();
         // The initiating client already swung on press; only observers need the animation packet.
         player.swing(InteractionHand.MAIN_HAND, false);
@@ -80,7 +86,12 @@ public final class BasicSwordSkill {
             miss(player, data);
             return false;
         }
-        player.level().playSound(null, player.blockPosition(), ZSSRegistries.SWORD_CUT.get(), SoundSource.PLAYERS, 0.6F, 0.9F + player.getRandom().nextFloat() * 0.2F);
+        if (critical != null) {
+            player.crit(target);
+            player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0F, 1.0F);
+        } else {
+            player.level().playSound(null, player.blockPosition(), ZSSRegistries.SWORD_CUT.get(), SoundSource.PLAYERS, 0.6F, 0.9F + player.getRandom().nextFloat() * 0.2F);
+        }
         int before = data.combat().comboCount();
         data.combat().recordHit(target.getId(), damage, comboMaximum(level), player.level().getGameTime() + comboDuration(level));
         trueMasterSwordBonus(player, data, target, before);
@@ -89,13 +100,15 @@ public final class BasicSwordSkill {
         return true;
     }
 
-    /** Shared-target skills must not be suppressed by another locking player's last hit. */
+    /** Keep shared-target hits and ordinary attacks between Flash Assault hits from suppressing each other. */
     public static boolean hurtLockedTarget(ServerPlayer player, ZSSPlayerData data, LivingEntity target,
                                            DamageSource source, float damage) {
         DamageSource previous = target.getLastDamageSource();
         if (target.invulnerableTime > 10 && data.combat().targetId() == target.getId()
-                && previous != null && previous.getEntity() instanceof ServerPlayer other && other != player
-                && ZSSCapabilities.get(other).map(otherData -> otherData.combat().targetId() == target.getId()).orElse(false)) {
+                && previous != null && previous.getEntity() instanceof ServerPlayer other
+                && (other == player && source.is(DamageTypes.PLAYER_ATTACK) && FlashAssault.isDamage(previous)
+                    || other != player && ZSSCapabilities.get(other)
+                        .map(otherData -> otherData.combat().targetId() == target.getId()).orElse(false))) {
             // Bypass only this hit's cooldown check; retain armor, shields and damage event hooks.
             source = new DamageSource(source.typeHolder(), source.getDirectEntity(), source.getEntity(), source.sourcePositionRaw()) {
                 @Override

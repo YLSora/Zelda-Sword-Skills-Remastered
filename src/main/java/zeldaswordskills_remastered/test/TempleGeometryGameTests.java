@@ -51,6 +51,10 @@ public final class TempleGeometryGameTests {
                 if (block.contains("nbt")) counts.merge(name, 1, Integer::sum);
                 if (name.contains(":door_boss_")) doors++;
                 if (type == DungeonType.END) {
+                    helper.assertTrue(!name.equals("minecraft:water")
+                                    && !palette.getCompound(block.getInt("state")).getCompound("Properties")
+                                            .getString("waterlogged").equals("true"),
+                            "End Temple retained water: " + variant);
                     var pos = block.getList("pos", Tag.TAG_INT);
                     int x = pos.getInt(0), y = pos.getInt(1), z = pos.getInt(2);
                     int max = DungeonStructureDataProvider.roomSize(variant);

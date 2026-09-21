@@ -22,7 +22,7 @@ public final class LiftItems {
 
     public static final class Gauntlet extends Item {
         private final ZSSBlockInteractions.Weight strength;
-        public Gauntlet(ZSSBlockInteractions.Weight strength, Properties properties) { super(properties); this.strength = strength; }
+        public Gauntlet(ZSSBlockInteractions.Weight strength, Properties properties) { super(properties.durability(256)); this.strength = strength; }
 
         @Override public InteractionResult useOn(UseOnContext context) {
             if (!(context.getPlayer() instanceof ServerPlayer player) || !(context.getLevel() instanceof ServerLevel level))
@@ -38,6 +38,7 @@ public final class LiftItems {
             liftable.onLifted(level, pos, state, player, carried);
             level.removeBlock(pos, false);
             if (!player.getInventory().add(carried)) player.drop(carried, false);
+            context.getItemInHand().hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(context.getHand()));
             if (state.getBlock() instanceof zeldaswordskills_remastered.block.MechanismBlocks.Heavy)
                 ZSSAdvancementService.hammerProgress(player, false, true, false,
                         liftable.liftWeight(state) == ZSSBlockInteractions.Weight.VERY_HEAVY);

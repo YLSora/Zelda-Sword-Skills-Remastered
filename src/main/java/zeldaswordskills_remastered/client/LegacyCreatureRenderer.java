@@ -41,7 +41,11 @@ public final class LegacyCreatureRenderer extends MobRenderer<LegacyCreature, En
     public void render(LegacyCreature creature, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffers, int packedLight) {
         shadowRadius = creature instanceof ChuCreature chu ? 0.15F * chu.getSize()
-                : creature.kind() == LegacyCreature.Kind.FOREST_BOSS ? 2.0F : 0.5F;
+                : switch (creature.kind()) {
+                    case KEESE_NORMAL, KEESE_FIRE, KEESE_ICE, KEESE_THUNDER, KEESE_CURSED -> 0.125F;
+                    case FOREST_BOSS -> 2.0F;
+                    default -> 0.5F;
+                };
         model = switch (creature.kind()) {
             case DARKNUT_STANDARD, DARKNUT_MIGHTY, DARKNUT_BOSS -> throw new IllegalStateException("Darknuts require DarknutRenderer");
             case CHU_RED, CHU_GREEN, CHU_BLUE, CHU_YELLOW -> chu;
@@ -62,6 +66,7 @@ public final class LegacyCreatureRenderer extends MobRenderer<LegacyCreature, En
         float scale = switch (creature.kind()) {
             case CHU_RED, CHU_GREEN, CHU_BLUE, CHU_YELLOW -> 0.65F;
             case BABA_DEKU, BABA_FIRE, BABA_WITHERED -> 1.25F;
+            case KEESE_NORMAL, KEESE_FIRE, KEESE_ICE, KEESE_THUNDER, KEESE_CURSED -> 0.25F;
             case OCTOROK_NORMAL, OCTOROK_BOMB, WATER_BOSS -> 0.7F;
             case WIZZROBE_GRAND -> 1.5F;
             case FOREST_BOSS -> 4.0F;

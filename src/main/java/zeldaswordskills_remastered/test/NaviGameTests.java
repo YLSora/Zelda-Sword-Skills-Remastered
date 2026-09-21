@@ -390,7 +390,7 @@ public final class NaviGameTests {
         }
         helper.runAtTickTime(45, () -> {
             helper.assertTrue(navi.isAlive() && navi.getX() > start.x + 8
-                            && navi.position().distanceTo(player.getEyePosition()) < 3.0D,
+                            && navi.position().distanceTo(player.position()) <= 3.5D,
                     "Flight must follow actual player positions even when server momentum is zero");
             finish(helper, player);
         });

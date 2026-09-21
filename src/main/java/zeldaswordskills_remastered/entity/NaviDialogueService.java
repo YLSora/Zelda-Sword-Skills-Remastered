@@ -15,16 +15,13 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.player.Player;
 import zeldaswordskills_remastered.block.entity.StageNineBlockEntities;
-import zeldaswordskills_remastered.block.entity.SecretRoomCore;
+import zeldaswordskills_remastered.block.entity.FairyCore;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
 
 /** Selects a short Navi line from the supplied dialogue groups for the current world context. */
 public final class NaviDialogueService {
     private static final String LAST_COMBAT_KEY = "zss_navi_last_combat";
     private static final long COMBAT_WINDOW_TICKS = 20L * 15L;
-
-    private static final Map<Integer, List<String>> GROUPS = loadGroups();
-    private static final List<String> GENERAL = combine(1, 3, 6);
 
     private NaviDialogueService() {}
 
@@ -34,11 +31,13 @@ public final class NaviDialogueService {
 
     public static boolean interact(ServerPlayer player, NaviCreature navi) {
         if (navi.ownerUuid() == null || !navi.ownerUuid().equals(player.getUUID())) return false;
-        List<String> pool = recentlyFought(player) ? group(4)
-                : inNaviStructure(player) ? group(5)
-                : specialBiome(player) ? group(2) : generalPool(player);
+        boolean chinese = "zh_cn".equalsIgnoreCase(player.getLanguage());
+        Map<Integer, List<String>> groups = chinese ? DialogueGroups.CHINESE : DialogueGroups.ENGLISH;
+        List<String> pool = recentlyFought(player) ? group(groups, 4)
+                : inNaviStructure(player) ? group(groups, 5)
+                : specialBiome(player) ? group(groups, 2) : generalPool(player, groups);
         String line = pool.get(player.getRandom().nextInt(pool.size()));
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("娜薇：" + line));
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal((chinese ? "娜薇：" : "Navi: ") + line));
         player.playNotifySound(ZSSRegistries.NAVI_INTERACT.get(), SoundSource.NEUTRAL, 0.8F, 1.0F);
         return true;
     }
@@ -61,33 +60,40 @@ public final class NaviDialogueService {
         BlockPos center = player.blockPosition();
         for (BlockPos pos : BlockPos.betweenClosed(center.offset(-16, -8, -16), center.offset(16, 8, 16))) {
             var blockEntity = player.level().getBlockEntity(pos);
-            if (blockEntity instanceof StageNineBlockEntities.DungeonCore || blockEntity instanceof SecretRoomCore) return true;
+            if (blockEntity instanceof StageNineBlockEntities.DungeonCore || blockEntity instanceof FairyCore) return true;
         }
         return false;
     }
 
-    private static List<String> generalPool(ServerPlayer player) {
-        if (player.level().isRaining() || player.level().isThundering()) return group(3);
+    private static List<String> generalPool(ServerPlayer player, Map<Integer, List<String>> groups) {
+        if (player.level().isRaining() || player.level().isThundering()) return group(groups, 3);
         long time = player.level().getDayTime() % 24000L;
-        if (time < 1500L || time >= 12000L) return group(1);
-        return GENERAL;
+        if (time < 1500L || time >= 12000L) return group(groups, 1);
+        return groups == DialogueGroups.CHINESE ? DialogueGroups.CHINESE_GENERAL : DialogueGroups.ENGLISH_GENERAL;
     }
 
-    private static List<String> combine(int... groups) {
+    private static List<String> combine(Map<Integer, List<String>> source, int... groups) {
         List<String> combined = new ArrayList<>();
-        for (int group : groups) combined.addAll(group(group));
+        for (int group : groups) combined.addAll(group(source, group));
         return List.copyOf(combined);
     }
 
-    private static List<String> group(int number) {
-        List<String> values = GROUPS.get(number);
+    private static List<String> group(Map<Integer, List<String>> source, int number) {
+        List<String> values = source.get(number);
         if (values == null || values.isEmpty()) throw new IllegalStateException("Missing Navi dialogue group " + number);
         return values;
     }
 
     private static Map<Integer, List<String>> loadGroups() {
+        return loadGroupsFile("/data/zeldaswordskills_remastered/navi_dialogue.md");
+    }
+
+    private static Map<Integer, List<String>> loadGroups(String language) {
+        return loadGroupsFile("/data/zeldaswordskills_remastered/navi_dialogue_" + language + ".md");
+    }
+
+    private static Map<Integer, List<String>> loadGroupsFile(String path) {
         Map<Integer, List<String>> groups = new HashMap<>();
-        String path = "/data/zeldaswordskills_remastered/navi_dialogue.md";
         try (var stream = Objects.requireNonNull(NaviDialogueService.class.getResourceAsStream(path), path);
                 var reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             int current = 0;
@@ -106,5 +112,12 @@ public final class NaviDialogueService {
         }
         groups.replaceAll((number, lines) -> List.copyOf(lines));
         return Map.copyOf(groups);
+    }
+
+    private static final class DialogueGroups {
+        private static final Map<Integer, List<String>> CHINESE = loadGroups();
+        private static final Map<Integer, List<String>> ENGLISH = loadGroups("en_us");
+        private static final List<String> CHINESE_GENERAL = combine(CHINESE, 1, 3, 6);
+        private static final List<String> ENGLISH_GENERAL = combine(ENGLISH, 1, 3, 6);
     }
 }

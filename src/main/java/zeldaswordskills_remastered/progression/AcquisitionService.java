@@ -35,6 +35,7 @@ public final class AcquisitionService {
     private static final int LON_LON_WINDOW = 6_000;
     private static final int LON_LON_COOLDOWN_TICKS = 24_000;
     private static final int TEMPERED_SWORD_KILLS = 300;
+    public static final int GOLDEN_SWORD_REQUIRED_KILLS = TEMPERED_SWORD_KILLS + 1;
 
     private static final Map<String, PotionTrade> JELLY_TRADES = Map.of(
             "chu_jelly_red", new PotionTrade("red_potion", 8),
@@ -56,6 +57,7 @@ public final class AcquisitionService {
     }
 
     public static boolean interact(ServerPlayer player, Entity target, InteractionHand hand) {
+        if (!target.isAlive() || target.level() != player.level()) return false;
         ItemStack held = player.getItemInHand(hand);
         if (target instanceof LegacyCreature creature && creature.kind() == LegacyCreature.Kind.FAIRY
                 && held.is(Items.GLASS_BOTTLE)) {
@@ -64,8 +66,8 @@ public final class AcquisitionService {
             creature.discard();
             return true;
         }
-        if (target instanceof LegacyCreature creature && creature.kind() == LegacyCreature.Kind.FAIRY
-                && nearFairyPool(player) && upgradeAtFairy(player, hand, held)) return true;
+        if (target instanceof zeldaswordskills_remastered.entity.FairyCreature fairy
+                && fairy.canUpgradeEquipment() && upgradeAtFairy(player, hand, held, fairy)) return true;
         if (target instanceof Cow cow && held.is(Items.GLASS_BOTTLE)) return milkLonLonCow(player, cow, hand, held);
         return target instanceof Villager villager && unlockJellyTrade(player, villager, held);
     }
@@ -95,12 +97,16 @@ public final class AcquisitionService {
         ItemStack sword = player.getMainHandItem();
         if (!sword.is(ZSSRegistries.TEMPERED_SWORD.get())) return;
         int kills = sword.getOrCreateTag().getInt("zss_kills");
-        sword.getOrCreateTag().putInt("zss_kills", Math.min(TEMPERED_SWORD_KILLS + 1, kills + 1));
+        sword.getOrCreateTag().putInt("zss_kills", Math.min(GOLDEN_SWORD_REQUIRED_KILLS, kills + 1));
+        if (kills < GOLDEN_SWORD_REQUIRED_KILLS && kills + 1 >= GOLDEN_SWORD_REQUIRED_KILLS)
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.zeldaswordskills_remastered.tempered_sword_ready"));
         if (kills < TEMPERED_SWORD_KILLS && kills + 1 >= TEMPERED_SWORD_KILLS)
             ZSSAdvancementService.swordProgress(player, "sword.evil");
     }
 
-    private static boolean upgradeAtFairy(ServerPlayer player, InteractionHand hand, ItemStack held) {
+    private static boolean upgradeAtFairy(ServerPlayer player, InteractionHand hand, ItemStack held,
+                                         zeldaswordskills_remastered.entity.FairyCreature fairy) {
         ItemStack result;
         int emeralds = 0;
         if (player.isShiftKeyDown() && held.getItem() instanceof zeldaswordskills_remastered.item.StageNineToolItem tool
@@ -118,6 +124,7 @@ public final class AcquisitionService {
             enchantments.put(power, newLevel);
             net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(enchantments, held);
             ZSSAdvancementService.fairyProgress(player, false, true, true);
+            fairy.discard();
             return true;
         } else if (held.getItem() instanceof zeldaswordskills_remastered.item.ZeldaCombatItems.HeroBow) {
             int bowLevel = zeldaswordskills_remastered.item.ZeldaCombatItems.HeroBow.upgradeLevel(held);
@@ -147,7 +154,7 @@ public final class AcquisitionService {
                         >= Math.max(1, zeldaswordskills_remastered.config.ZSSConfig.SERVER.maximumHeartContainers.get() / 2)).orElse(false)) {
             result = stack("magic_boomerang");
         } else if (held.is(ZSSRegistries.TEMPERED_SWORD.get())
-                && held.getOrCreateTag().getInt("zss_kills") > TEMPERED_SWORD_KILLS) {
+                && held.getOrCreateTag().getInt("zss_kills") >= GOLDEN_SWORD_REQUIRED_KILLS) {
             result = stack("golden_sword");
         } else {
             return false;
@@ -163,6 +170,7 @@ public final class AcquisitionService {
         if (result.getItem() instanceof zeldaswordskills_remastered.item.ZeldaCombatItems.HeroBow)
             ZSSAdvancementService.bowUpgraded(player, zeldaswordskills_remastered.item.ZeldaCombatItems.HeroBow.upgradeLevel(result));
         player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.zeldaswordskills_remastered.fairy_upgrade_complete", result.getHoverName()));
+        fairy.discard();
         return true;
     }
 
@@ -220,16 +228,6 @@ public final class AcquisitionService {
     private static boolean hasItem(ServerPlayer player, Item item) {
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             if (player.getInventory().getItem(slot).is(item)) return true;
-        }
-        return false;
-    }
-
-    private static boolean nearFairyPool(ServerPlayer player) {
-        net.minecraft.core.BlockPos center = player.blockPosition();
-        for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(
-                center.offset(-8, -4, -8), center.offset(8, 4, 8))) {
-            if (player.level().getBlockEntity(pos) instanceof zeldaswordskills_remastered.block.entity.SecretRoomCore core
-                    && core.isFairyPool()) return true;
         }
         return false;
     }

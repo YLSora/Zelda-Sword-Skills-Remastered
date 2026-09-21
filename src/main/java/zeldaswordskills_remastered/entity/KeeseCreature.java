@@ -1,5 +1,6 @@
 package zeldaswordskills_remastered.entity;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -7,31 +8,30 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.FlyingMoveControl;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import zeldaswordskills_remastered.item.EquipmentItem;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
-import zeldaswordskills_remastered.entity.ZSSDamageSources;
-
-import java.util.EnumSet;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 /** Free-flying Keese with contact attacks and explicit elemental variants. */
 public final class KeeseCreature extends LegacyCreature {
+    private static final double STEERING_INTERPOLATION = 0.125D;
+    private BlockPos flightTarget;
+    private int attackCooldown;
+
     public KeeseCreature(EntityType<? extends LegacyCreature> type, Level level, Kind kind) {
         super(type, level, kind);
-        moveControl = new FlyingMoveControl(this, 12, true);
-        getAttribute(Attributes.FLYING_SPEED).setBaseValue(Math.max(kind.speed() * 2.0D, 0.5D));
         setNoGravity(true);
     }
 
     @Override protected void registerGoals() {
-        goalSelector.addGoal(1, new FlyAttackGoal(this));
         goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -40,6 +40,54 @@ public final class KeeseCreature extends LegacyCreature {
     }
 
     @Override public boolean isNoGravity() { return true; }
+    @Override public boolean isPushable() { return false; }
+    @Override protected void doPush(Entity entity) { }
+    @Override protected void pushEntities() { }
+    @Override public boolean causeFallDamage(float distance, float multiplier, DamageSource source) { return false; }
+    @Override protected void checkFallDamage(double distance, boolean onGround, BlockState state, BlockPos pos) { }
+
+    @Override
+    public void tick() {
+        super.tick();
+        setDeltaMovement(getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        LivingEntity target = getTarget();
+        if (target != null && target.isAlive()) {
+            flightTarget = BlockPos.containing(target.getX(), target.getEyeY(), target.getZ());
+        } else {
+            if (flightTarget != null && (!level().isEmptyBlock(flightTarget)
+                    || flightTarget.getY() <= level().getMinBuildHeight())) flightTarget = null;
+            if (flightTarget == null || random.nextInt(30) == 0
+                    || flightTarget.closerToCenterThan(position(), 2.0D)) {
+                flightTarget = BlockPos.containing(getX() + random.nextInt(7) - random.nextInt(7),
+                        getY() + random.nextInt(6) - 2.0D,
+                        getZ() + random.nextInt(7) - random.nextInt(7));
+            }
+        }
+
+        double x = flightTarget.getX() + 0.5D - getX();
+        double y = flightTarget.getY() + 0.1D - getY();
+        double z = flightTarget.getZ() + 0.5D - getZ();
+        Vec3 velocity = getDeltaMovement();
+        Vec3 next = velocity.add((Math.signum(x) * 0.5D - velocity.x) * STEERING_INTERPOLATION,
+                (Math.signum(y) * 0.7D - velocity.y) * STEERING_INTERPOLATION,
+                (Math.signum(z) * 0.5D - velocity.z) * STEERING_INTERPOLATION);
+        setDeltaMovement(next);
+        float desiredYaw = (float) (Mth.atan2(next.z, next.x) * Mth.RAD_TO_DEG) - 90.0F;
+        zza = 0.5F;
+        setYRot(getYRot() + Mth.wrapDegrees(desiredYaw - getYRot()));
+
+        if (attackCooldown > 0) attackCooldown--;
+        if (target != null && getBoundingBox().inflate(0.4D).intersects(target.getBoundingBox())
+                && attackCooldown == 0) {
+            doHurtTarget(target);
+            attackCooldown = 20;
+        }
+    }
 
     @Override public boolean doHurtTarget(Entity entity) {
         if (!(entity instanceof LivingEntity living)) return false;
@@ -73,20 +121,4 @@ public final class KeeseCreature extends LegacyCreature {
                 && item.gear() == EquipmentItem.Gear.SKULL_MASK;
     }
 
-    private static final class FlyAttackGoal extends Goal {
-        private final KeeseCreature keese;
-        private int cooldown;
-        FlyAttackGoal(KeeseCreature keese) { this.keese = keese; setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
-        @Override public boolean canUse() { return keese.getTarget() != null && keese.getTarget().isAlive(); }
-        @Override public void tick() {
-            LivingEntity target = keese.getTarget();
-            if (target == null) return;
-            keese.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            keese.getMoveControl().setWantedPosition(target.getX(), target.getEyeY(), target.getZ(), 1.25D);
-            if (cooldown > 0) cooldown--;
-            if (keese.getBoundingBox().inflate(.4D).intersects(target.getBoundingBox()) && cooldown == 0) {
-                keese.doHurtTarget(target); cooldown = 20;
-            }
-        }
-    }
 }

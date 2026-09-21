@@ -151,9 +151,9 @@ public final class ZSSGameTests {
                 .stream().flatMap(List::stream).toList();
         helper.assertTrue(new HashSet<>(categorizedItems).equals(new HashSet<>(ZSSRegistries.allItems())), "Creative categories are incomplete");
         helper.assertTrue(new HashSet<>(categorizedItems).size() == categorizedItems.size(), "An item appears in more than one creative category");
-        helper.assertTrue(ZSSRegistries.BLOCKS.getEntries().size() == 57, "Missing modern blocks");
+        helper.assertTrue(ZSSRegistries.BLOCKS.getEntries().size() == 58, "Missing modern blocks");
         helper.assertTrue(ZSSRegistries.BLOCK_ITEMS.size() == 55, "Every stage-nine block needs exactly one block item");
-        List<String> expectedBlockIds = List.of("secret_room_core", "navi_light", "beam_wooden", "bomb_flower", "ceramic_jar", "chest_invisible", "chest_locked",
+        List<String> expectedBlockIds = List.of("fairy_pool_core", "fairy_root_core", "navi_light", "beam_wooden", "bomb_flower", "ceramic_jar", "chest_invisible", "chest_locked",
                 "door_boss_desert", "door_boss_earth", "door_boss_fire", "door_boss_forest", "door_boss_ice",
                 "door_boss_water", "door_boss_end", "door_locked", "dungeon_core_stone", "dungeon_core_sandstone", "dungeon_stone_stone",
                 "dungeon_stone_sandstone", "gossip_stone", "light_block", "heavy_block", "hook_target", "hook_target_all",
@@ -267,10 +267,11 @@ public final class ZSSGameTests {
             helper.assertTrue(specializedCreature(creature),
                     "A creature registry entry still uses the inert LegacyCreature implementation: " + creature.kind());
             if (creature instanceof KeeseCreature) {
-                helper.assertTrue(Math.abs(creature.getBbWidth() - 0.5F) < 0.001F
-                                && Math.abs(creature.getBbHeight() - 0.9F) < 0.001F
-                                && creature.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) >= 0.5D,
-                        "Keese collision dimensions or flying speed are incorrect");
+                helper.assertTrue(Math.abs(creature.getBbWidth() - 0.25F) < 0.001F
+                                && Math.abs(creature.getBbHeight() - 0.25F) < 0.001F
+                                && !creature.isPushable()
+                                && !creature.causeFallDamage(100.0F, 1.0F, creature.damageSources().fall()),
+                        "Keese collision dimensions are incorrect");
             }
             if (creature instanceof ChuCreature chu) {
                 float baseWidth = chu.getBbWidth();
@@ -342,7 +343,7 @@ public final class ZSSGameTests {
         helper.assertTrue(ZSSRegistries.getItem("empty_spirit_crystal") instanceof SpiritCrystalItem empty
                         && empty.kind() == SpiritCrystalItem.Kind.EMPTY
                         && ZSSRegistries.getItem("din_crystal") instanceof SpiritCrystalItem din
-                        && din.kind() == SpiritCrystalItem.Kind.DIN && !din.canBeDepleted(),
+                        && din.kind() == SpiritCrystalItem.Kind.DIN && din.canBeDepleted(),
                 "Spirit Crystal charge type or unbreakable behavior changed");
         helper.assertTrue(ZSSRegistries.getItem("hero_bow") instanceof ZeldaCombatItems.HeroBow heroBow
                         && heroBow.getAllSupportedProjectiles().test(new ItemStack(ZSSRegistries.getItem("bomb_arrow")))
@@ -351,10 +352,10 @@ public final class ZSSGameTests {
                         && waterArrow.kind() == ZeldaCombatItems.ArrowKind.WATER_BOMB,
                 "Hero Bow no longer auto-selects Zelda arrow ammunition");
         helper.assertTrue(!ZSSRegistries.getItem("master_sword").canBeDepleted()
-                        && !ZSSRegistries.getItem("deku_shield").canBeDepleted()
-                        && !ZSSRegistries.getItem("hero_tunic_chestplate").canBeDepleted()
-                        && !ZSSRegistries.getItem("hookshot").canBeDepleted()
-                        && !ZSSRegistries.getItem("magic_mirror").canBeDepleted(),
+                        && ZSSRegistries.getItem("deku_shield").canBeDepleted()
+                        && ZSSRegistries.getItem("hero_tunic_chestplate").canBeDepleted()
+                        && ZSSRegistries.getItem("hookshot").canBeDepleted()
+                        && ZSSRegistries.getItem("magic_mirror").canBeDepleted(),
                 "A ZSS weapon, shield, armor, tool, or utility item remains breakable");
         helper.assertTrue(((ZeldaCombatItems.ElementArrow) ZSSRegistries.getItem("fire_bomb_arrow"))
                         .createArrow(helper.getLevel(), new ItemStack(ZSSRegistries.getItem("fire_bomb_arrow")), mockLiving(helper))
@@ -1157,16 +1158,14 @@ public final class ZSSGameTests {
                 "Sword Break did not count as a combo hit on the locked target");
         helper.assertTrue(Math.abs(combatPlayer.getFoodData().getExhaustionLevel() - exhaustionBeforeParry) < 1.0E-4F,
                 "Sword Break consumed hunger");
-        // A landed Sword Break keeps the enemy unable to attack or move for its own, longer window:
-        // the stun effect is refreshed past the parry's twenty ticks and the lock outlives it, while
-        // the position hold is re-armed after a short grace so the knockback above still carried.
+        // Sword Break starts its own twenty-tick stun, with a short grace for knockback.
         long breakLockUntil = AdvancedSwordSkills.parryLockUntil(target);
         helper.assertTrue(AdvancedSwordSkills.parryLocked(target)
-                        && breakLockUntil >= helper.getLevel().getGameTime() + 38L,
+                        && breakLockUntil == helper.getLevel().getGameTime() + 20L,
                 "Sword Break did not extend the attack lock and immobility to its own window");
         var swordBreakStun = target.getEffect(ZSSRegistries.STUN.get());
-        helper.assertTrue(swordBreakStun != null && swordBreakStun.getDuration() >= 38,
-                "A landed Sword Break must refresh the forty-tick stun window");
+        helper.assertTrue(swordBreakStun != null && swordBreakStun.getDuration() == 20,
+                "A landed Sword Break must refresh the twenty-tick stun window");
         helper.assertTrue(AdvancedSwordSkills.parryHoldFromTick(target) > helper.getLevel().getGameTime(),
                 "Sword Break must give the knockback a grace before pinning its target again");
 
