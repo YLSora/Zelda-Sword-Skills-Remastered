@@ -124,9 +124,9 @@ public final class ZSSRegistries {
     public static final RegistryObject<Item> PENDANT_WISDOM = item("pendant_wisdom", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> PENDANT_COURAGE = item("pendant_courage", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> THROWING_ROCK = item("throwing_rock", () -> new ThrowingRockItem(new Item.Properties().stacksTo(18)));
-    public static final RegistryObject<Item> DEKU_SHIELD = item("deku_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().durability(64)));
-    public static final RegistryObject<Item> HYLIAN_SHIELD = item("hylian_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().durability(64)));
-    public static final RegistryObject<Item> MIRROR_SHIELD = item("mirror_shield", () -> new ZeldaCombatItems.Shield(true, new Item.Properties().durability(64)));
+    public static final RegistryObject<Item> DEKU_SHIELD = item("deku_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().durability(500)));
+    public static final RegistryObject<Item> HYLIAN_SHIELD = item("hylian_shield", () -> new ZeldaCombatItems.Shield(false, new Item.Properties().durability(3000)));
+    public static final RegistryObject<Item> MIRROR_SHIELD = item("mirror_shield", () -> new ZeldaCombatItems.Shield(true, new Item.Properties().durability(3000)));
     public static final RegistryObject<Item> BROKEN_SWORD = sword("broken_sword", Tiers.WOOD, 0, -2.4F, false, false);
     public static final RegistryObject<Item> KOKIRI_SWORD = sword("kokiri_sword", Tiers.WOOD, 3, -2.4F, false, false);
     // Vanilla totals are "1 + tier bonus + modifier" for attack damage

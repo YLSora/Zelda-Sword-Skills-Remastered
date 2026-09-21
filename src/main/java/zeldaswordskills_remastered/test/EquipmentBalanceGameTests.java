@@ -48,7 +48,7 @@ public final class EquipmentBalanceGameTests {
                 "wooden_hammer", "skull_hammer", "megaton_hammer", "hero_bow",
                 "deku_shield", "hylian_shield", "mirror_shield", "hookshot", "slingshot", "magic_mirror",
                 "hero_tunic_helmet", "hero_tunic_chestplate", "hero_tunic_leggings", "hero_tunic_boots"};
-        int[] uses = {256, 512, 1200, 2000, 768, 512, 512, 512, 512, 64, 64, 64, 256, 256, 256, 363, 528, 495, 429};
+        int[] uses = {256, 512, 1200, 2000, 768, 512, 512, 512, 512, 500, 3000, 3000, 256, 256, 256, 363, 528, 495, 429};
         for (int i = 0; i < ids.length; i++) {
             ItemStack stack = new ItemStack(ZSSRegistries.getItem(ids[i]));
             helper.assertTrue(stack.isDamageableItem() && stack.getMaxDamage() == uses[i], "Wrong durability: " + ids[i]);
