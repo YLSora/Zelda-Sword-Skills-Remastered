@@ -19,13 +19,16 @@ final class DungeonVictory {
         var tablets = java.util.List.of(ZSSRegistries.ANCIENT_TABLET_BOMBOS,
                 ZSSRegistries.ANCIENT_TABLET_ETHER, ZSSRegistries.ANCIENT_TABLET_QUAKE);
         int radius = Math.max(1, core.arenaRadius() - 1);
-        for (int attempt = 0; attempt < 4; attempt++) {
-            BlockPos pos = core.getBlockPos().offset(level.random.nextInt(radius * 2 + 1) - radius,
-                    core.arenaHeight(), level.random.nextInt(radius * 2 + 1) - radius);
-            if (!level.isEmptyBlock(pos) || !level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
-            level.setBlockAndUpdate(pos, tablets.get(level.random.nextInt(3)).get().defaultBlockState()
-                    .setValue(HorizontalDirectionalBlock.FACING, level.random.nextBoolean() ? Direction.SOUTH : Direction.EAST));
-            return;
+        int center = core.arenaWidth() / 2;
+        var positions = new java.util.ArrayList<BlockPos>();
+        for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) {
+            BlockPos pos = DungeonArena.localPos(core, center + dx, core.arenaHeight(), center + dz);
+            if (level.isEmptyBlock(pos) && level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP))
+                positions.add(pos);
         }
+        if (positions.isEmpty()) return;
+        BlockPos pos = positions.get(level.random.nextInt(positions.size()));
+        level.setBlockAndUpdate(pos, tablets.get(level.random.nextInt(3)).get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, level.random.nextBoolean() ? Direction.SOUTH : Direction.EAST));
     }
 }
