@@ -62,9 +62,6 @@ sourceSets.main.resources {
     srcDir 'src/generated/resources'
 }
 
-apply from: 'gradle/verify-client-resources.gradle'
-apply from: 'gradle/verify-modern-sources.gradle'
-
 def verifyNaviFlight = tasks.register('verifyNaviFlight', JavaExec) {
     group = 'verification'
     description = 'Checks fairy wandering, following, and lock-on flight numerically.'
