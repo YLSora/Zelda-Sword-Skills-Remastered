@@ -1,9 +1,16 @@
+buildscript {
+    repositories { maven { url = 'https://repo.spongepowered.org/repository/maven-public/' } }
+    dependencies { classpath 'org.spongepowered:mixingradle:0.7.38' }
+}
+
 plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
+
+apply plugin: 'org.spongepowered.mixin'
 
 group = mod_group_id
 version = mod_version
@@ -62,6 +69,11 @@ sourceSets.main.resources {
     srcDir 'src/generated/resources'
 }
 
+mixin {
+    add sourceSets.main, 'zeldaswordskills_remastered.refmap.json'
+    config 'zeldaswordskills_remastered.mixins.json'
+}
+
 def verifyNaviFlight = tasks.register('verifyNaviFlight', JavaExec) {
     group = 'verification'
     description = 'Checks fairy wandering, following, and lock-on flight numerically.'
@@ -92,6 +104,7 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
 def resourceProperties = [

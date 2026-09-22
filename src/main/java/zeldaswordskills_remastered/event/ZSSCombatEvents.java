@@ -12,6 +12,7 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.common.Mod;
@@ -24,6 +25,7 @@ import zeldaswordskills_remastered.combat.FatalStrike;
 import zeldaswordskills_remastered.combat.GroundSlam;
 import zeldaswordskills_remastered.combat.IaiSlash;
 import zeldaswordskills_remastered.combat.MasterMode;
+import zeldaswordskills_remastered.combat.ParryEffectProtection;
 import zeldaswordskills_remastered.config.ZSSConfig;
 import zeldaswordskills_remastered.registry.ZSSRegistries;
 import zeldaswordskills_remastered.registry.ZSSContentIds;
@@ -178,6 +180,14 @@ public final class ZSSCombatEvents {
         });
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
+    public static void beginIncomingAttack(LivingAttackEvent event) {
+        // Also reset when another handler cancels the next hit before playerAttacked runs.
+        if (event.getEntity() instanceof ServerPlayer player) {
+            ZSSCapabilities.get(player).ifPresent(data -> data.combat().clearParriedAttack());
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void playerAttacked(LivingAttackEvent event) {
         if (event.getAmount() <= 0.0F) return;
@@ -197,7 +207,10 @@ public final class ZSSCombatEvents {
             if (data.combat().dodgeActive(now) || data.combat().dashImmune(now)
                     || data.combat().flashAssault().dashing(now)
                     || data.combat().risingCutImmune(now)
-                    || data.combat().helmSplitter().airborne()) event.setCanceled(true);
+                    || ParryEffectProtection.blocks(player, data)) {
+                // Applicable is result-based, not cancelable in Forge 1.20.1.
+                event.setResult(Event.Result.DENY);
+            }
         });
     }
 }

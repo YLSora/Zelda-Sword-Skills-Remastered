@@ -739,6 +739,7 @@ public final class AdvancedSwordSkills {
     }
 
     public static boolean onAttacked(ServerPlayer player, ZSSPlayerData data, DamageSource source) {
+        data.combat().clearParriedAttack();
         long now = player.level().getGameTime();
         tickParry(player, data, now);
         // Cancel before attacker checks: environmental and projectile damage are immune too.
@@ -758,6 +759,7 @@ public final class AdvancedSwordSkills {
     }
 
     public static boolean parryProjectile(ServerPlayer player, ZSSPlayerData data, Projectile projectile) {
+        data.combat().clearParriedAttack();
         if (!(projectile.getOwner() instanceof LivingEntity attacker) || !projectile.isAlive()) return false;
         long now = player.level().getGameTime();
         tickParry(player, data, now);
@@ -776,6 +778,8 @@ public final class AdvancedSwordSkills {
             // The window is spent by the parry that used it: the cooldown starts now, and no later
             // attack can be stopped by the same window.
             data.combat().finishParry(now);
+            data.combat().recordParriedAttack(now, attacker.getUUID(),
+                    projectile == null ? attacker.getUUID() : projectile.getUUID());
             if (projectile == null) {
                 attacker.addEffect(new MobEffectInstance(ZSSRegistries.STUN.get(), (int) PARRY_STUN_TICKS, 0));
                 lockParriedAttacker(player, attacker, now);

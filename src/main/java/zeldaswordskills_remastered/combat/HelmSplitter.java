@@ -66,8 +66,6 @@ public final class HelmSplitter {
         public boolean immune(UUID attacker, long now) {
             return attacker.equals(protectedTarget) && (airborne || now < immuneUntil);
         }
-        /** The Helm Splitter jump is protected from all negative effects while airborne. */
-        public boolean airborne() { return airborne; }
         public void hit(long now) { hitImmuneUntil = now + 30L; }
         public boolean hitImmune(long now) { return now < hitImmuneUntil; }
         public double fallGrace() { return fallGrace; }

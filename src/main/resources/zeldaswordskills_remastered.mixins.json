@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "zeldaswordskills_remastered.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "zeldaswordskills_remastered.refmap.json",
+  "mixins": ["LevelEffectSourceMixin", "LivingEffectSourceMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

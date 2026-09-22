@@ -30,6 +30,9 @@ public final class PlayerCombatState {
     private Vec3 dodgeLastTapDirection = Vec3.ZERO;
     private long parryUntil;
     private long parryCooldownUntil;
+    private long parriedAttackTick = Long.MIN_VALUE;
+    private java.util.UUID parriedAttacker;
+    private java.util.UUID parriedDirectEntity;
     private long swordBreakUntil;
     private boolean swordBreakUsed;
     private int swordBreakTargetId = -1;
@@ -111,6 +114,7 @@ public final class PlayerCombatState {
     public void disableSkill(ResourceLocation skill, long now) {
         if (charging(skill)) clearCharge();
         if (skill.equals(ZSSContentIds.SWORD_BASIC)) {
+            clearParriedAttack();
             endFocusOnTargetChange(now);
             clearTarget();
             clearCombo();
@@ -126,6 +130,7 @@ public final class PlayerCombatState {
             dodgeLastTapTick = Long.MIN_VALUE;
             dodgeLastTapDirection = Vec3.ZERO;
         } else if (skill.equals(ZSSContentIds.PARRY)) {
+            clearParriedAttack();
             finishParry(now);
             useSwordBreak();
             helmSplitter.clearOpening();
@@ -189,6 +194,21 @@ public final class PlayerCombatState {
     public long parryUntil() { return parryUntil; }
     public long parryCooldownUntil() { return parryCooldownUntil; }
     public boolean parryCoolingDown(long now) { return now < parryCooldownUntil; }
+
+    /** Covers synchronous effect application after a parried hit, never a later tick or attack. */
+    public void recordParriedAttack(long now, java.util.UUID attacker, java.util.UUID directEntity) {
+        parriedAttackTick = now;
+        parriedAttacker = attacker;
+        parriedDirectEntity = directEntity;
+    }
+    public boolean parriedAttackEffectsImmune(long now, java.util.UUID source) {
+        return parriedAttackTick == now && source != null
+                && (source.equals(parriedAttacker) || source.equals(parriedDirectEntity));
+    }
+    public void clearParriedAttack() {
+        parriedAttackTick = Long.MIN_VALUE;
+        parriedAttacker = parriedDirectEntity = null;
+    }
 
     /** Ends once; late tick processing never extends the cooldown past timeout + 60. */
     public boolean finishParry(long now) {
@@ -515,6 +535,7 @@ public final class PlayerCombatState {
 
     private void clearAdvanced() {
         clearCharge();
+        clearParriedAttack();
         dodgeUntil = dodgeCooldownUntil = parryUntil = parryCooldownUntil = swordBreakUntil = risingCutUntil = dashUntil = dashImmuneUntil = spinUntil = spinCooldownUntil = 0L;
         dashCooldownUntil = 0L;
         clearDashContinuation();
