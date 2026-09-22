@@ -316,7 +316,7 @@ public final class FairyRootGameTests {
         var generator = level.getChunkSource().getGenerator();
         long seed = level.getSeed();
         int loaded = 0;
-        for (int region = 0; region < 1024 && loaded < 8; region++) {
+        for (int region = 0; region < 1024 && loaded < 128; region++) {
             var chunk = placement.getPotentialStructureChunk(seed, (region % 32 + 80) * placement.spacing(), (region / 32 + 80) * placement.spacing());
             var start = structure.generate(registries, generator, generator.getBiomeSource(), level.getChunkSource().randomState(),
                     level.getStructureManager(), seed, chunk, 0, level, structure.biomes()::contains);
