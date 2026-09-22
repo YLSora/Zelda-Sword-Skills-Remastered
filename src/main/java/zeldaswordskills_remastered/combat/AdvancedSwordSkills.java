@@ -202,7 +202,7 @@ public final class AdvancedSwordSkills {
         int level = level(data, ZSSContentIds.DODGE);
         long now = player.level().getGameTime();
         if (level <= 0 || !player.isAlive() || player.isSpectator() || player.isPassenger()
-                || !player.onGround() || data.combat().dodgeOnCooldown(now)) return;
+                || !player.onGround() || player.isInFluidType() || data.combat().dodgeOnCooldown(now)) return;
         Vec3 side = validatedSide(player, direction);
         if (side.lengthSqr() < 0.25D) return;
         if (!data.combat().acceptDodgeTap(now, side)) return;
@@ -533,7 +533,7 @@ public final class AdvancedSwordSkills {
         }
         if (data.combat().spinActive(now)) return;
         int superLevel = level(data, ZSSContentIds.SUPER_SPIN_ATTACK);
-        float cost = 5.75F - 0.75F * superLevel;
+        float cost = 5.75F - 0.75F * superLevel + 2.0F * (data.combat().spinRounds() - 1);
         if (!data.combat().spinContinuationQueued() || superLevel <= 0
                 || level(data, ZSSContentIds.SPIN_ATTACK) <= 0 || !fullHealth(player)
                 || data.combat().spinRounds() >= superLevel + 2 || !data.consumeMagic(cost)) {
@@ -675,7 +675,7 @@ public final class AdvancedSwordSkills {
         int level = level(data, ZSSContentIds.DOUBLE_JUMP);
         if (level <= 0 || !player.isAlive() || player.isSpectator() || player.isPassenger()
                 || player.onGround() || player.isFallFlying()) return;
-        if (!data.combat().useDoubleJump()) return;
+        if (!data.combat().useDoubleJump(player.level().getGameTime())) return;
         // Replace the vertical velocity exactly like a vanilla jump, so the height depends only on
         // the skill level rather than on the fall speed at the moment the jump is pressed. The
         // horizontal motion is left untouched, and vanilla carries the player from there.

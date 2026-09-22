@@ -109,6 +109,11 @@ public class LegacyCreature extends PathfinderMob implements zeldaswordskills_re
         return kind.family() != Family.FAIRY;
     }
 
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return dungeonCorePos == null && super.removeWhenFarAway(distanceToClosestPlayer);
+    }
+
     @Override public int getExperienceReward() { return kind.experience(); }
 
     public final boolean tryWhipLoot(Player player) {

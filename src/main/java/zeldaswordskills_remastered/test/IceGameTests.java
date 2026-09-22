@@ -68,6 +68,7 @@ public final class IceGameTests {
                         && boss.getAttributeValue(Attributes.ATTACK_DAMAGE) == 12
                         && boss.dungeonCorePos().orElseThrow().equals(core.getBlockPos())
                         && boss.dungeonType().orElseThrow() == DungeonType.ICE
+                        && !boss.removeWhenFarAway(160.0D * 160.0D)
                         && boss.getType().is(CreatureSpawnRules.DUNGEON_ONLY)), "Ice count, identity or health changed");
                 var chest = switch (difficulty) {
                     case EASY -> Items.CHAINMAIL_CHESTPLATE;
@@ -113,7 +114,7 @@ public final class IceGameTests {
                 restored.hurt(level.damageSources().genericKill(), Float.MAX_VALUE);
                 core.setIceReinforcementDelay(1);
                 DungeonController.tick(level, core);
-                helper.assertTrue(!core.completed() && core.iceReinforcements().size() == 8
+                helper.assertTrue(!core.completed() && core.iceReinforcements().size() == 12
                         && core.iceReinforcementDelay() == 1 && rewards(level, origin) == 0,
                         "Ice finished or continued spawning before reinforcements died");
                 core.iceReinforcements().stream().map(level::getEntity)
@@ -346,12 +347,17 @@ public final class IceGameTests {
         helper.assertTrue(core.iceReinforcements().size() == 4, "Ice did not spawn four scheduled strays");
         core.setIceReinforcementDelay(1);
         DungeonController.tick(level, core);
+        var secondWave = core.iceReinforcements();
+        core.setIceReinforcementDelay(1);
+        DungeonController.tick(level, core);
         var ids = core.iceReinforcements();
+        core.setIceReinforcementDelay(1);
+        DungeonController.tick(level, core);
         int delay = core.iceReinforcementDelay();
         core.load(core.saveWithoutMetadata());
-        helper.assertTrue(ids.size() == 8 && core.iceReinforcements().equals(ids)
+        helper.assertTrue(secondWave.size() == 8 && ids.size() == 12 && core.iceReinforcements().equals(ids)
                 && core.iceReinforcementDelay() == delay && delay >= 300 && delay <= 599,
-                "Ice multiple waves or countdown did not survive reload");
+                "Ice reinforcement waves exceeded three or were lost on reload");
         helper.assertTrue(ids.stream().map(level::getEntity).allMatch(entity ->
                 entity instanceof net.minecraft.world.entity.monster.Stray stray && stray.getMaxHealth() == 20
                 && stray.getMainHandItem().is(Items.BOW) && stray.isPersistenceRequired()), "Ice reinforcement lost vanilla attributes");

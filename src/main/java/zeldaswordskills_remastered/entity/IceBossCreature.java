@@ -61,6 +61,9 @@ public final class IceBossCreature extends Illusioner implements DungeonBoss {
     }
 
     @Override public boolean isBoss() { return true; }
+    @Override public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return dungeonCorePos == null && super.removeWhenFarAway(distanceToClosestPlayer);
+    }
     @Override public Optional<DungeonType> dungeonType() { return Optional.ofNullable(dungeonType); }
     @Override public Optional<BlockPos> dungeonCorePos() { return Optional.ofNullable(dungeonCorePos); }
     @Override public void linkDungeon(DungeonType type, BlockPos pos) {

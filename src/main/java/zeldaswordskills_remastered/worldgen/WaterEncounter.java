@@ -35,6 +35,8 @@ public final class WaterEncounter {
     private WaterEncounter() {}
 
     static boolean spawnReinforcement(ServerLevel level, DungeonCore core) {
+        var waveId = DungeonController.beginReinforcementWave(level, core.waterReinforcement().stream().toList(), 1);
+        if (waveId.isEmpty()) return false;
         ElderGuardian guardian = EntityType.ELDER_GUARDIAN.create(level);
         if (guardian == null) return false;
         for (int corner = 0; corner < 4; corner++) {
@@ -42,6 +44,7 @@ public final class WaterEncounter {
             guardian.finalizeSpawn(level, level.getCurrentDifficultyAt(guardian.blockPosition()), MobSpawnType.EVENT, null, null);
             guardian.setPersistenceRequired();
             guardian.getPersistentData().putLong(REINFORCEMENT_CORE, core.getBlockPos().asLong());
+            DungeonController.markReinforcement(guardian, waveId.orElseThrow());
             if (!level.addFreshEntity(guardian)) return false;
             core.setWaterReinforcement(guardian.getUUID());
             return true;

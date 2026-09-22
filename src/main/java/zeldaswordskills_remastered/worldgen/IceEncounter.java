@@ -56,7 +56,9 @@ public final class IceEncounter {
         if (!core.bossUuids().isEmpty()) {
             core.setIceReinforcementDelay(core.iceReinforcementDelay() - 1);
             if (core.iceReinforcementDelay() <= 0) {
-                for (int corner = 0; corner < 4; corner++) spawnReinforcement(level, core, corner);
+                DungeonController.beginReinforcementWave(level, core.iceReinforcements(), 4).ifPresent(waveId -> {
+                    for (int corner = 0; corner < 4; corner++) spawnReinforcement(level, core, corner, waveId);
+                });
                 core.setIceReinforcementDelay(300 + level.random.nextInt(300));
             }
             return;
@@ -68,13 +70,14 @@ public final class IceEncounter {
                 LegacyCreatureDrops.bonusHeartOrb()));
     }
 
-    private static void spawnReinforcement(ServerLevel level, DungeonCore core, int corner) {
+    private static void spawnReinforcement(ServerLevel level, DungeonCore core, int corner, java.util.UUID waveId) {
         var stray = net.minecraft.world.entity.EntityType.STRAY.create(level);
         if (stray == null || !DungeonArena.positionAtCorner(level, core, stray, corner)) return;
         stray.finalizeSpawn(level, level.getCurrentDifficultyAt(stray.blockPosition()),
                 net.minecraft.world.entity.MobSpawnType.EVENT, null, null);
         stray.setPersistenceRequired();
         stray.getPersistentData().putLong(REINFORCEMENT_CORE, core.getBlockPos().asLong());
+        DungeonController.markReinforcement(stray, waveId);
         if (level.addFreshEntity(stray)) core.addIceReinforcement(stray.getUUID());
     }
 

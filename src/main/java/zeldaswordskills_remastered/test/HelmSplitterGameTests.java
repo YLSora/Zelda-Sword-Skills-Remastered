@@ -103,7 +103,7 @@ public final class HelmSplitterGameTests {
             helper.assertTrue(!HelmSplitter.tryStrike(player, data), "A grounded attack used Helm Splitter");
             player.setPos(player.position().add(0, 0.5D, 0));
             player.setOnGround(false);
-            if (level == 5) data.combat().useDoubleJump();
+            if (level == 5) data.combat().useDoubleJump(now);
             int food = player.getFoodData().getFoodLevel();
             float exhaustion = player.getFoodData().getExhaustionLevel();
             float expected = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) + 1.5F * level;

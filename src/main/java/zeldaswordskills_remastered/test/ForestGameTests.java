@@ -40,6 +40,7 @@ import zeldaswordskills_remastered.worldgen.DungeonType;
 import zeldaswordskills_remastered.worldgen.ForestEncounter;
 
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,6 +75,7 @@ public final class ForestGameTests {
                                 && boss.getAttributeValue(Attributes.ATTACK_DAMAGE) == 10
                                 && boss.dungeonCorePos().orElseThrow().equals(center)
                                 && boss.dungeonType().orElseThrow() == DungeonType.FOREST
+                                && !boss.removeWhenFarAway(160.0D * 160.0D)
                                 && boss.getType().is(CreatureSpawnRules.DUNGEON_ONLY)), "Forest boss count, identity or attributes changed");
                 helper.assertTrue(first.getItemBySlot(EquipmentSlot.CHEST).isEmpty(), "Forest boss retained cave-spider equipment");
                 helper.assertTrue(core.forestReinforcements().size() == 4, "Forest's four Skulltula reinforcements did not spawn");
@@ -418,16 +420,76 @@ public final class ForestGameTests {
         var firstWave = core.forestReinforcements();
         core.setForestReinforcementDelay(1);
         DungeonController.tick(helper.getLevel(), core);
-        var bothWaves = core.forestReinforcements();
+        var secondWave = core.forestReinforcements();
+        core.setForestReinforcementDelay(1);
+        DungeonController.tick(helper.getLevel(), core);
+        var threeWaves = core.forestReinforcements();
+        core.setForestReinforcementDelay(1);
+        DungeonController.tick(helper.getLevel(), core);
         int reinforcementDelay = core.forestReinforcementDelay();
         core.load(core.saveWithoutMetadata());
-        helper.assertTrue(bothWaves.size() == 8 && core.forestReinforcements().equals(bothWaves)
-                && core.forestReinforcementDelay() == reinforcementDelay, "Multiple reinforcement waves lost on reload");
-        bothWaves.stream().filter(uuid -> !firstWave.contains(uuid)).map(helper.getLevel()::getEntity)
+        helper.assertTrue(secondWave.size() == 8 && threeWaves.size() == 12
+                && core.forestReinforcements().equals(threeWaves)
+                && core.forestReinforcementDelay() == reinforcementDelay,
+                "Forest reinforcement waves exceeded three or were lost on reload");
+        threeWaves.stream().filter(uuid -> !firstWave.contains(uuid)).map(helper.getLevel()::getEntity)
                 .forEach(entity -> entity.hurt(helper.getLevel().damageSources().genericKill(), Float.MAX_VALUE));
         DungeonController.tick(helper.getLevel(), core);
         helper.assertTrue(core.forestReinforcements().equals(firstWave), "Dead reinforcement stayed bound");
         core.setForestHazardDelay(hazardDelay);
+    }
+
+    @GameTest(template = "zssgametests.dungeon_empty", templateNamespace = "minecraft", batch = "zssForest")
+    public static void forestReinforcementPopulationLimit(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Difficulty previous = level.getDifficulty();
+        BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
+        try {
+            level.getServer().setDifficulty(Difficulty.NORMAL, true);
+            DungeonCore core = place(helper, origin, 0);
+            var boss = DungeonController.spawnBoss(level, core).orElseThrow();
+            var ordinary = new ArrayList<Mob>();
+            for (int index = 0; index < 20; index++) {
+                var zombie = EntityType.ZOMBIE.create(level);
+                zombie.setNoAi(true);
+                zombie.setPos(Vec3.atCenterOf(core.getBlockPos().above(3)));
+                helper.assertTrue(level.addFreshEntity(zombie), "Failed to add an ordinary temple monster");
+                ordinary.add(zombie);
+            }
+            core.setForestReinforcementDelay(1);
+            DungeonController.tick(level, core);
+            helper.assertTrue(core.forestReinforcements().size() == 4 && core.bossUuids().size() == 2
+                            && ordinary.stream().allMatch(Entity::isAlive)
+                            && !boss.removeWhenFarAway(160.0D * 160.0D),
+                    "Bosses or ordinary monsters incorrectly consumed the reinforcement limit");
+
+            core.forestReinforcements().stream().map(level::getEntity)
+                    .forEach(entity -> entity.hurt(level.damageSources().genericKill(), Float.MAX_VALUE));
+            DungeonController.tick(level, core);
+            helper.assertTrue(core.forestReinforcements().isEmpty(), "Defeated test reinforcements stayed registered");
+
+            UUID existingWave = UUID.randomUUID();
+            ordinary.stream().limit(18).forEach(entity -> {
+                entity.getPersistentData().putUUID("zss_dungeon_reinforcement_wave", existingWave);
+                core.addForestReinforcement(entity.getUUID());
+            });
+            core.setForestReinforcementDelay(1);
+            DungeonController.tick(level, core);
+            helper.assertTrue(core.forestReinforcements().size() == 18,
+                    "Forest exceeded twenty reinforcements by starting a four-member wave at eighteen");
+
+            ordinary.stream().limit(2)
+                    .forEach(entity -> entity.hurt(level.damageSources().genericKill(), Float.MAX_VALUE));
+            core.setForestReinforcementDelay(1);
+            DungeonController.tick(level, core);
+            helper.assertTrue(core.forestReinforcements().size() == DungeonController.MAX_REINFORCEMENTS,
+                    "Forest did not allow a reinforcement wave that reached exactly twenty members");
+        } finally {
+            clean(level, origin.offset(22, 0, 22));
+            clearRoom(level, origin);
+            level.getServer().setDifficulty(previous, true);
+        }
+        helper.succeed();
     }
 
     private static BlockPos door(DungeonCore core) {

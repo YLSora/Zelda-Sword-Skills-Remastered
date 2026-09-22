@@ -94,6 +94,7 @@ public final class ZSSClientGameplay {
     private static boolean helmAttackQueued;
     /** Client mirror of the server rule: one extra mid-air jump, restored on landing. */
     private static boolean doubleJumpUsed;
+    private static int doubleJumpCooldownUntil;
     /**
      * Ticks spent off the ground. The vanilla jump is applied by the client's own physics before
      * this handler runs, so a jump pressed from the ground already reports {@code onGround() == false}
@@ -177,6 +178,7 @@ public final class ZSSClientGameplay {
         helmJumped = false;
         helmAttackQueued = false;
         doubleJumpUsed = false;
+        doubleJumpCooldownUntil = 0;
         airborneTicks = 0;
     }
 
@@ -487,7 +489,8 @@ public final class ZSSClientGameplay {
                 // Covers the whole crouch-jump: the attack may land at any point before landing.
                 risingCutUntil = tick + RISING_CUT_WINDOW_TICKS;
             }
-            else if (airborneTicks > 0 && !doubleJumpUsed && learned(ZSSContentIds.DOUBLE_JUMP)
+            else if (airborneTicks > 0 && !doubleJumpUsed && tick >= doubleJumpCooldownUntil
+                    && learned(ZSSContentIds.DOUBLE_JUMP)
                     && !player.isFallFlying()) {
                 // A jump pressed while already airborne is the extra Double Jump; the crouch-jump
                 // above still reports zero airborne ticks, so the two never compete for one press.
@@ -495,6 +498,7 @@ public final class ZSSClientGameplay {
                 // jumpFromGround would overwrite the elytra's own vertical motion.
                 send(ZSSContentIds.DOUBLE_JUMP, SkillIntentMessage.Action.BEGIN, Optional.empty());
                 doubleJumpUsed = true;
+                doubleJumpCooldownUntil = tick + PlayerCombatState.DOUBLE_JUMP_COOLDOWN_TICKS;
             }
             // Item actions own use; Parry may only claim it when both hands have no use action.
         }
@@ -585,7 +589,7 @@ public final class ZSSClientGameplay {
     }
 
     private static void sendDodgeTap(net.minecraft.world.entity.player.Player player, boolean right) {
-        if (spinChargeStarted >= 0 || !learned(ZSSContentIds.DODGE)) return;
+        if (spinChargeStarted >= 0 || player.isInFluidType() || !learned(ZSSContentIds.DODGE)) return;
         send(ZSSContentIds.DODGE, SkillIntentMessage.Action.BEGIN,
                 Optional.of(sideDirection(player, right)));
     }
@@ -686,7 +690,7 @@ public final class ZSSClientGameplay {
             return true;
         }
         if (!ZSSClientCombatState.hasTarget()) {
-            beginSpinCharge(tick);
+            beginSpinCharge(minecraft, tick);
             return false;
         }
         // Outside a confirmed Flash Assault window, the forward gesture belongs to Dash.
@@ -722,12 +726,15 @@ public final class ZSSClientGameplay {
         // The press attacks immediately; holding it may also charge a later Spin Attack.
         // Send ATTACK before BEGIN because the basic attack clears the server's prior charge.
         sendPlainLockedAttack(player);
-        beginSpinCharge(tick);
+        beginSpinCharge(minecraft, tick);
         return true;
     }
 
-    private static void beginSpinCharge(int tick) {
-        if (spinChargeStarted < 0 && learned(ZSSContentIds.SPIN_ATTACK) && tick >= spinCooldownUntil) {
+    private static void beginSpinCharge(Minecraft minecraft, int tick) {
+        boolean aimingAtBlock = minecraft.hitResult != null
+                && minecraft.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK;
+        if (!aimingAtBlock && spinChargeStarted < 0 && learned(ZSSContentIds.SPIN_ATTACK)
+                && tick >= spinCooldownUntil) {
             spinChargeStarted = tick;
             spinChargeToneTick = -1;
             send(ZSSContentIds.SPIN_ATTACK, SkillIntentMessage.Action.BEGIN, Optional.empty());

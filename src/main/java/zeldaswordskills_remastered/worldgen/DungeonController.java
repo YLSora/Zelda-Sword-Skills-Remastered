@@ -34,13 +34,20 @@ import zeldaswordskills_remastered.capability.ZSSPlayerData;
 
 import java.util.Optional;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /** Server-authoritative lifecycle for a generated dungeon core and its explicitly linked boss. */
 @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = ZeldaSwordSkills_Remastered.MOD_ID)
 public final class DungeonController {
     public static final int CHECK_INTERVAL_TICKS = 20;
     public static final double ACTIVATION_RANGE = 3.5D;
+    public static final int MAX_REINFORCEMENT_WAVES = 3;
+    public static final int MAX_REINFORCEMENTS = 20;
+    private static final String REINFORCEMENT_WAVE = "zss_dungeon_reinforcement_wave";
 
     private DungeonController() {
     }
@@ -238,6 +245,22 @@ public final class DungeonController {
         return ResourceLocation.fromNamespaceAndPath(ZeldaSwordSkills_Remastered.MOD_ID,
                 "dungeons/" + dimension.getNamespace() + "/" + dimension.getPath() + "/"
                         + corePos.getX() + "/" + corePos.getY() + "/" + corePos.getZ());
+    }
+
+    static Optional<UUID> beginReinforcementWave(ServerLevel level, Collection<UUID> reinforcements,
+                                                  int waveSize) {
+        if (waveSize <= 0 || reinforcements.size() > MAX_REINFORCEMENTS - waveSize) return Optional.empty();
+        Set<UUID> waves = new HashSet<>();
+        for (UUID uuid : reinforcements) {
+            Entity entity = level.getEntity(uuid);
+            if (entity == null || !entity.getPersistentData().hasUUID(REINFORCEMENT_WAVE)) return Optional.empty();
+            waves.add(entity.getPersistentData().getUUID(REINFORCEMENT_WAVE));
+        }
+        return waves.size() < MAX_REINFORCEMENT_WAVES ? Optional.of(UUID.randomUUID()) : Optional.empty();
+    }
+
+    static void markReinforcement(Entity entity, UUID waveId) {
+        entity.getPersistentData().putUUID(REINFORCEMENT_WAVE, waveId);
     }
 
     private static void beginEncounter(ServerLevel level, StageNineBlockEntities.DungeonCore core, DungeonType dungeon) {

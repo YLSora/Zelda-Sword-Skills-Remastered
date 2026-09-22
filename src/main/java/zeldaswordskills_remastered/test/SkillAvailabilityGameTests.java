@@ -126,7 +126,7 @@ public final class SkillAvailabilityGameTests {
         SkillAvailability.setEnabled(player, data, ZSSContentIds.DASH, false);
         helper.assertTrue(!state.dashPending() && !state.dashImmune(now) && state.dashCoolingDown(now)
                 && player.getDeltaMovement().horizontalDistanceSqr() == 0, "Dash survived disable or refunded its cooldown");
-        state.useDoubleJump();
+        state.useDoubleJump(now);
         SkillAvailability.setEnabled(player, data, ZSSContentIds.DOUBLE_JUMP, false);
         var fall = new net.minecraftforge.event.entity.living.LivingFallEvent(player, 10, 1);
         ZSSCombatEvents.playerFall(fall);

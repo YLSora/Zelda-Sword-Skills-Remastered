@@ -11,6 +11,7 @@ public final class PlayerCombatState {
     public static final int PARRY_COOLDOWN_TICKS = 60;
     public static final int SPIN_ROUND_TICKS = 8;
     public static final int SWORD_BEAM_COOLDOWN_TICKS = 40;
+    public static final int DOUBLE_JUMP_COOLDOWN_TICKS = 60;
     /** Ticks between the repeated vanilla sword sweeps of a climbing Rising Cut. */
     public static final long RISING_CUT_SLASH_INTERVAL_TICKS = 2L;
     private int targetId = -1;
@@ -82,6 +83,7 @@ public final class PlayerCombatState {
     private long nextFocusRoll = -1L;
     private FatalStrike.Attempt dashAttempt;
     private boolean doubleJumpUsed;
+    private long doubleJumpCooldownUntil;
 
     public int targetId() { return targetId; }
     public int comboCount() { return comboCount; }
@@ -427,12 +429,14 @@ public final class PlayerCombatState {
      * Consumes the one extra mid-air jump this airtime allows. Returns false once it is spent,
      * which keeps a single jump chain from being extended indefinitely; landing restores it.
      */
-    public boolean useDoubleJump() {
-        if (doubleJumpUsed) return false;
+    public boolean useDoubleJump(long now) {
+        if (doubleJumpUsed || doubleJumpCoolingDown(now)) return false;
         doubleJumpUsed = true;
+        doubleJumpCooldownUntil = now + DOUBLE_JUMP_COOLDOWN_TICKS;
         return true;
     }
     public boolean doubleJumpUsed() { return doubleJumpUsed; }
+    public boolean doubleJumpCoolingDown(long now) { return now < doubleJumpCooldownUntil; }
     public void resetDoubleJump() { doubleJumpUsed = false; }
 
     public long focusUntil() { return focusUntil; }
@@ -564,6 +568,7 @@ public final class PlayerCombatState {
         spinContinuationQueued = false;
         swordBreakUsed = false;
         doubleJumpUsed = false;
+        doubleJumpCooldownUntil = 0L;
         clearGroundSlam();
     }
 

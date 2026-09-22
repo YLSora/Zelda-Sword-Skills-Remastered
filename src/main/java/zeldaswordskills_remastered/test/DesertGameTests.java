@@ -67,7 +67,8 @@ public final class DesertGameTests {
                         entity instanceof DesertBossCreature boss && !boss.isBaby() && boss.getMaxHealth() == 80 && boss.getHealth() == 80
                         && boss.getAttributeValue(Attributes.ATTACK_DAMAGE) == 6 + 2 * difficulty.getId()
                         && boss.getAttributeValue(Attributes.MOVEMENT_SPEED) == .15
-                        && boss.dungeonCorePos().orElseThrow().equals(core.getBlockPos()) && boss.isPersistenceRequired()),
+                        && boss.dungeonCorePos().orElseThrow().equals(core.getBlockPos()) && boss.isPersistenceRequired()
+                        && !boss.removeWhenFarAway(160.0D * 160.0D)),
                         "Desert husk count, attributes or binding changed");
                 helper.assertTrue(skeletons.size() == 4 && skeletons.stream().map(level::getEntity).allMatch(entity ->
                         entity.getClass() == Skeleton.class && ((Skeleton) entity).getMaxHealth() == 20

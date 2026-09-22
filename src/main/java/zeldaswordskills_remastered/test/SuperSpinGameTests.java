@@ -114,6 +114,30 @@ public final class SuperSpinGameTests {
     }
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
+    public static void continuationMagicCostIncreasesByTwo(GameTestHelper helper) {
+        FakePlayer player = player(helper);
+        ZSSPlayerData data = ZSSCapabilities.get(player).orElseThrow(() -> new AssertionError("Missing player data"));
+        long now = helper.getLevel().getGameTime();
+
+        data.combat().startSpin(now + PlayerCombatState.SPIN_ROUND_TICKS, now + 20L);
+        tap(player, data);
+        tap(player, data);
+        helper.runAfterDelay(PlayerCombatState.SPIN_ROUND_TICKS, () -> {
+            AdvancedSwordSkills.tick(player, data);
+            helper.assertTrue(data.currentMagic() == 25.0F && data.combat().spinRounds() == 2,
+                    "The first Super Spin circle did not consume its level-scaled base cost");
+            tap(player, data);
+            tap(player, data);
+            helper.runAfterDelay(PlayerCombatState.SPIN_ROUND_TICKS, () -> {
+                AdvancedSwordSkills.tick(player, data);
+                helper.assertTrue(data.currentMagic() == 18.0F && data.combat().spinRounds() == 3,
+                        "The second Super Spin circle did not cost two more magic than the first");
+                helper.succeed();
+            });
+        });
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft")
     public static void continuationRechecksRequirements(GameTestHelper helper) {
         FakePlayer player = player(helper);
         ZSSPlayerData data = ZSSCapabilities.get(player).orElseThrow(() -> new AssertionError("Missing player data"));

@@ -54,6 +54,9 @@ public final class DesertBossCreature extends Husk implements DungeonBoss {
     }
 
     @Override protected boolean convertsInWater() { return false; }
+    @Override public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return dungeonCorePos == null && super.removeWhenFarAway(distanceToClosestPlayer);
+    }
     @Override public boolean isBoss() { return true; }
     @Override public Optional<DungeonType> dungeonType() {
         return dungeonCorePos == null ? Optional.empty() : Optional.of(DungeonType.DESERT);

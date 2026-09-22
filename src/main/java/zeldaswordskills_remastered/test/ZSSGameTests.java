@@ -985,16 +985,21 @@ public final class ZSSGameTests {
             helper.assertTrue(Math.abs(reached - jumpHeight) < 0.01D,
                     "Double Jump level " + level + " rose " + reached + " blocks");
         }
+        long doubleJumpTime = helper.getLevel().getGameTime();
         combatData.combat().resetDoubleJump();
-        helper.assertTrue(combatData.combat().useDoubleJump() && !combatData.combat().useDoubleJump(),
+        helper.assertTrue(combatData.combat().useDoubleJump(doubleJumpTime)
+                        && !combatData.combat().useDoubleJump(doubleJumpTime),
                 "Double Jump must be usable only once per airtime");
         combatData.combat().resetDoubleJump();
-        helper.assertTrue(combatData.combat().useDoubleJump(), "Landing did not restore the Double Jump");
+        helper.assertTrue(!combatData.combat().useDoubleJump(doubleJumpTime + 59L),
+                "Landing bypassed the three-second Double Jump cooldown");
+        helper.assertTrue(combatData.combat().useDoubleJump(doubleJumpTime + 60L),
+                "Double Jump remained unavailable after its three-second cooldown");
         combatData.combat().reset();
-        helper.assertTrue(combatData.combat().useDoubleJump(), "Combat reset left the Double Jump spent");
+        helper.assertTrue(combatData.combat().useDoubleJump(doubleJumpTime), "Combat reset left the Double Jump spent");
         // The assertions above spend the charge on purpose; give the skill a fresh one before
         // checking that a real activation replaces the falling velocity.
-        combatData.combat().resetDoubleJump();
+        combatData.combat().reset();
         combatData.setSkillLevel(id("double_jump"), 1);
         combatPlayer.setOnGround(false);
         combatPlayer.setDeltaMovement(0.0D, -0.3D, 0.0D);
@@ -1009,7 +1014,9 @@ public final class ZSSGameTests {
                 "A second Double Jump was accepted in the same airtime");
         combatPlayer.setOnGround(true);
         AdvancedSwordSkills.tick(combatPlayer, combatData);
-        helper.assertTrue(!combatData.combat().doubleJumpUsed(), "Touching the ground did not restore the Double Jump");
+        helper.assertTrue(!combatData.combat().doubleJumpUsed()
+                        && combatData.combat().doubleJumpCoolingDown(helper.getLevel().getGameTime()),
+                "Landing did not restore the airtime jump or incorrectly cleared its cooldown");
 
         // Parry: one (20 + 2 x level) tick guard, followed by a sixty-tick cooldown.
         combatData.setSkillLevel(id("parry"), 1);
@@ -1784,6 +1791,7 @@ public final class ZSSGameTests {
                                 && entity.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
                                 == 10 + 2 * difficulty.getId()
                                 && entity.dungeonCorePos().orElseThrow().equals(center)
+                                && !entity.removeWhenFarAway(160.0D * 160.0D)
                                 && entity.getType().is(CreatureSpawnRules.DUNGEON_ONLY)),
                         "Fire boss identity, count, attributes or instance binding changed");
                 helper.assertTrue(bosses.stream().map(entity -> ((zeldaswordskills_remastered.entity.FireBossCreature) entity).element())
@@ -1847,6 +1855,15 @@ public final class ZSSGameTests {
                     helper.assertTrue(core.fireReinforcements().size() == count + 1
                                     && core.fireBattleDifficulty() == difficulty.getId(),
                             "Fire difficulty snapshot or long-battle phase was lost");
+                    int interval = 800 - 50 * difficulty.getId();
+                    setFireBattleTick(core, 6000L + 2L * interval - 1L);
+                    DungeonController.tick(level, core);
+                    helper.assertTrue(core.fireReinforcements().size() == 3,
+                            "Fire did not allow its third simultaneous reinforcement wave");
+                    setFireBattleTick(core, 6000L + 3L * interval - 1L);
+                    DungeonController.tick(level, core);
+                    helper.assertTrue(core.fireReinforcements().size() == 3,
+                            "Fire exceeded three simultaneous reinforcement waves");
                 }
                 for (int dx : new int[]{-12, 12}) for (int dz : new int[]{-12, 12})
                     for (int y = 1; y <= 4; y++) level.setBlock(center.offset(dx, y, dz), Blocks.END_STONE.defaultBlockState(), 2);

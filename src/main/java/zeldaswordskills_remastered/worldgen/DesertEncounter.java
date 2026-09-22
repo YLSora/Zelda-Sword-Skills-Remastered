@@ -40,6 +40,8 @@ public final class DesertEncounter {
     private DesertEncounter() {}
 
     static boolean spawnReinforcements(ServerLevel level, DungeonCore core) {
+        var waveId = DungeonController.beginReinforcementWave(level, core.desertReinforcements(), 4);
+        if (waveId.isEmpty()) return false;
         var skeletons = new ArrayList<Mob>();
         for (int corner = 0; corner < 4; corner++) {
             var skeleton = EntityType.SKELETON.create(level);
@@ -53,6 +55,7 @@ public final class DesertEncounter {
             skeleton.setItemSlot(EquipmentSlot.MAINHAND, bow);
             skeleton.setPersistenceRequired();
             skeleton.getPersistentData().putLong(REINFORCEMENT_CORE, core.getBlockPos().asLong());
+            DungeonController.markReinforcement(skeleton, waveId.orElseThrow());
             if (!level.addFreshEntity(skeleton)) {
                 skeletons.forEach(Entity::discard);
                 return false;

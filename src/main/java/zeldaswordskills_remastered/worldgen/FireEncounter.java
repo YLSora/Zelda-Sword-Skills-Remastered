@@ -92,6 +92,8 @@ public final class FireEncounter {
     }
 
     private static void spawnReinforcement(ServerLevel level, DungeonCore core) {
+        var waveId = DungeonController.beginReinforcementWave(level, core.fireReinforcements(), 1);
+        if (waveId.isEmpty()) return;
         boolean hard = core.fireBattleDifficulty() == 3;
         Mob mob = EntityType.WITHER_SKELETON.create(level);
         if (mob == null) return;
@@ -110,6 +112,7 @@ public final class FireEncounter {
         }
         mob.setPersistenceRequired();
         mob.getPersistentData().putLong(CORE_POS, core.getBlockPos().asLong());
+        DungeonController.markReinforcement(mob, waveId.orElseThrow());
         if (level.addFreshEntity(mob)) core.addFireReinforcement(mob.getUUID());
     }
 

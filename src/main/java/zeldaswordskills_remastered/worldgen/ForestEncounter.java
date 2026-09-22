@@ -43,12 +43,13 @@ public final class ForestEncounter {
         }
     }
 
-    private static void spawnReinforcement(ServerLevel level, DungeonCore core, int corner) {
+    private static void spawnReinforcement(ServerLevel level, DungeonCore core, int corner, java.util.UUID waveId) {
         var spider = ZSSRegistries.SKULLTULA.get().create(level);
         if (spider == null || !positionAtCorner(level, core, spider, corner)) return;
         spider.finalizeSpawn(level, level.getCurrentDifficultyAt(spider.blockPosition()), MobSpawnType.EVENT, null, null);
         spider.setPersistenceRequired();
         spider.getPersistentData().putLong(REINFORCEMENT_CORE, core.getBlockPos().asLong());
+        DungeonController.markReinforcement(spider, waveId);
         if (level.addFreshEntity(spider)) core.addForestReinforcement(spider.getUUID());
     }
 
@@ -85,7 +86,9 @@ public final class ForestEncounter {
         if (!core.bossUuids().isEmpty()) {
             core.setForestReinforcementDelay(core.forestReinforcementDelay() - 1);
             if (core.forestReinforcementDelay() <= 0) {
-                for (int corner = 0; corner < 4; corner++) spawnReinforcement(level, core, corner);
+                DungeonController.beginReinforcementWave(level, core.forestReinforcements(), 4).ifPresent(waveId -> {
+                    for (int corner = 0; corner < 4; corner++) spawnReinforcement(level, core, corner, waveId);
+                });
                 core.setForestReinforcementDelay(300 + level.random.nextInt(300));
             }
         }
