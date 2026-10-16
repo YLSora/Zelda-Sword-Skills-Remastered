@@ -43,8 +43,8 @@ public final class SkillAvailabilityGameTests {
         }
         helper.assertTrue(dispatcher.execute("zss skills learn all", source) == 1, "Learn all failed");
         for (var skill : ZSSContentIds.SKILLS) {
-            helper.assertTrue(data.activeSkillLevel(skill) == Math.min(5, data.skillMaximum(skill)),
-                    "Learn all did not set level five and enable " + skill);
+            helper.assertTrue(data.activeSkillLevel(skill) == data.skillMaximum(skill),
+                    "Learn all did not maximize and enable " + skill);
         }
         data.setSkillEnabled(ZSSContentIds.DODGE, false);
         dispatcher.execute("zss skills learn all", source);
@@ -70,8 +70,64 @@ public final class SkillAvailabilityGameTests {
                         && player.getHealth() <= player.getMaxHealth(), "Forget all retained bonus hearts");
         dispatcher.execute("zss skills learn all", source);
         for (var skill : ZSSContentIds.SKILLS) {
-            helper.assertTrue(data.activeSkillLevel(skill) == Math.min(5, data.skillMaximum(skill)), "Relearning all left a skill disabled");
+            helper.assertTrue(data.activeSkillLevel(skill) == data.skillMaximum(skill), "Relearning all left a skill disabled");
         }
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssSkillCommands")
+    public static void singleSkillCommandsUseMaximumLevelsAndFilterSuggestions(GameTestHelper helper) throws CommandSyntaxException {
+        var player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "single_skill_test"));
+        var data = ZSSCapabilities.get(player).orElseThrow(AssertionError::new);
+        var dispatcher = helper.getLevel().getServer().getCommands().getDispatcher();
+        var source = player.createCommandSourceStack().withPermission(2).withSuppressedOutput();
+        for (String action : new String[]{"learn", "forget"}) {
+            try {
+                dispatcher.execute("zss skills " + action + " " + ZSSContentIds.DODGE, source.withPermission(0));
+                throw new AssertionError("Single skill command bypassed operator permissions");
+            } catch (CommandSyntaxException expected) {
+                helper.assertTrue(data.skills().isEmpty(), "Unauthorized command changed a skill");
+            }
+        }
+        var emptyForget = dispatcher.getCompletionSuggestions(dispatcher.parse("zss skills forget ", source)).join();
+        helper.assertTrue(emptyForget.getList().size() == 1 && emptyForget.getList().get(0).getText().equals("all"),
+                "Forget suggestions included unlearned skills");
+        data.setSkillLevel(ZSSContentIds.DODGE, 2);
+        data.setSkillEnabled(ZSSContentIds.DODGE, false);
+        helper.assertTrue(dispatcher.execute("zss skills learn " + ZSSContentIds.DODGE, source) == 1
+                        && data.activeSkillLevel(ZSSContentIds.DODGE) == data.skillMaximum(ZSSContentIds.DODGE),
+                "Single learn did not maximize and enable the skill");
+        var learn = dispatcher.getCompletionSuggestions(dispatcher.parse("zss skills learn ", source)).join();
+        helper.assertTrue(learn.getList().stream().noneMatch(s -> s.getText().equals(ZSSContentIds.DODGE.toString()))
+                        && learn.getList().stream().anyMatch(s -> s.getText().equals(ZSSContentIds.SWORD_BASIC.toString())),
+                "Learn suggestions included a maxed skill or hid an unlearned skill");
+        var forget = dispatcher.getCompletionSuggestions(dispatcher.parse("zss skills forget ", source)).join();
+        helper.assertTrue(forget.getList().stream().map(s -> s.getText()).collect(java.util.stream.Collectors.toSet())
+                        .equals(java.util.Set.of("all", ZSSContentIds.DODGE.toString())),
+                "Forget suggestions did not match learned skills");
+        long now = helper.getLevel().getGameTime();
+        data.combat().startDodge(now, 1);
+        player.setDeltaMovement(1, 0, 0);
+        helper.assertTrue(dispatcher.execute("zss skills forget " + ZSSContentIds.DODGE, source) == 1
+                        && data.skillLevel(ZSSContentIds.DODGE) == 0 && data.skillEnabled(ZSSContentIds.DODGE)
+                        && !data.combat().dodgeActive(now) && player.getDeltaMovement().horizontalDistanceSqr() == 0,
+                "Single forget retained Dodge effects or disabled future learning");
+        helper.assertTrue(dispatcher.execute("zss skills learn " + ZSSContentIds.SWORD_BASIC, source) == 1
+                        && data.skillLevel(ZSSContentIds.SWORD_BASIC) == 10,
+                "Single learn left Basic Sword Skill at level five");
+        var before = data.skills();
+        for (String action : new String[]{"learn", "forget"}) {
+            helper.assertTrue(dispatcher.execute("zss skills " + action + " zeldaswordskills_remastered:unknown", source) == 0
+                            && data.skills().equals(before), "Unknown skill command changed data");
+        }
+        dispatcher.execute("zss skills learn all", source);
+        var maxed = dispatcher.getCompletionSuggestions(dispatcher.parse("zss skills learn ", source)).join();
+        helper.assertTrue(maxed.getList().size() == 1 && maxed.getList().get(0).getText().equals("all"),
+                "Maxed skills remained in learn suggestions");
+        dispatcher.execute("zss skills forget all", source);
+        var cleared = dispatcher.getCompletionSuggestions(dispatcher.parse("zss skills forget ", source)).join();
+        helper.assertTrue(cleared.getList().size() == 1 && cleared.getList().get(0).getText().equals("all"),
+                "Forgotten skills remained in suggestions");
         helper.succeed();
     }
 
