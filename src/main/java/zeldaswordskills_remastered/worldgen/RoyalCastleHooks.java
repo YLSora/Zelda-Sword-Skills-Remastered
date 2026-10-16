@@ -14,6 +14,17 @@ import net.minecraft.world.level.levelgen.structure.StructureStart;
 public final class RoyalCastleHooks {
     private RoyalCastleHooks() { }
 
+    public static HolderSet<Structure> filterLocateStructures(ServerLevel level, HolderSet<Structure> structures) {
+        if (zeldaswordskills_remastered.config.ZSSConfig.SERVER.generateStructures.get()
+                && level.structureManager().shouldGenerateStructures()) return structures;
+        return HolderSet.direct(structures.stream().filter(holder -> {
+            Structure structure = holder.value();
+            return !(structure instanceof TempleStructure || structure instanceof EndTempleStructure
+                    || structure instanceof FairyPoolStructure || structure instanceof FairyRootStructure
+                    || structure instanceof RoyalCastleStructure);
+        }).toList());
+    }
+
     public static boolean skipFeatures(WorldGenLevel level, BlockPos origin) {
         RoyalCastleSite site = RoyalCastleWorldData.get(level.getLevel());
         if (site == null) return false;

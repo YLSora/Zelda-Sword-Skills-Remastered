@@ -411,6 +411,7 @@ public final class ZSSRegistries {
             OCTOROK, OCTOROK_BOMB, SKULLTULA, SKULLTULA_GOLD, WIZZROBE, WIZZROBE_ICE,
             WIZZROBE_LIGHTNING, WIZZROBE_WIND, DARKNUT_BOSS, WIZZROBE_GRAND, FIRE_BOSS, FOREST_BOSS, WATER_BOSS);
     public static final RegistryObject<SimpleParticleType> CYCLONE = PARTICLE_TYPES.register("cyclone", () -> new SimpleParticleType(false));
+    public static final RegistryObject<SimpleParticleType> RECOVERY_SMOKE = PARTICLE_TYPES.register("recovery_smoke", () -> new SimpleParticleType(false));
     public static final RegistryObject<RecipeSerializer<ThrowingRockRecipe>> THROWING_ROCK_RECIPE = RECIPE_SERIALIZERS.register("throwing_rock",
             () -> new SimpleCraftingRecipeSerializer<>(ThrowingRockRecipe::new));
     public static final RegistryObject<RecipeSerializer<HeartPieceRecipe>> HEART_PIECE_RECIPE = RECIPE_SERIALIZERS.register("heart_piece",
@@ -519,7 +520,7 @@ public final class ZSSRegistries {
     public static final List<RegistryObject<Item>> MUSIC_DISC_ITEMS = MusicDiscCatalog.DISCS.stream().map(disc -> {
         RegistryObject<SoundEvent> music = sound(disc.id());
         return item(disc.id(), () -> new net.minecraft.world.item.RecordItem(1, music,
-                new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), disc.seconds()));
+                new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), disc.seconds() * 20));
     }).toList();
     public static final RegistryObject<CreativeModeTab> ZELDA_OST_TAB =
             tab("zelda_ost", "music_disc_a_link_to_the_past", MUSIC_DISC_ITEMS);

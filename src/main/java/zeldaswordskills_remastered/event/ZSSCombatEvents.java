@@ -89,10 +89,12 @@ public final class ZSSCombatEvents {
     public static void masterModeEnemyTick(LivingEvent.LivingTickEvent event) {
         LivingEntity living = event.getEntity();
         if (!living.level().isClientSide && living.tickCount % 20 == 0) MasterMode.updateEnemyHealth(living);
+        MasterMode.tickRecovery(living);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void playerDamaged(LivingDamageEvent event) {
+        if (event.getAmount() > 0.0F) MasterMode.onEnemyDamaged(event.getEntity());
         if (event.getEntity() instanceof ServerPlayer player) {
             ZSSCapabilities.get(player).ifPresent(data -> {
                 if (event.getAmount() > 0.0F) {

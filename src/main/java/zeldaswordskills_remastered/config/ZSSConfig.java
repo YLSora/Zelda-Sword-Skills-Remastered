@@ -84,7 +84,7 @@ public final class ZSSConfig {
             builder.push("gameplay");
             naturalMonsterSpawning = builder.comment("Allow natural ZSS monster spawning. Also requires doMobSpawning; does not affect dungeon encounters or explicit summons.")
                     .define("naturalMonsterSpawning", true);
-            masterMode = builder.comment("Enable Master Mode: five base hearts, double enemy health and damage, no dropped Small Hearts, and no natural magic regeneration.")
+            masterMode = builder.comment("Enable Master Mode: five base hearts, double enemy health and damage, enemy health regeneration, no dropped Small Hearts, and no natural magic regeneration.")
                     .define("masterMode", false);
             generateZssLoot = builder.comment("Generate ZeldaSwordSkills_Remastered loot in injected vanilla loot tables.")
                     .define("generateZssLoot", true);

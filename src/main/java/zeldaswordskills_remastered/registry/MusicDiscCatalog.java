@@ -31,7 +31,7 @@ public final class MusicDiscCatalog {
             new Disc("music_disc_song_of_storm", "Song of Storm", 135),
             new Disc("music_disc_spirit_tracks", "Spirit Tracks", 249),
             new Disc("music_disc_tears_of_the_kingdom", "Tears of the Kingdom", 79),
-            new Disc("music_disc_the_legend_of_zelda", "The Legend of Zelda", 108),
+            new Disc("music_disc_the_legend_of_zelda", "The Legend of Zelda", 342),
             new Disc("music_disc_twilight_princess", "Twilight Princess", 69),
             new Disc("music_disc_zelda_princess", "Zelda Princess", 59));
 

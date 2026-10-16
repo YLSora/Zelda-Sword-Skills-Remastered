@@ -168,5 +168,6 @@ public final class ZSSClient {
     @SubscribeEvent
     public static void registerParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ZSSRegistries.CYCLONE.get(), CycloneParticle.Provider::new);
+        event.registerSpriteSet(ZSSRegistries.RECOVERY_SMOKE.get(), zeldaswordskills_remastered.client.particle.RecoverySmokeParticle::provider);
     }
 }

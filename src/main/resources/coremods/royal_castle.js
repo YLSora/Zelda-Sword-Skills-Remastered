@@ -60,6 +60,13 @@ function initializeCoreMod() {
                 'methodDesc': '(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/HolderSet;Lnet/minecraft/core/BlockPos;IZ)Lcom/mojang/datafixers/util/Pair;'
             },
             'transformer': function(method) {
+                var guard = new InsnList();
+                guard.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                guard.add(new VarInsnNode(Opcodes.ALOAD, 2));
+                guard.add(new MethodInsnNode(Opcodes.INVOKESTATIC, hooks, 'filterLocateStructures',
+                    '(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/HolderSet;)Lnet/minecraft/core/HolderSet;', false));
+                guard.add(new VarInsnNode(Opcodes.ASTORE, 2));
+                method.instructions.insert(guard);
                 var instructions = method.instructions.toArray();
                 for (var i = 0; i < instructions.length; i++) {
                     if (instructions[i].getOpcode() === Opcodes.ARETURN) {

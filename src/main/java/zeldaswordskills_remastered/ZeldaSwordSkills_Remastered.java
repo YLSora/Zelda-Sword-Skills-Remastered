@@ -29,6 +29,8 @@ public final class ZeldaSwordSkills_Remastered {
         IEventBus modBus = loadingContext.getModEventBus();
         ZSSRegistries.register(modBus);
         loadingContext.registerConfig(ModConfig.Type.SERVER, ZSSConfig.SERVER_SPEC);
+        loadingContext.registerConfig(ModConfig.Type.SERVER, zeldaswordskills_remastered.config.MasterModeConfig.SPEC,
+                "zeldaswordskills_remastered-master-mode-server.toml");
         loadingContext.registerConfig(ModConfig.Type.CLIENT, ZSSConfig.CLIENT_SPEC);
         modBus.addListener(ZSSCapabilities::register);
         modBus.addListener(this::modifyEntityAttributes);

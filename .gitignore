@@ -225,5 +225,6 @@ pip-log.txt
 /docs/
 /.obsidian/
 /artifacts/
-/tools/
+/tools/*
+!/tools/compress_music.py
 /.idea/

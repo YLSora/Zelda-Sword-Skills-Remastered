@@ -1,6 +1,11 @@
 package zeldaswordskills_remastered.combat;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraftforge.registries.ForgeRegistries;
+import zeldaswordskills_remastered.config.MasterModeConfig;
+import zeldaswordskills_remastered.registry.ZSSRegistries;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,6 +23,7 @@ public final class MasterMode {
     public static final UUID PLAYER_HEALTH_MODIFIER_ID = UUID.fromString("87743e08-401b-4e59-9c20-e2074706842d");
     public static final UUID ENEMY_HEALTH_MODIFIER_ID = UUID.fromString("21b71f40-a029-4d6d-b24e-8dc526d6808c");
     private static final double PLAYER_HEALTH_REDUCTION = -10.0D;
+    private static final String RECOVERY = "zssMasterModeRecovery";
 
     private MasterMode() {
     }
@@ -67,6 +73,46 @@ public final class MasterMode {
             return amount;
         }
         return Math.min(Float.MAX_VALUE, amount * 2.0F);
+    }
+
+    public static void onEnemyDamaged(LivingEntity enemy) {
+        if (enemy.level().isClientSide || !ZSSConfig.SERVER.masterMode.get() || !isEnemy(enemy)) return;
+        var recovery = new CompoundTag();
+        recovery.putLong("LastDamage", enemy.level().getGameTime());
+        enemy.getPersistentData().put(RECOVERY, recovery);
+    }
+
+    public static void tickRecovery(LivingEntity enemy) {
+        if (!(enemy.level() instanceof ServerLevel level) || !enemy.getPersistentData().contains(RECOVERY)) return;
+        if (!ZSSConfig.SERVER.masterMode.get() || !enemy.isAlive()
+                || MasterModeConfig.REGENERATION_BLACKLIST.get().contains(ForgeRegistries.ENTITY_TYPES.getKey(enemy.getType()).toString())) {
+            enemy.getPersistentData().remove(RECOVERY);
+            return;
+        }
+        var recovery = enemy.getPersistentData().getCompound(RECOVERY);
+        long now = level.getGameTime();
+        if (now - recovery.getLong("LastDamage") < 200) return;
+        if (!recovery.contains("Remaining")) {
+            float missing = Math.max(0, enemy.getMaxHealth() - enemy.getHealth());
+            recovery.putFloat("Remaining", enemy.getHealth() > enemy.getMaxHealth() * .75F ? missing : missing * .75F);
+            recovery.putLong("NextHeal", now);
+        }
+        float remaining = recovery.getFloat("Remaining");
+        if (now >= recovery.getLong("NextHeal")) {
+            float before = enemy.getHealth();
+            enemy.heal(Math.min(remaining, enemy.getMaxHealth() * .05F));
+            remaining -= Math.max(0, enemy.getHealth() - before);
+            recovery.putFloat("Remaining", remaining);
+            recovery.putLong("NextHeal", now + 60);
+        }
+        if (remaining <= .0001F || enemy.getHealth() >= enemy.getMaxHealth()) {
+            enemy.getPersistentData().remove(RECOVERY);
+            return;
+        }
+        if (enemy.tickCount % 4 == 0) {
+            level.sendParticles(ZSSRegistries.RECOVERY_SMOKE.get(), enemy.getX(), enemy.getY() + .1, enemy.getZ(),
+                    2, enemy.getBbWidth() * .4, .05, enemy.getBbWidth() * .4, .02);
+        }
     }
 
     /** Vanilla hostile mobs use Enemy; ZSS hostile entities use the monster category. */
