@@ -203,18 +203,19 @@ public final class AdvancedSwordSkills {
         long now = player.level().getGameTime();
         if (level <= 0 || !player.isAlive() || player.isSpectator() || player.isPassenger()
                 || !player.onGround() || player.isInFluidType() || data.combat().dodgeOnCooldown(now)) return;
-        Vec3 side = validatedSide(player, direction);
-        if (side.lengthSqr() < 0.25D) return;
-        if (!data.combat().acceptDodgeTap(now, side)) return;
+        Vec3 movement = validatedDodgeDirection(player, direction);
+        if (movement.lengthSqr() < 0.25D) return;
+        if (!data.combat().acceptDodgeTap(now, movement)) return;
+        boolean backward = movement.dot(Vec3.directionFromRotation(0.0F, player.getYRot())) < -0.5D;
         data.combat().startDodge(now, level);
         var groundPos = player.getOnPos();
         float friction = player.level().getBlockState(groundPos).getFriction(player.level(), groundPos, player);
-        double speed = dodgeImpulseSpeed(friction);
+        double speed = dodgeImpulseSpeed(friction) * (backward ? 0.5D : 1.0D);
         LivingEntity target = TargetingService.getLockedTarget(player, data).orElse(null);
         data.combat().flashAssault().startDodge(now, target == null ? -1 : target.getId());
-        if (target != null && horizontal(player.position().subtract(target.position())).lengthSqr() >= 1.0E-6D) {
+        if (!backward && target != null && horizontal(player.position().subtract(target.position())).lengthSqr() >= 1.0E-6D) {
             Vec3 look = horizontal(player.getLookAngle()).normalize();
-            boolean right = side.dot(new Vec3(-look.z, 0.0D, look.x)) > 0.0D;
+            boolean right = movement.dot(new Vec3(-look.z, 0.0D, look.x)) > 0.0D;
             Vec3 motion = DodgeMovement.orbitVelocity(player.position(), target.position(), speed, right);
             player.setDeltaMovement(motion.x, player.getDeltaMovement().y, motion.z);
             player.hasImpulse = true;
@@ -223,7 +224,7 @@ public final class AdvancedSwordSkills {
         }
         // Replace existing horizontal motion so the first tap's walking speed does
         // not increase the impulse. Vanilla handles all subsequent travel and collisions.
-        player.setDeltaMovement(side.x * speed, player.getDeltaMovement().y, side.z * speed);
+        player.setDeltaMovement(movement.x * speed, player.getDeltaMovement().y, movement.z * speed);
         player.hurtMarked = true;
     }
 
@@ -971,14 +972,15 @@ public final class AdvancedSwordSkills {
         return new Vec3(vector.x, 0.0D, vector.z);
     }
 
-    private static Vec3 validatedSide(ServerPlayer player, Vec3 requested) {
-        Vec3 look = horizontal(player.getLookAngle()).normalize();
+    private static Vec3 validatedDodgeDirection(ServerPlayer player, Vec3 requested) {
+        Vec3 look = Vec3.directionFromRotation(0.0F, player.getYRot());
         Vec3 right = new Vec3(-look.z, 0.0D, look.x);
         Vec3 horizontalRequest = horizontal(requested);
         if (horizontalRequest.lengthSqr() < 0.25D) return Vec3.ZERO;
-        double sideDot = horizontalRequest.normalize().dot(right);
-        if (Math.abs(sideDot) < 0.5D) return Vec3.ZERO;
-        return right.scale(Math.signum(sideDot));
+        Vec3 direction = horizontalRequest.normalize();
+        double sideDot = direction.dot(right);
+        if (Math.abs(sideDot) >= 0.5D) return right.scale(Math.signum(sideDot));
+        return direction.dot(look) < -0.5D ? look.reverse() : Vec3.ZERO;
     }
 
     private static double distanceToSegment(Vec3 point, Vec3 start, Vec3 end) {

@@ -305,8 +305,10 @@ public final class ZSSClientGameplay {
         if (key >= 0) recordSpinSequenceKey(key, clock(minecraft.player));
         // Capture every press, including press/release pairs between client ticks.
         // GLFW_REPEAT is excluded above; holding a key cannot supply a second tap.
-        if (event.getKey() == GLFW.GLFW_KEY_A) sendDodgeTap(minecraft.player, false);
-        if (event.getKey() == GLFW.GLFW_KEY_D) sendDodgeTap(minecraft.player, true);
+        if (event.getKey() == GLFW.GLFW_KEY_A) sendDodgeTap(minecraft.player, sideDirection(minecraft.player, false));
+        if (event.getKey() == GLFW.GLFW_KEY_D) sendDodgeTap(minecraft.player, sideDirection(minecraft.player, true));
+        if (event.getKey() == GLFW.GLFW_KEY_S) sendDodgeTap(minecraft.player,
+                Vec3.directionFromRotation(0.0F, minecraft.player.getYRot()).reverse());
     }
 
     @SubscribeEvent
@@ -588,10 +590,10 @@ public final class ZSSClientGameplay {
         }
     }
 
-    private static void sendDodgeTap(net.minecraft.world.entity.player.Player player, boolean right) {
+    private static void sendDodgeTap(net.minecraft.world.entity.player.Player player, Vec3 direction) {
         if (spinChargeStarted >= 0 || player.isInFluidType() || !learned(ZSSContentIds.DODGE)) return;
         send(ZSSContentIds.DODGE, SkillIntentMessage.Action.BEGIN,
-                Optional.of(sideDirection(player, right)));
+                Optional.of(direction));
     }
 
     private static boolean continuousDashInput(Minecraft minecraft) {

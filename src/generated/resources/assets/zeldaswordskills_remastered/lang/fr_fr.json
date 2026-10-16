@@ -185,6 +185,8 @@
   "command.zeldaswordskills_remastered.quest.resetall": "Reset all quests for %s.",
   "command.zeldaswordskills_remastered.quest.unavailable": "Quest data is unavailable for %s.",
   "command.zeldaswordskills_remastered.quest.unknown": "Unknown quest: %s",
+  "command.zeldaswordskills_remastered.skills.forget_all": "Forgot all skills.",
+  "command.zeldaswordskills_remastered.skills.learn_all": "Learned and enabled all skills at level 5 (subject to server limits).",
   "command.zeldaswordskills_remastered.skills.range": "Level for %s must be between 0 and %s (received %s).",
   "command.zeldaswordskills_remastered.skills.set": "Set %s to level %s.",
   "command.zeldaswordskills_remastered.skills.unknown": "Unknown Zelda skill: %s",

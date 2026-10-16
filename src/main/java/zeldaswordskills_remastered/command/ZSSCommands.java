@@ -23,6 +23,7 @@ import zeldaswordskills_remastered.progression.ZSSAdvancementService;
 import zeldaswordskills_remastered.quest.QuestService;
 import zeldaswordskills_remastered.registry.ZSSContentIds;
 import zeldaswordskills_remastered.combat.AdvancedSwordSkills;
+import zeldaswordskills_remastered.combat.SkillAvailability;
 
 @Mod.EventBusSubscriber(modid = ZeldaSwordSkills_Remastered.MOD_ID)
 public final class ZSSCommands {
@@ -40,6 +41,12 @@ public final class ZSSCommands {
                                                 IntegerArgumentType.getInteger(context, "count"))))))
                 .then(Commands.literal("skills")
                         .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("learn")
+                                .then(Commands.literal("all")
+                                        .executes(context -> setAllSkills(context.getSource(), 5))))
+                        .then(Commands.literal("forget")
+                                .then(Commands.literal("all")
+                                        .executes(context -> setAllSkills(context.getSource(), 0))))
                         .then(Commands.literal("set")
                                 .then(Commands.argument("skill", ResourceLocationArgument.id())
                                         .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(ZSSContentIds.SKILLS, builder))
@@ -151,6 +158,27 @@ public final class ZSSCommands {
         }
         ZSSNetwork.syncPlayerData(player);
         source.sendSuccess(() -> Component.translatable("command.zeldaswordskills_remastered.skills.set", skill, level), false);
+        return 1;
+    }
+
+    private static int setAllSkills(CommandSourceStack source, int level) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        var data = ZSSCapabilities.get(player).orElse(null);
+        if (data == null) return 0;
+        for (var skill : ZSSContentIds.SKILL_ORDER) {
+            if (level == 0) {
+                boolean enabled = data.skillEnabled(skill);
+                SkillAvailability.setEnabled(player, data, skill, false);
+                if (enabled) data.setSkillEnabled(skill, true);
+            }
+            data.setSkillLevel(skill, level);
+            if (level > 0) data.setSkillEnabled(skill, true);
+        }
+        AdvancedSwordSkills.tickBonusHearts(player, data);
+        ZSSNetwork.syncPlayerData(player);
+        source.sendSuccess(() -> Component.translatable(level > 0
+                ? "command.zeldaswordskills_remastered.skills.learn_all"
+                : "command.zeldaswordskills_remastered.skills.forget_all"), false);
         return 1;
     }
 

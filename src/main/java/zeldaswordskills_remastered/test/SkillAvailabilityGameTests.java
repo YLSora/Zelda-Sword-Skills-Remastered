@@ -27,6 +27,55 @@ public final class SkillAvailabilityGameTests {
     private SkillAvailabilityGameTests() {}
 
     @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssSkillCommands")
+    public static void learnAndForgetAllSkillsUseCommandPermissionsAndClearEffects(GameTestHelper helper) throws CommandSyntaxException {
+        var player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "all_skills_test"));
+        var data = ZSSCapabilities.get(player).orElseThrow(AssertionError::new);
+        var dispatcher = helper.getLevel().getServer().getCommands().getDispatcher();
+        var source = player.createCommandSourceStack().withPermission(2).withSuppressedOutput();
+        for (String command : new String[]{"zss skills learn all", "zss skills forget all"}) {
+            var before = data.skills();
+            try {
+                dispatcher.execute(command, source.withPermission(0));
+                throw new AssertionError("Bulk skill command bypassed operator permissions");
+            } catch (CommandSyntaxException expected) {
+                helper.assertTrue(data.skills().equals(before), "Unauthorized bulk command changed skills");
+            }
+        }
+        helper.assertTrue(dispatcher.execute("zss skills learn all", source) == 1, "Learn all failed");
+        for (var skill : ZSSContentIds.SKILLS) {
+            helper.assertTrue(data.activeSkillLevel(skill) == Math.min(5, data.skillMaximum(skill)),
+                    "Learn all did not set level five and enable " + skill);
+        }
+        data.setSkillEnabled(ZSSContentIds.DODGE, false);
+        dispatcher.execute("zss skills learn all", source);
+        helper.assertTrue(data.activeSkillLevel(ZSSContentIds.DODGE) == 5, "Learn all retained a disabled skill");
+        long now = helper.getLevel().getGameTime();
+        data.combat().setTarget(123);
+        data.combat().startDodge(now, 1);
+        data.combat().startParry(now, now + 22);
+        data.combat().startSpin(now + 8, now + 20);
+        player.setDeltaMovement(1, 0, 0);
+        var beam = new SwordBeam(helper.getLevel(), player, 10, 10, false);
+        helper.getLevel().addFreshEntity(beam);
+        helper.assertTrue(dispatcher.execute("zss skills forget all", source) == 1 && data.skills().isEmpty(),
+                "Forget all retained learned skills");
+        for (var skill : ZSSContentIds.SKILLS) {
+            helper.assertTrue(data.skillEnabled(skill), "Forget all disabled future skill learning");
+        }
+        helper.assertTrue(!data.combat().dodgeActive(now) && !data.combat().parryActive(now)
+                        && !data.combat().spinPending() && data.combat().targetId() < 0
+                        && player.getDeltaMovement().horizontalDistanceSqr() == 0 && beam.isRemoved(),
+                "Forget all retained active skill effects");
+        helper.assertTrue(player.getAttribute(Attributes.MAX_HEALTH).getModifier(AdvancedSwordSkills.BONUS_HEART_MODIFIER_ID) == null
+                        && player.getHealth() <= player.getMaxHealth(), "Forget all retained bonus hearts");
+        dispatcher.execute("zss skills learn all", source);
+        for (var skill : ZSSContentIds.SKILLS) {
+            helper.assertTrue(data.activeSkillLevel(skill) == Math.min(5, data.skillMaximum(skill)), "Relearning all left a skill disabled");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "zssgametests.empty", templateNamespace = "minecraft", batch = "zssSkillCommands")
     public static void skillCommandRejectsOutOfRangeLevelsWithoutChangingData(GameTestHelper helper) throws CommandSyntaxException {
         var player = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "skill_command_test"));
         var data = ZSSCapabilities.get(player).orElseThrow(AssertionError::new);

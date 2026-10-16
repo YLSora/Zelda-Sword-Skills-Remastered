@@ -440,6 +440,8 @@ public final class ZSSDataGenerators {
             add("command.zeldaswordskills_remastered.skills.unknown", "Unknown Zelda skill: %s");
             add("command.zeldaswordskills_remastered.skills.range", "Level for %s must be between 0 and %s (received %s).");
             add("command.zeldaswordskills_remastered.skills.set", "Set %s to level %s.");
+            add("command.zeldaswordskills_remastered.skills.learn_all", "Learned and enabled all skills at level 5 (subject to server limits).");
+            add("command.zeldaswordskills_remastered.skills.forget_all", "Forgot all skills.");
             add("command.zeldaswordskills_remastered.quest.unknown", "Unknown quest: %s");
             add("command.zeldaswordskills_remastered.quest.unavailable", "Quest data is unavailable for %s.");
             add("command.zeldaswordskills_remastered.quest.achieve", "Completed quest %s for %s.");
@@ -592,6 +594,8 @@ public final class ZSSDataGenerators {
             add("command.zeldaswordskills_remastered.skills.unknown", "未知塞尔达技能：%s");
             add("command.zeldaswordskills_remastered.skills.range", "%s 的等级必须在 0 至 %s 之间（输入了 %s）。");
             add("command.zeldaswordskills_remastered.skills.set", "已将 %s 设为 %s 级。");
+            add("command.zeldaswordskills_remastered.skills.learn_all", "已学习并启用全部技能，等级设为 5 级（受服务器上限限制）。");
+            add("command.zeldaswordskills_remastered.skills.forget_all", "已遗忘全部技能。");
             add("command.zeldaswordskills_remastered.quest.unknown", "未知任务：%s");
             add("command.zeldaswordskills_remastered.quest.unavailable", "无法读取 %s 的任务数据。");
             add("command.zeldaswordskills_remastered.quest.achieve", "已完成任务 %s，玩家：%s。");
