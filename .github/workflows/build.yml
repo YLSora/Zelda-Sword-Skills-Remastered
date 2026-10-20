@@ -28,3 +28,11 @@ jobs:
           test -z "$(git ls-files --others --exclude-standard -- src/generated/resources)"
       - name: Run game tests
         run: ./gradlew runGameTestServer --stacktrace
+      - name: Build final JAR
+        run: ./gradlew clean build
+      - name: Upload final JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZeldaSwordSkills_Remastered
+          path: build/libs/ZeldaSwordSkills_Remaster_*.jar
+          if-no-files-found: error
