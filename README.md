@@ -13,25 +13,6 @@ Use a Java 17 JDK:
 ./gradlew runClient
 ```
 
-Master Mode uses `gameplay.masterMode` in the world's
-`serverconfig/zeldaswordskills_remastered-server.toml`. Injured enemies wait ten seconds
-without damage, then heal 5% of maximum health every three seconds, with rising red smoke.
-Each recovery restores at most 75% of the health missing when recovery begins. Enemies
-above 75% maximum health at that moment may heal fully. Any further damage restarts the wait.
-Exclude entity IDs in the separate world configuration
-`serverconfig/zeldaswordskills_remastered-master-mode-server.toml`:
-
-```toml
-regenerationBlacklist = ["minecraft:wither", "minecraft:ender_dragon"]
-```
-
-The default blacklist is empty. It only disables regeneration, leaving other Master Mode rules active.
-OST assets can be rebuilt from the original recordings with
-`python tools/compress_music.py "E:/Minecraft/others/zelda/music" --ffmpeg /path/to/ffmpeg`.
-The script preserves stereo, encodes Vorbis quality 0 at 22.05 kHz, verifies every track decodes
-to its full duration and the set stays below 20 MB, and writes sizes and SHA-256 hashes to
-`build/reports/music-compression.json`. This smaller version loses some high-frequency detail.
-
 ## Description
 
 This mod is the fully remake of Zelda Sword Skills from 1.8.9. 
@@ -48,6 +29,20 @@ Apart from transferring the original mod content and making it compatible with t
  **Adjustment of equiments** Master sword in old version was too weak. Now it as well as other weapons or tools has a stronger power to fight against the new mobs like wardens, or explore the modern terrains of Minecraft. 
 
  **More configurable options** Wanna more challenging mode? Or just want to disabled the annoying monsters for the casual players? You can configure them in the mods option.
+
+## Master Mode
+
+Master Mode needs to activate `gameplay.masterMode` in the world's
+`serverconfig/zeldaswordskills_remastered-server.toml`. Or use Configured Mod to easily change it.
+
+You can add exclude entity IDs in the separate world configuration
+`<saves>/serverconfig/zeldaswordskills_remastered-master-mode-server.toml`:
+
+```toml
+regenerationBlacklist = ["minecraft:wither", "minecraft:ender_dragon"]
+```
+
+The default blacklist is empty. It only disables regeneration, leaving other Master Mode rules active.
 
 ## AI Notice
 
